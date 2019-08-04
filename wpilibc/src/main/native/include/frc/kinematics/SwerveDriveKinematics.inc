@@ -11,8 +11,8 @@
 
 namespace frc {
 
-template <class Wheel, class... Wheels>
-SwerveDriveKinematics(Wheel, Wheels...)
+template <class... Wheels>
+SwerveDriveKinematics(Translation2d, Wheels...)
     ->SwerveDriveKinematics<1 + sizeof...(Wheels)>;
 
 template <size_t NumModules>

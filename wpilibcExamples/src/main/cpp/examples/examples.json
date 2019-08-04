@@ -243,5 +243,14 @@
     ],
     "foldername": "ShuffleBoard",
     "gradlebase": "cpp"
+  },
+  {
+    "name": "SwerveBot",
+    "description": "An example program for a swerve drive that uses swerve drive kinematics and odometry.",
+    "tags": [
+      "SwerveBot"
+    ],
+    "foldername": "SwerveBot",
+    "gradlebase": "cpp"
   }
 ]
