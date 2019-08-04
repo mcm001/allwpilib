@@ -1,0 +1,26 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
+#include "SwerveDrive.h"
+
+void SwerveDrive::Drive(double xSpeed, double ySpeed, double rot) {
+  auto states = m_kinematics.ToSwerveModuleStates({xSpeed, ySpeed, rot});
+
+  m_kinematics.NormalizeWheelSpeeds(&states, kMaxSpeed);
+
+  auto [fl, fr, bl, br] = states;
+
+  m_frontLeft.SetDesiredState(fl);
+  m_frontRight.SetDesiredState(fr);
+  m_backLeft.SetDesiredState(bl);
+  m_backRight.SetDesiredState(br);
+}
+
+void SwerveDrive::UpdateOdometry() {
+  m_odometry.Update(m_frontLeft.GetState(), m_frontRight.GetState(),
+                    m_backLeft.GetState(), m_backRight.GetState());
+}
