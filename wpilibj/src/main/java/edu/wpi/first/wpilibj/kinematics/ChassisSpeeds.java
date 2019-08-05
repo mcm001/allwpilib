@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
  */
 @SuppressWarnings("MemberName")
 public class ChassisSpeeds {
-
   /**
    * Represents forward velocity w.r.t the robot frame of reference. (Fwd is +)
    */
