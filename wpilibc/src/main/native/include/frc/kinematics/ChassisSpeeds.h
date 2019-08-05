@@ -6,6 +6,7 @@
 /*----------------------------------------------------------------------------*/
 
 #pragma once
+#include "frc/geometry/Rotation2d.h"
 
 namespace frc {
 /**
@@ -27,5 +28,27 @@ struct ChassisSpeeds {
   double dx = 0;
   double dy = 0;
   double dtheta = 0;
+
+  /**
+   * Converts a user provided field-relative set of speeds into a robot-relative
+   * ChassisSpeeds object.
+   *
+   * @param vx The component of speed in the x direction relative to the field.
+   * Positive x is away from your alliance wall.
+   * @param vy The component of speed in the y direction relative to the field.
+   * Positive y is to your left when standing behind the alliance wall.
+   * @param vtheta The angular rate of the robot.
+   * @param robotAngle The angle of the robot as measured by a gyroscope.
+   * Remember that this should be CCW positive.
+   *
+   * @return ChassisSpeeds object representing the speeds in the robot's frame
+   * of reference.
+   */
+  static ChassisSpeeds FromFieldRelativeSpeeds(double vx, double vy,
+                                               double vtheta,
+                                               const Rotation2d& robotAngle) {
+    return {vx * robotAngle.Cos() + vy * robotAngle.Sin(),
+            -vx * robotAngle.Sin() + vy * robotAngle.Cos(), vtheta};
+  }
 };
 }  // namespace frc
