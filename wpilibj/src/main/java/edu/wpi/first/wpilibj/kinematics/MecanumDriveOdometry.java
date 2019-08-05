@@ -70,8 +70,8 @@ public class MecanumDriveOdometry {
 
     var chassisState = m_kinematics.toChassisSpeeds(wheelSpeeds);
     m_pose = m_pose.exp(
-        new Twist2d(chassisState.dx * period, chassisState.dy * period,
-            chassisState.dtheta * period));
+        new Twist2d(chassisState.vx * period, chassisState.vy * period,
+            chassisState.omega * period));
 
     return m_pose;
   }
@@ -96,7 +96,7 @@ public class MecanumDriveOdometry {
 
     var chassisState = m_kinematics.toChassisSpeeds(wheelSpeeds);
     m_pose = m_pose.exp(
-        new Twist2d(chassisState.dx * period, chassisState.dy * period,
+        new Twist2d(chassisState.vx * period, chassisState.vy * period,
             angularRateRadians * period));
 
     return m_pose;

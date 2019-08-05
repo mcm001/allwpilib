@@ -54,8 +54,8 @@ public class DifferentialDriveKinematics {
    */
   public DifferentialDriveWheelSpeeds toWheelSpeeds(ChassisSpeeds chassisSpeeds) {
     return new DifferentialDriveWheelSpeeds(
-        chassisSpeeds.dx - m_driveRadius * chassisSpeeds.dtheta,
-        chassisSpeeds.dx + m_driveRadius * chassisSpeeds.dtheta
+        chassisSpeeds.vx - m_driveRadius * chassisSpeeds.omega,
+        chassisSpeeds.vx + m_driveRadius * chassisSpeeds.omega
     );
   }
 }

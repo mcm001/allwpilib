@@ -104,7 +104,7 @@ public class MecanumDriveKinematics {
 
     var chassisSpeedsVector = new SimpleMatrix(3, 1);
     chassisSpeedsVector.setColumn(0, 0,
-        chassisSpeeds.dx, chassisSpeeds.dy, chassisSpeeds.dtheta);
+        chassisSpeeds.vx, chassisSpeeds.vy, chassisSpeeds.omega);
 
     var wheelsMatrix = m_inverseKinematics.mult(chassisSpeedsVector);
     return new MecanumDriveWheelSpeeds(

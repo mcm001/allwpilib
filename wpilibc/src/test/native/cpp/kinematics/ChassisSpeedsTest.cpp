@@ -14,7 +14,7 @@ TEST(ChassisSpeeds, FieldRelativeConstruction) {
   const auto chassisSpeeds = frc::ChassisSpeeds::FromFieldRelativeSpeeds(
       1.0, 0.0, 0.5, frc::Rotation2d::FromDegrees(-90.0));
 
-  EXPECT_NEAR(0.0, chassisSpeeds.dx, kEpsilon);
-  EXPECT_NEAR(1.0, chassisSpeeds.dy, kEpsilon);
-  EXPECT_NEAR(0.5, chassisSpeeds.dtheta, kEpsilon);
+  EXPECT_NEAR(0.0, chassisSpeeds.vx, kEpsilon);
+  EXPECT_NEAR(1.0, chassisSpeeds.vy, kEpsilon);
+  EXPECT_NEAR(0.5, chassisSpeeds.omega, kEpsilon);
 }

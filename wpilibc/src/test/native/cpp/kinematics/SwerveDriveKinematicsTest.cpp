@@ -41,9 +41,9 @@ TEST(SwerveDriveKinematics, StraightLineForwardKinematics) {
 
   auto chassisSpeeds = kinematics.ToChassisSpeeds(state, state, state, state);
 
-  EXPECT_NEAR(chassisSpeeds.dx, 5.0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.dy, 0.0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.dtheta, 0.0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vx, 5.0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vy, 0.0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.omega, 0.0, kEpsilon);
 }
 
 TEST(SwerveDriveKinematics, NormalizeTest) {

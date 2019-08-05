@@ -109,7 +109,7 @@ public class SwerveDriveKinematics {
 
     var chassisSpeedsVector = new SimpleMatrix(3, 1);
     chassisSpeedsVector.setColumn(0, 0,
-        chassisSpeeds.dx, chassisSpeeds.dy, chassisSpeeds.dtheta);
+        chassisSpeeds.vx, chassisSpeeds.vy, chassisSpeeds.omega);
 
     var moduleStatesMatrix = m_inverseKinematics.mult(chassisSpeedsVector);
     SwerveModuleState[] moduleStates = new SwerveModuleState[m_numModules];

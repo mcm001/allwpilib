@@ -33,8 +33,8 @@ SwerveDriveKinematics<NumModules>::ToSwerveModuleStates(
   }
 
   Eigen::Vector3d chassisSpeedsVector;
-  chassisSpeedsVector << chassisSpeeds.dx, chassisSpeeds.dy,
-      chassisSpeeds.dtheta;
+  chassisSpeedsVector << chassisSpeeds.vx, chassisSpeeds.vy,
+      chassisSpeeds.omega;
 
   Eigen::Matrix<double, NumModules * 2, 1> moduleStatesMatrix =
       m_inverseKinematics * chassisSpeedsVector;
