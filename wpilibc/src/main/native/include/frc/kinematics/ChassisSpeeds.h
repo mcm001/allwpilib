@@ -10,7 +10,7 @@
 
 namespace frc {
 /**
- * Represents the speed of a robot chassis. Although this struct contains the
+ * Represents the speed of a robot chassis. Although this struct contains
  * similar members compared to a Twist2d, they do NOT represent the same thing.
  * Whereas a Twist2d represents a change in pose w.r.t to the robot frame of
  * reference, this ChassisSpeeds struct represents a velocity w.r.t to the robot
