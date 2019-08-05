@@ -8,6 +8,8 @@
 package edu.wpi.first.wpilibj.kinematics;
 
 
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+
 /**
  * Represents the speed of a robot chassis. Although this struct contains the
  * same members as a Twist2d, they do NOT represent the same thing. Whereas a
@@ -48,5 +50,28 @@ public class ChassisSpeeds {
     this.dx = dx;
     this.dy = dy;
     this.dtheta = dtheta;
+  }
+
+  /**
+   * Converts a user provided field-relative set of speeds into a robot-relative
+   * ChassisSpeeds object.
+   *
+   * @param vx         The component of speed in the x direction relative to the field.
+   *                   Positive x is away from your alliance wall.
+   * @param vy         The component of speed in the y direction relative to the field.
+   *                   Positive y is to your left when standing behind the alliance wall.
+   * @param vtheta     The angular rate of the robot.
+   * @param robotAngle The angle of the robot as measured by a gyroscope.
+   *                   Remember that this should be CCW positive.
+   *
+   * @return ChassisSpeeds object representing the speeds in the robot's frame of reference.
+   */
+  public static ChassisSpeeds fromFieldRelativeSpeeds(
+      double vx, double vy, double vtheta, Rotation2d robotAngle) {
+    return new ChassisSpeeds(
+        vx * robotAngle.getCos() + vy * robotAngle.getSin(),
+        -vx * robotAngle.getSin() + vy * robotAngle.getCos(),
+        vtheta
+    );
   }
 }
