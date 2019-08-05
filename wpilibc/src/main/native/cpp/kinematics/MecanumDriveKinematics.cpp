@@ -25,8 +25,8 @@ MecanumDriveWheelSpeeds MecanumDriveKinematics::ToWheelSpeeds(
   }
 
   Eigen::Vector3d chassisSpeedsVector;
-  chassisSpeedsVector << chassisSpeeds.dx, chassisSpeeds.dy,
-      chassisSpeeds.dtheta;
+  chassisSpeedsVector << chassisSpeeds.vx, chassisSpeeds.vy,
+      chassisSpeeds.omega;
 
   Eigen::Matrix<double, 4, 1> wheelsMatrix =
       m_inverseKinematics * chassisSpeedsVector;

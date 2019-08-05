@@ -85,11 +85,11 @@ public class DifferentialDriveOdometry {
     final var chassisState = m_kinematics.toChassisSpeeds(
         new DifferentialDriveWheelSpeeds(deltaLeft, deltaRight));
 
-    m_pose = m_pose.exp(new Twist2d(chassisState.dx, chassisState.dy, chassisState.dtheta));
+    m_pose = m_pose.exp(new Twist2d(chassisState.vx, chassisState.vy, chassisState.omega));
 
     m_prevLeftEncoder = leftEncoder;
     m_prevRightEncoder = rightEncoder;
-    m_prevAngle = m_prevAngle.plus(new Rotation2d(chassisState.dtheta));
+    m_prevAngle = m_prevAngle.plus(new Rotation2d(chassisState.omega));
 
     return m_pose;
   }

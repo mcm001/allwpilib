@@ -50,9 +50,9 @@ class SwerveDriveKinematicsTest {
     var chassisSpeeds = m_kinematics.toChassisSpeeds(state, state, state, state);
 
     assertAll(
-        () -> assertEquals(0.0, chassisSpeeds.dx, kEpsilon),
-        () -> assertEquals(5.0, chassisSpeeds.dy, kEpsilon),
-        () -> assertEquals(0.0, chassisSpeeds.dtheta, kEpsilon)
+        () -> assertEquals(0.0, chassisSpeeds.vx, kEpsilon),
+        () -> assertEquals(5.0, chassisSpeeds.vy, kEpsilon),
+        () -> assertEquals(0.0, chassisSpeeds.omega, kEpsilon)
     );
   }
 }

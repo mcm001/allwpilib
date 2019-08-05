@@ -24,9 +24,9 @@ class ChassisSpeedsTest {
     );
 
     assertAll(
-        () -> assertEquals(0.0, chassisSpeeds.dx, kEpsilon),
-        () -> assertEquals(1.0, chassisSpeeds.dy, kEpsilon),
-        () -> assertEquals(0.5, chassisSpeeds.dtheta, kEpsilon)
+        () -> assertEquals(0.0, chassisSpeeds.vx, kEpsilon),
+        () -> assertEquals(1.0, chassisSpeeds.vy, kEpsilon),
+        () -> assertEquals(0.5, chassisSpeeds.omega, kEpsilon)
     );
   }
 }

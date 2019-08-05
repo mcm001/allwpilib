@@ -20,6 +20,6 @@ ChassisSpeeds DifferentialDriveKinematics::ToChassisSpeeds(
 
 DifferentialDriveWheelSpeeds DifferentialDriveKinematics::ToWheelSpeeds(
     const ChassisSpeeds& chassisSpeeds) const {
-  return {chassisSpeeds.dx - m_driveRadius * chassisSpeeds.dtheta,
-          chassisSpeeds.dx + m_driveRadius * chassisSpeeds.dtheta};
+  return {chassisSpeeds.vx - m_driveRadius * chassisSpeeds.omega,
+          chassisSpeeds.vx + m_driveRadius * chassisSpeeds.omega};
 }
