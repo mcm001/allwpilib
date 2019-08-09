@@ -7,6 +7,8 @@
 
 package edu.wpi.first.wpilibj.examples.swervebot;
 
+import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
@@ -26,23 +28,33 @@ public class SwerveDrive {
   private final SwerveModule m_backLeft = new SwerveModule(5, 6);
   private final SwerveModule m_backRight = new SwerveModule(7, 8);
 
+  private final AnalogGyro m_gyro = new AnalogGyro(0);
+
   private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
       m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation
   );
 
   private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics);
 
+  public SwerveDrive() {
+    m_gyro.reset();
+  }
+
   /**
    * Method to drive the robot using joystick info.
    *
-   * @param xSpeed Speed of the robot in the x direction (forward).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot    Angular rate of the robot.
+   * @param xSpeed        Speed of the robot in the x direction (forward).
+   * @param ySpeed        Speed of the robot in the y direction (sideways).
+   * @param rot           Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
   @SuppressWarnings("ParameterName")
-  public void drive(double xSpeed, double ySpeed, double rot) {
+  public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     var swerveModuleStates = m_kinematics.toSwerveModuleStates(
-        new ChassisSpeeds(xSpeed, ySpeed, rot)
+        fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
+            // Negating the angle because WPILib gyros are CW positive.
+            xSpeed, ySpeed, rot, Rotation2d.fromDegrees(-m_gyro.getAngle()))
+            : new ChassisSpeeds(xSpeed, ySpeed, rot)
     );
     SwerveDriveKinematics.normalizeWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_frontLeft.setDesiredState(swerveModuleStates[0]);

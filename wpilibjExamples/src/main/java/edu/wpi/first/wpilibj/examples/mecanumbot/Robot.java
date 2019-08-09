@@ -5,23 +5,23 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package edu.wpi.first.wpilibj.examples.swervebot;
+package edu.wpi.first.wpilibj.examples.mecanumbot;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 
-import static edu.wpi.first.wpilibj.examples.swervebot.SwerveDrive.kMaxAngularSpeed;
-import static edu.wpi.first.wpilibj.examples.swervebot.SwerveDrive.kMaxSpeed;
+import static edu.wpi.first.wpilibj.examples.mecanumbot.MecanumDrive.kMaxAngularSpeed;
+import static edu.wpi.first.wpilibj.examples.mecanumbot.MecanumDrive.kMaxSpeed;
 
 public class Robot extends TimedRobot {
   private final XboxController m_controller = new XboxController(0);
-  private final SwerveDrive m_swerve = new SwerveDrive();
+  private final MecanumDrive m_mecanum = new MecanumDrive();
 
   @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
-    m_swerve.updateOdometry();
+    m_mecanum.updateOdometry();
   }
 
   @Override
@@ -45,6 +45,6 @@ public class Robot extends TimedRobot {
     // the right by default.
     final var rot = -m_controller.getX(GenericHID.Hand.kRight) * kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed, ySpeed, rot, fieldRelative);
+    m_mecanum.drive(xSpeed, ySpeed, rot, fieldRelative);
   }
 }
