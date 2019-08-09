@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <frc/AnalogGyro.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
@@ -15,7 +16,9 @@
 
 class SwerveDrive {
  public:
-  void Drive(double xSpeed, double ySpeed, double rot);
+  SwerveDrive() { m_gyro.Reset(); }
+
+  void Drive(double xSpeed, double ySpeed, double rot, bool fieldRelative);
   void UpdateOdometry();
 
   static constexpr double kMaxSpeed = 3.0;  // 3 meters per second
@@ -32,6 +35,8 @@ class SwerveDrive {
   SwerveModule m_frontRight{2, 3};
   SwerveModule m_backLeft{5, 6};
   SwerveModule m_backRight{7, 8};
+
+  frc::AnalogGyro m_gyro{0};
 
   frc::SwerveDriveKinematics<4> m_kinematics{
       m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation,
