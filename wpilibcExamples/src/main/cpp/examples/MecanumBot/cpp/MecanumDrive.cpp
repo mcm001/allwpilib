@@ -37,6 +37,8 @@ void MecanumDrive::Drive(double xSpeed, double ySpeed, double rot,
                 // Negating the angle because WPILib Gyros are CW positive.
                 frc::Rotation2d::FromDegrees(-m_gyro.GetAngle()))
           : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
+  wheelSpeeds.Normalize(kMaxSpeed);
+  SetSpeeds(wheelSpeeds);
 }
 
 void MecanumDrive::UpdateOdometry() { m_odometry.Update(GetCurrentState()); }
