@@ -7,8 +7,15 @@
 
 #include "SwerveDrive.h"
 
-void SwerveDrive::Drive(double xSpeed, double ySpeed, double rot) {
-  auto states = m_kinematics.ToSwerveModuleStates({xSpeed, ySpeed, rot});
+void SwerveDrive::Drive(double xSpeed, double ySpeed, double rot,
+                        bool fieldRelative) {
+  auto states = m_kinematics.ToSwerveModuleStates(
+      fieldRelative
+          ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+                xSpeed, ySpeed, rot,
+                // Negating the angle because WPILib Gyros are CW positive.
+                frc::Rotation2d::FromDegrees(-m_gyro.GetAngle()))
+          : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
 
   m_kinematics.NormalizeWheelSpeeds(&states, kMaxSpeed);
 

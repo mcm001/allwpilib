@@ -8,41 +8,41 @@
 #include <frc/TimedRobot.h>
 #include <frc/XboxController.h>
 
-#include "SwerveDrive.h"
+#include "MecanumDrive.h"
 
 class Robot : public frc::TimedRobot {
  public:
   void AutonomousPeriodic() override {
     DriveWithJoystick(false);
-    m_swerve.UpdateOdometry();
+    m_mecanum.UpdateOdometry();
   }
 
   void TeleopPeriodic() override { DriveWithJoystick(true); }
 
  private:
   frc::XboxController m_controller{0};
-  SwerveDrive m_swerve;
+  MecanumDrive m_mecanum;
 
   void DriveWithJoystick(bool fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
-    const auto xSpeed =
-        -m_controller.GetY(frc::GenericHID::kLeftHand) * SwerveDrive::kMaxSpeed;
+    const auto xSpeed = -m_controller.GetY(frc::GenericHID::kLeftHand) *
+                        MecanumDrive::kMaxSpeed;
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
-    const auto ySpeed =
-        -m_controller.GetX(frc::GenericHID::kLeftHand) * SwerveDrive::kMaxSpeed;
+    const auto ySpeed = -m_controller.GetX(frc::GenericHID::kLeftHand) *
+                        MecanumDrive::kMaxSpeed;
 
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
     const auto rot = -m_controller.GetX(frc::GenericHID::kRightHand) *
-                     SwerveDrive::kMaxAngularSpeed;
+                     MecanumDrive::kMaxAngularSpeed;
 
-    m_swerve.Drive(xSpeed, ySpeed, rot, fieldRelative);
+    m_mecanum.Drive(xSpeed, ySpeed, rot, fieldRelative);
   }
 };
 

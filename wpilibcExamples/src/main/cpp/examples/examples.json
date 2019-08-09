@@ -252,5 +252,14 @@
     ],
     "foldername": "SwerveBot",
     "gradlebase": "cpp"
+  },
+  {
+    "name": "MecanumBot",
+    "description": "An example program for a mecanum drive that uses mecanum drive kinematics and odometry.",
+    "tags": [
+      "MecanumBot"
+    ],
+    "foldername": "MecanumBot",
+    "gradlebase": "cpp"
   }
 ]
