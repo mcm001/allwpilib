@@ -60,10 +60,10 @@ void MecanumDriveKinematics::SetInverseKinematics(Translation2d fl,
                                                   Translation2d rl,
                                                   Translation2d rr) {
   // clang-format off
-  m_inverseKinematics << 1, -1, -(fl.X() + fl.Y()),
-                         1,  1, fr.X() - fr.Y(),
-                         1,  1, rl.X() - rl.Y(),
-                         1, -1, -(rr.X() + rr.Y());
+  m_inverseKinematics << 1, -1, (-(fl.X() + fl.Y())).to<double>(),
+                         1,  1, (fr.X() - fr.Y()).to<double>(),
+                         1,  1, (rl.X() - rl.Y()).to<double>(),
+                         1, -1, (-(rr.X() + rr.Y())).to<double>();
   // clang-format on
   m_inverseKinematics /= std::sqrt(2);
 }
