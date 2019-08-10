@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <units/units.h>
+
 #include "frc/geometry/Rotation2d.h"
 
 namespace frc {
@@ -17,7 +19,7 @@ struct SwerveModuleState {
   /**
    * Speed of the wheel of the module.
    */
-  double speed = 0;
+  units::meters_per_second_t speed = 0_mps;
 
   /**
    * Angle of the module.

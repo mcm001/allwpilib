@@ -5,6 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+#include <units/units.h>
 #include <wpi/math>
 
 #include "frc/kinematics/ChassisSpeeds.h"
@@ -16,59 +17,61 @@ using namespace frc;
 static constexpr double kEpsilon = 1E-9;
 
 TEST(DifferentialDriveKinematics, InverseKinematicsFromZero) {
-  const DifferentialDriveKinematics kinematics{0.381};
+  const DifferentialDriveKinematics kinematics{0.381_m};
   const ChassisSpeeds chassisSpeeds;
   const auto wheelSpeeds = kinematics.ToWheelSpeeds(chassisSpeeds);
 
-  EXPECT_NEAR(wheelSpeeds.left, 0, kEpsilon);
-  EXPECT_NEAR(wheelSpeeds.right, 0, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.left.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.right.to<double>(), 0, kEpsilon);
 }
 
 TEST(DifferentialDriveKinematics, ForwardKinematicsFromZero) {
-  const DifferentialDriveKinematics kinematics{0.381};
+  const DifferentialDriveKinematics kinematics{0.381_m};
   const DifferentialDriveWheelSpeeds wheelSpeeds;
   const auto chassisSpeeds = kinematics.ToChassisSpeeds(wheelSpeeds);
 
-  EXPECT_NEAR(chassisSpeeds.vx, 0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.vy, 0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.omega, 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vx.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vy.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.omega.to<double>(), 0, kEpsilon);
 }
 
 TEST(DifferentialDriveKinematics, InverseKinematicsForStraightLine) {
-  const DifferentialDriveKinematics kinematics{0.381};
-  const ChassisSpeeds chassisSpeeds{3.0, 0, 0};
+  const DifferentialDriveKinematics kinematics{0.381_m};
+  const ChassisSpeeds chassisSpeeds{3.0_mps, 0_mps, 0_rad_per_s};
   const auto wheelSpeeds = kinematics.ToWheelSpeeds(chassisSpeeds);
 
-  EXPECT_NEAR(wheelSpeeds.left, 3, kEpsilon);
-  EXPECT_NEAR(wheelSpeeds.right, 3, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.left.to<double>(), 3, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.right.to<double>(), 3, kEpsilon);
 }
 
 TEST(DifferentialDriveKinematics, ForwardKinematicsForStraightLine) {
-  const DifferentialDriveKinematics kinematics{0.381};
-  const DifferentialDriveWheelSpeeds wheelSpeeds{3.0, 3.0};
+  const DifferentialDriveKinematics kinematics{0.381_m};
+  const DifferentialDriveWheelSpeeds wheelSpeeds{3.0_mps, 3.0_mps};
   const auto chassisSpeeds = kinematics.ToChassisSpeeds(wheelSpeeds);
 
-  EXPECT_NEAR(chassisSpeeds.vx, 3, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.vy, 0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.omega, 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vx.to<double>(), 3, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vy.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.omega.to<double>(), 0, kEpsilon);
 }
 
 TEST(DifferentialDriveKinematics, InverseKinematicsForRotateInPlace) {
-  const DifferentialDriveKinematics kinematics{0.381};
-  const ChassisSpeeds chassisSpeeds{0.0, 0.0, wpi::math::pi};
+  const DifferentialDriveKinematics kinematics{0.381_m};
+  const ChassisSpeeds chassisSpeeds{0.0_mps, 0.0_mps,
+                                    units::radians_per_second_t{wpi::math::pi}};
   const auto wheelSpeeds = kinematics.ToWheelSpeeds(chassisSpeeds);
 
-  EXPECT_NEAR(wheelSpeeds.left, -0.381 * wpi::math::pi, kEpsilon);
-  EXPECT_NEAR(wheelSpeeds.right, +0.381 * wpi::math::pi, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.left.to<double>(), -0.381 * wpi::math::pi, kEpsilon);
+  EXPECT_NEAR(wheelSpeeds.right.to<double>(), +0.381 * wpi::math::pi, kEpsilon);
 }
 
 TEST(DifferentialDriveKinematics, ForwardKinematicsForRotateInPlace) {
-  const DifferentialDriveKinematics kinematics{0.381};
-  const DifferentialDriveWheelSpeeds wheelSpeeds{+0.381 * wpi::math::pi,
-                                                 -0.381 * wpi::math::pi};
+  const DifferentialDriveKinematics kinematics{0.381_m};
+  const DifferentialDriveWheelSpeeds wheelSpeeds{
+      units::meters_per_second_t(+0.381 * wpi::math::pi),
+      units::meters_per_second_t(-0.381 * wpi::math::pi)};
   const auto chassisSpeeds = kinematics.ToChassisSpeeds(wheelSpeeds);
 
-  EXPECT_NEAR(chassisSpeeds.vx, 0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.vy, 0, kEpsilon);
-  EXPECT_NEAR(chassisSpeeds.omega, -wpi::math::pi, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vx.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.vy.to<double>(), 0, kEpsilon);
+  EXPECT_NEAR(chassisSpeeds.omega.to<double>(), -wpi::math::pi, kEpsilon);
 }

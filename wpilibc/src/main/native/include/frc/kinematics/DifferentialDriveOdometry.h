@@ -9,6 +9,7 @@
 
 #include <mutex>
 
+#include <units/units.h>
 #include <wpi/mutex.h>
 
 #include "DifferentialDriveKinematics.h"
@@ -66,7 +67,7 @@ class DifferentialDriveOdometry {
    *
    * @return The new pose of the robot.
    */
-  const Pose2d& Update(double leftEncoder, double rightEncoder);
+  const Pose2d& Update(units::meter_t leftEncoder, units::meter_t rightEncoder);
 
   /**
    * Updates the robot's position on the field using forward kinematics and
@@ -87,7 +88,7 @@ class DifferentialDriveOdometry {
    *
    * @return The new pose of the robot.
    */
-  const Pose2d& Update(double leftEncoder, double rightEncoder,
+  const Pose2d& Update(units::meter_t leftEncoder, units::meter_t rightEncoder,
                        const Rotation2d& gyro);
 
  private:
@@ -95,8 +96,8 @@ class DifferentialDriveOdometry {
   Pose2d m_pose;
   wpi::mutex m_mutex;
 
-  double prevLeftEncoder = 0;
-  double prevRightEncoder = 0;
+  units::meter_t prevLeftEncoder = 0_m;
+  units::meter_t prevRightEncoder = 0_m;
   Rotation2d previousAngle;
 };
 }  // namespace frc

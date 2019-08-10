@@ -25,17 +25,17 @@ MecanumDriveWheelSpeeds MecanumDriveKinematics::ToWheelSpeeds(
   }
 
   Eigen::Vector3d chassisSpeedsVector;
-  chassisSpeedsVector << chassisSpeeds.vx, chassisSpeeds.vy,
-      chassisSpeeds.omega;
+  chassisSpeedsVector << chassisSpeeds.vx.to<double>(),
+      chassisSpeeds.vy.to<double>(), chassisSpeeds.omega.to<double>();
 
   Eigen::Matrix<double, 4, 1> wheelsMatrix =
       m_inverseKinematics * chassisSpeedsVector;
 
   MecanumDriveWheelSpeeds wheelSpeeds;
-  wheelSpeeds.frontLeft = wheelsMatrix(0, 0);
-  wheelSpeeds.frontRight = wheelsMatrix(1, 0);
-  wheelSpeeds.rearLeft = wheelsMatrix(2, 0);
-  wheelSpeeds.rearRight = wheelsMatrix(3, 0);
+  wheelSpeeds.frontLeft = units::meters_per_second_t{wheelsMatrix(0, 0)};
+  wheelSpeeds.frontRight = units::meters_per_second_t{wheelsMatrix(1, 0)};
+  wheelSpeeds.rearLeft = units::meters_per_second_t{wheelsMatrix(2, 0)};
+  wheelSpeeds.rearRight = units::meters_per_second_t{wheelsMatrix(3, 0)};
   return wheelSpeeds;
 }
 
@@ -43,15 +43,16 @@ ChassisSpeeds MecanumDriveKinematics::ToChassisSpeeds(
     const MecanumDriveWheelSpeeds& wheelSpeeds) {
   Eigen::Matrix<double, 4, 1> wheelSpeedsMatrix;
   // clang-format off
-  wheelSpeedsMatrix << wheelSpeeds.frontLeft, wheelSpeeds.frontRight,
-                       wheelSpeeds.rearLeft, wheelSpeeds.rearRight;
+  wheelSpeedsMatrix << wheelSpeeds.frontLeft.to<double>(), wheelSpeeds.frontRight.to<double>(),
+                       wheelSpeeds.rearLeft.to<double>(), wheelSpeeds.rearRight.to<double>();
   // clang-format on
 
   Eigen::Vector3d chassisSpeedsVector =
       m_forwardKinematics.solve(wheelSpeedsMatrix);
 
-  return {chassisSpeedsVector(0), chassisSpeedsVector(1),
-          chassisSpeedsVector(2)};
+  return {units::meters_per_second_t{chassisSpeedsVector(0)},
+          units::meters_per_second_t{chassisSpeedsVector(1)},
+          units::radians_per_second_t{chassisSpeedsVector(2)}};
 }
 
 void MecanumDriveKinematics::SetInverseKinematics(Translation2d fl,

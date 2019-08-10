@@ -9,17 +9,19 @@
 
 using namespace frc;
 
-DifferentialDriveKinematics::DifferentialDriveKinematics(double driveRadius)
+DifferentialDriveKinematics::DifferentialDriveKinematics(
+    units::meter_t driveRadius)
     : m_driveRadius(driveRadius) {}
 
 ChassisSpeeds DifferentialDriveKinematics::ToChassisSpeeds(
     const DifferentialDriveWheelSpeeds& wheelSpeeds) const {
-  return {(wheelSpeeds.left + wheelSpeeds.right) / 2, 0,
-          (wheelSpeeds.right - wheelSpeeds.left) / (m_driveRadius * 2)};
+  return {
+      (wheelSpeeds.left + wheelSpeeds.right) / 2.0, 0_mps,
+      (wheelSpeeds.right - wheelSpeeds.left) / (m_driveRadius * 2.0) * 1_rad};
 }
 
 DifferentialDriveWheelSpeeds DifferentialDriveKinematics::ToWheelSpeeds(
     const ChassisSpeeds& chassisSpeeds) const {
-  return {chassisSpeeds.vx - m_driveRadius * chassisSpeeds.omega,
-          chassisSpeeds.vx + m_driveRadius * chassisSpeeds.omega};
+  return {chassisSpeeds.vx - m_driveRadius * chassisSpeeds.omega / 1_rad,
+          chassisSpeeds.vx + m_driveRadius * chassisSpeeds.omega / 1_rad};
 }

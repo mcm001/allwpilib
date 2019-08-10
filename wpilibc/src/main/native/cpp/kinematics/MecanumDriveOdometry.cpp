@@ -20,10 +20,9 @@ const Pose2d& MecanumDriveOdometry::UpdateWithTime(
       (m_previousTime >= 0_s) ? currentTime - m_previousTime : 0_s;
   m_previousTime = currentTime;
 
-  double period = units::unit_cast<double>(deltaTime);
   auto [dx, dy, dtheta] = m_kinematics.ToChassisSpeeds(wheelSpeeds);
 
-  m_pose = m_pose.Exp({dx * period, dy * period, dtheta * period});
+  m_pose = m_pose.Exp({dx * deltaTime, dy * deltaTime, dtheta * deltaTime});
 
   return m_pose;
 }
@@ -36,12 +35,11 @@ const Pose2d& MecanumDriveOdometry::UpdateWithTime(
       (m_previousTime >= 0_s) ? currentTime - m_previousTime : 0_s;
   m_previousTime = currentTime;
 
-  double period = units::unit_cast<double>(deltaTime);
   auto [dx, dy, dtheta] = m_kinematics.ToChassisSpeeds(wheelSpeeds);
   static_cast<void>(dtheta);
 
-  m_pose = m_pose.Exp({dx * period, dy * period,
-                       units::unit_cast<double>(angularVelocity) * period});
+  m_pose =
+      m_pose.Exp({dx * deltaTime, dy * deltaTime, angularVelocity * deltaTime});
 
   return m_pose;
 }

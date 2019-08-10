@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <units/units.h>
+
 #include "frc/kinematics/ChassisSpeeds.h"
 #include "frc/kinematics/DifferentialDriveWheelSpeeds.h"
 
@@ -29,7 +31,7 @@ class DifferentialDriveKinematics {
    * empirical value may be larger than the physical measured value due to
    * scrubbing effects.
    */
-  explicit DifferentialDriveKinematics(double driveRadius);
+  explicit DifferentialDriveKinematics(units::meter_t driveRadius);
 
   /**
    * Returns a chassis speed from left and right component velocities using
@@ -53,6 +55,6 @@ class DifferentialDriveKinematics {
       const ChassisSpeeds& chassisSpeeds) const;
 
  private:
-  double m_driveRadius;
+  units::meter_t m_driveRadius;
 };
 }  // namespace frc

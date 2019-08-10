@@ -25,27 +25,29 @@ SwerveDriveKinematics<NumModules>::ToSwerveModuleStates(
     for (size_t i = 0; i < NumModules; i++) {
       // clang-format off
       m_inverseKinematics.template block<2, 3>(i * 2, 0) <<
-        1, 0, -m_modules[i].Y() + centerOfRotation.Y(),
-        0, 1, +m_modules[i].X() - centerOfRotation.X();
+        1, 0, (-m_modules[i].Y() + centerOfRotation.Y()).to<double>(),
+        0, 1, (+m_modules[i].X() - centerOfRotation.X()).to<double>();
       // clang-format on
     }
     m_previousCoR = centerOfRotation;
   }
 
   Eigen::Vector3d chassisSpeedsVector;
-  chassisSpeedsVector << chassisSpeeds.vx, chassisSpeeds.vy,
-      chassisSpeeds.omega;
+  chassisSpeedsVector << chassisSpeeds.vx.to<double>(),
+      chassisSpeeds.vy.to<double>(), chassisSpeeds.omega.to<double>();
 
   Eigen::Matrix<double, NumModules * 2, 1> moduleStatesMatrix =
       m_inverseKinematics * chassisSpeedsVector;
   std::array<SwerveModuleState, NumModules> moduleStates;
 
   for (size_t i = 0; i < NumModules; i++) {
-    double x = moduleStatesMatrix(i * 2, 0);
-    double y = moduleStatesMatrix(i * 2 + 1, 0);
+    units::meters_per_second_t x =
+        units::meters_per_second_t{moduleStatesMatrix(i * 2, 0)};
+    units::meters_per_second_t y =
+        units::meters_per_second_t{moduleStatesMatrix(i * 2 + 1, 0)};
 
-    double speed = std::hypot(x, y);
-    Rotation2d rotation{x, y};
+    auto speed = units::math::hypot(x, y);
+    Rotation2d rotation{x.to<double>(), y.to<double>()};
 
     moduleStates[i] = {speed, rotation};
   }
@@ -66,28 +68,31 @@ ChassisSpeeds SwerveDriveKinematics<NumModules>::ToChassisSpeeds(
 
   for (size_t i = 0; i < NumModules; i++) {
     SwerveModuleState module = moduleStates[i];
-    moduleStatesMatrix.row(i * 2) << module.speed * module.angle.Cos();
-    moduleStatesMatrix.row(i * 2 + 1) << module.speed * module.angle.Sin();
+    moduleStatesMatrix.row(i * 2)
+        << module.speed.to<double>() * module.angle.Cos();
+    moduleStatesMatrix.row(i * 2 + 1)
+        << module.speed.to<double>() * module.angle.Sin();
   }
 
   Eigen::Vector3d chassisSpeedsVector =
       m_forwardKinematics.solve(moduleStatesMatrix);
 
-  return {chassisSpeedsVector(0), chassisSpeedsVector(1),
-          chassisSpeedsVector(2)};
+  return {units::meters_per_second_t{chassisSpeedsVector(0)},
+          units::meters_per_second_t{chassisSpeedsVector(1)},
+          units::radians_per_second_t{chassisSpeedsVector(2)}};
 }
 
 template <size_t NumModules>
 void SwerveDriveKinematics<NumModules>::NormalizeWheelSpeeds(
     std::array<SwerveModuleState, NumModules>* moduleStates,
-    double attainableMaxSpeed) {
+    units::meters_per_second_t attainableMaxSpeed) {
   auto& states = *moduleStates;
-  double realMaxSpeed =
-      std::max_element(states.begin(), states.end(),
-                       [](const auto& a, const auto& b) {
-                         return std::abs(a.speed) < std::abs(b.speed);
-                       })
-          ->speed;
+  auto realMaxSpeed = std::max_element(states.begin(), states.end(),
+                                       [](const auto& a, const auto& b) {
+                                         return units::math::abs(a.speed) <
+                                                units::math::abs(b.speed);
+                                       })
+                          ->speed;
 
   if (realMaxSpeed > attainableMaxSpeed) {
     for (auto& module : states) {

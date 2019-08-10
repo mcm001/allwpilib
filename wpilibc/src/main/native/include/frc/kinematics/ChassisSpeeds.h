@@ -6,6 +6,9 @@
 /*----------------------------------------------------------------------------*/
 
 #pragma once
+
+#include <units/units.h>
+
 #include "frc/geometry/Rotation2d.h"
 
 namespace frc {
@@ -24,17 +27,17 @@ struct ChassisSpeeds {
   /**
    * Represents forward velocity w.r.t the robot frame of reference. (Fwd is +)
    */
-  double vx = 0;
+  units::meters_per_second_t vx = 0_mps;
 
   /**
    * Represents strafe velocity w.r.t the robot frame of reference. (Left is +)
    */
-  double vy = 0;
+  units::meters_per_second_t vy = 0_mps;
 
   /**
    * Represents the angular velocity of the robot frame. (CCW is +)
    */
-  double omega = 0;
+  units::radians_per_second_t omega = 0_rad_per_s;
 
   /**
    * Converts a user provided field-relative set of speeds into a robot-relative
@@ -51,9 +54,9 @@ struct ChassisSpeeds {
    * @return ChassisSpeeds object representing the speeds in the robot's frame
    * of reference.
    */
-  static ChassisSpeeds FromFieldRelativeSpeeds(double vx, double vy,
-                                               double omega,
-                                               const Rotation2d& robotAngle) {
+  static ChassisSpeeds FromFieldRelativeSpeeds(
+      units::meters_per_second_t vx, units::meters_per_second_t vy,
+      units::radians_per_second_t omega, const Rotation2d& robotAngle) {
     return {vx * robotAngle.Cos() + vy * robotAngle.Sin(),
             -vx * robotAngle.Sin() + vy * robotAngle.Cos(), omega};
   }

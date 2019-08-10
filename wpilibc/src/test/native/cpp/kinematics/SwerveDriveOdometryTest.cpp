@@ -13,11 +13,11 @@ using namespace frc;
 
 TEST(SwerveDriveOdometry, StraightLine) {
   SwerveDriveKinematics kinematics{
-      Translation2d{12, 12}, Translation2d{12, -12}, Translation2d{-12, 12},
-      Translation2d{-12, -12}};
+      Translation2d{12_m, 12_m}, Translation2d{12_m, -12_m},
+      Translation2d{-12_m, 12_m}, Translation2d{-12_m, -12_m}};
 
-  SwerveModuleState zero{0.0, Rotation2d()};
-  SwerveModuleState state{5.0, Rotation2d()};
+  SwerveModuleState zero{0.0_mps, Rotation2d()};
+  SwerveModuleState state{5.0_mps, Rotation2d()};
   SwerveDriveOdometry odometry{kinematics};
 
   Pose2d pose;
@@ -25,5 +25,5 @@ TEST(SwerveDriveOdometry, StraightLine) {
   pose = odometry.UpdateWithTime(0_s, zero, zero, zero, zero);
   pose = odometry.UpdateWithTime(0.02_s, state, state, state, state);
 
-  EXPECT_NEAR(pose.Translation().X(), 5 * 0.02, 1E-9);
+  EXPECT_NEAR(pose.Translation().X().to<double>(), 5 * 0.02, 1E-9);
 }

@@ -12,6 +12,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/QR>
+#include <units/units.h>
 
 #include "frc/geometry/Rotation2d.h"
 #include "frc/geometry/Translation2d.h"
@@ -64,8 +65,8 @@ class SwerveDriveKinematics {
     for (size_t i = 0; i < NumModules; i++) {
       // clang-format off
       m_inverseKinematics.template block<2, 3>(i * 2, 0) <<
-        1, 0, -m_modules[i].Y(),
-        0, 1, +m_modules[i].X();
+        1, 0, (-m_modules[i].Y()).to<double>(),
+        0, 1, (+m_modules[i].X()).to<double>();
       // clang-format on
     }
 
@@ -134,7 +135,7 @@ class SwerveDriveKinematics {
    */
   static void NormalizeWheelSpeeds(
       std::array<SwerveModuleState, NumModules>* moduleStates,
-      double attainableMaxSpeed);
+      units::meters_per_second_t attainableMaxSpeed);
 
  private:
   Eigen::Matrix<double, NumModules * 2, 3> m_inverseKinematics;
