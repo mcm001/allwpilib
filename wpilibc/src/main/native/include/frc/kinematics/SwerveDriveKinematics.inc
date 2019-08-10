@@ -25,8 +25,8 @@ SwerveDriveKinematics<NumModules>::ToSwerveModuleStates(
     for (size_t i = 0; i < NumModules; i++) {
       // clang-format off
       m_inverseKinematics.template block<2, 3>(i * 2, 0) <<
-        1, 0, (-m_modules[i].Y() + centerOfRotation.Y()).to<double>(),
-        0, 1, (+m_modules[i].X() - centerOfRotation.X()).to<double>();
+        1, 0, (-m_modules[i].Y() + centerOfRotation.Y()).template to<double>(),
+        0, 1, (+m_modules[i].X() - centerOfRotation.X()).template to<double>();
       // clang-format on
     }
     m_previousCoR = centerOfRotation;
