@@ -8,19 +8,21 @@
 #include "MecanumDrive.h"
 
 frc::MecanumDriveWheelSpeeds MecanumDrive::GetCurrentState() const {
-  return {m_frontLeftEncoder.GetRate(), m_frontRightEncoder.GetRate(),
-          m_backLeftEncoder.GetRate(), m_backRightEncoder.GetRate()};
+  return {units::meters_per_second_t(m_frontLeftEncoder.GetRate()),
+          units::meters_per_second_t(m_frontRightEncoder.GetRate()),
+          units::meters_per_second_t(m_backLeftEncoder.GetRate()),
+          units::meters_per_second_t(m_backRightEncoder.GetRate())};
 }
 
 void MecanumDrive::SetSpeeds(const frc::MecanumDriveWheelSpeeds& wheelSpeeds) {
   const auto frontLeftOutput = m_frontLeftPIDController.Calculate(
-      m_frontLeftEncoder.GetRate(), wheelSpeeds.frontLeft);
+      m_frontLeftEncoder.GetRate(), wheelSpeeds.frontLeft.to<double>());
   const auto frontRightOutput = m_frontRightPIDController.Calculate(
-      m_frontRightEncoder.GetRate(), wheelSpeeds.frontRight);
+      m_frontRightEncoder.GetRate(), wheelSpeeds.frontRight.to<double>());
   const auto backLeftOutput = m_backLeftPIDController.Calculate(
-      m_backLeftEncoder.GetRate(), wheelSpeeds.rearLeft);
+      m_backLeftEncoder.GetRate(), wheelSpeeds.rearLeft.to<double>());
   const auto backRightOutput = m_backRightPIDController.Calculate(
-      m_backRightEncoder.GetRate(), wheelSpeeds.rearRight);
+      m_backRightEncoder.GetRate(), wheelSpeeds.rearRight.to<double>());
 
   m_frontLeftMotor.Set(frontLeftOutput);
   m_frontRightMotor.Set(frontRightOutput);
@@ -28,14 +30,15 @@ void MecanumDrive::SetSpeeds(const frc::MecanumDriveWheelSpeeds& wheelSpeeds) {
   m_backRightMotor.Set(backRightOutput);
 }
 
-void MecanumDrive::Drive(double xSpeed, double ySpeed, double rot,
-                         bool fieldRelative) {
+void MecanumDrive::Drive(units::meters_per_second_t xSpeed,
+                         units::meters_per_second_t ySpeed,
+                         units::radians_per_second_t rot, bool fieldRelative) {
   auto wheelSpeeds = m_kinematics.ToWheelSpeeds(
       fieldRelative
           ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
                 xSpeed, ySpeed, rot,
                 // Negating the angle because WPILib Gyros are CW positive.
-                frc::Rotation2d::FromDegrees(-m_gyro.GetAngle()))
+                frc::Rotation2d(units::degree_t(-m_gyro.GetAngle())))
           : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
   wheelSpeeds.Normalize(kMaxSpeed);
   SetSpeeds(wheelSpeeds);

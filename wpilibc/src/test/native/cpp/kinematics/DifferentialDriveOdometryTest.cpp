@@ -16,26 +16,26 @@ static constexpr double kEpsilon = 1E-9;
 using namespace frc;
 
 TEST(DifferentialDriveOdometry, OneIteration) {
-  DifferentialDriveKinematics kinematics{0.381};
+  DifferentialDriveKinematics kinematics{0.381_m};
   DifferentialDriveOdometry odometry{kinematics};
 
   odometry.ResetPosition(Pose2d());
-  const auto& pose = odometry.Update(0.02, 0.02, Rotation2d());
+  const auto& pose = odometry.Update(0.02_m, 0.02_m, Rotation2d());
 
-  EXPECT_NEAR(pose.Translation().X(), 0.02, kEpsilon);
-  EXPECT_NEAR(pose.Translation().Y(), 0.0, kEpsilon);
-  EXPECT_NEAR(pose.Rotation().Radians(), 0.0, kEpsilon);
+  EXPECT_NEAR(pose.Translation().X().to<double>(), 0.02, kEpsilon);
+  EXPECT_NEAR(pose.Translation().Y().to<double>(), 0.0, kEpsilon);
+  EXPECT_NEAR(pose.Rotation().Radians().to<double>(), 0.0, kEpsilon);
 }
 
 TEST(DifferentialDriveOdometry, QuarterCircle) {
-  DifferentialDriveKinematics kinematics{0.381};
+  DifferentialDriveKinematics kinematics{0.381_m};
   DifferentialDriveOdometry odometry{kinematics};
 
   odometry.ResetPosition(Pose2d());
-  const auto& pose =
-      odometry.Update(0.0, 5 * wpi::math::pi, Rotation2d::FromDegrees(90.0));
+  const auto& pose = odometry.Update(0.0_m, units::meter_t(5 * wpi::math::pi),
+                                     Rotation2d(90.0_deg));
 
-  EXPECT_NEAR(pose.Translation().X(), 5.0, kEpsilon);
-  EXPECT_NEAR(pose.Translation().Y(), 5.0, kEpsilon);
-  EXPECT_NEAR(pose.Rotation().Degrees(), 90.0, kEpsilon);
+  EXPECT_NEAR(pose.Translation().X().to<double>(), 5.0, kEpsilon);
+  EXPECT_NEAR(pose.Translation().Y().to<double>(), 5.0, kEpsilon);
+  EXPECT_NEAR(pose.Rotation().Degrees().to<double>(), 90.0, kEpsilon);
 }

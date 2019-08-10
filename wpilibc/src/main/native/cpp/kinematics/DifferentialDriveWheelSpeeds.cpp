@@ -7,13 +7,12 @@
 
 #include "frc/kinematics/DifferentialDriveWheelSpeeds.h"
 
-#include <algorithm>
-#include <cmath>
-
 using namespace frc;
 
-void DifferentialDriveWheelSpeeds::Normalize(double attainableMaxSpeed) {
-  double realMaxSpeed = std::max(std::abs(left), std::abs(right));
+void DifferentialDriveWheelSpeeds::Normalize(
+    units::meters_per_second_t attainableMaxSpeed) {
+  auto realMaxSpeed =
+      units::math::max(units::math::abs(left), units::math::abs(right));
 
   if (realMaxSpeed > attainableMaxSpeed) {
     left = left / realMaxSpeed * attainableMaxSpeed;

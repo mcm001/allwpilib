@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <units/units.h>
+
 namespace frc {
 /**
  * Represents the wheel speeds for a mecanum drive drivetrain.
@@ -15,22 +17,22 @@ struct MecanumDriveWheelSpeeds {
   /**
    * Speed of the front-left wheel.
    */
-  double frontLeft = 0;
+  units::meters_per_second_t frontLeft = 0_mps;
 
   /**
    * Speed of the front-right wheel.
    */
-  double frontRight = 0;
+  units::meters_per_second_t frontRight = 0_mps;
 
   /**
    * Speed of the rear-left wheel.
    */
-  double rearLeft = 0;
+  units::meters_per_second_t rearLeft = 0_mps;
 
   /**
    * Speed of the rear-right wheel.
    */
-  double rearRight = 0;
+  units::meters_per_second_t rearRight = 0_mps;
 
   /**
    * Normalizes the wheel speeds using some max attainable speed. Sometimes,
@@ -42,6 +44,6 @@ struct MecanumDriveWheelSpeeds {
    *
    * @param attainableMaxSpeed The absolute max speed that a wheel can reach.
    */
-  void Normalize(double attainableMaxSpeed);
+  void Normalize(units::meters_per_second_t attainableMaxSpeed);
 };
 }  // namespace frc

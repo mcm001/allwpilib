@@ -31,17 +31,18 @@ SwerveModule::SwerveModule(const int driveMotorChannel,
 }
 
 frc::SwerveModuleState SwerveModule::GetState() const {
-  return {m_driveEncoder.GetRate(), frc::Rotation2d(m_turningEncoder.Get())};
+  return {units::meters_per_second_t{m_driveEncoder.GetRate()},
+          frc::Rotation2d(units::radian_t(m_turningEncoder.Get()))};
 }
 
 void SwerveModule::SetDesiredState(const frc::SwerveModuleState& state) {
   // Calculate the drive output from the drive PID controller.
-  const auto driveOutput =
-      m_drivePIDController.Calculate(m_driveEncoder.GetRate(), state.speed);
+  const auto driveOutput = m_drivePIDController.Calculate(
+      m_driveEncoder.GetRate(), state.speed.to<double>());
 
   // Calculate the turning motor output from the turning PID controller.
   const auto turnOutput = m_turningPIDController.Calculate(
-      m_turningEncoder.Get(), state.angle.Radians());
+      m_turningEncoder.Get(), state.angle.Radians().to<double>());
 
   // Set the motor outputs.
   m_driveMotor.Set(driveOutput);

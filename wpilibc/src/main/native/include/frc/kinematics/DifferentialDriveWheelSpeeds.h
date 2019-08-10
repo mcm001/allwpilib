@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <units/units.h>
+
 namespace frc {
 /**
  * Represents the wheel speeds for a differential drive drivetrain.
@@ -15,12 +17,12 @@ struct DifferentialDriveWheelSpeeds {
   /**
    * Speed of the left side of the robot.
    */
-  double left = 0;
+  units::meters_per_second_t left = 0_mps;
 
   /**
    * Speed of the right side of the robot.
    */
-  double right = 0;
+  units::meters_per_second_t right = 0_mps;
 
   /**
    * Normalizes the wheel speeds using some max attainable speed. Sometimes,
@@ -32,6 +34,6 @@ struct DifferentialDriveWheelSpeeds {
    *
    * @param attainableMaxSpeed The absolute max speed that a wheel can reach.
    */
-  void Normalize(double attainableMaxSpeed);
+  void Normalize(units::meters_per_second_t attainableMaxSpeed);
 };
 }  // namespace frc
