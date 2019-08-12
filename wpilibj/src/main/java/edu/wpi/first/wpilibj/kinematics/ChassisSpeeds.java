@@ -66,8 +66,9 @@ public class ChassisSpeeds {
    * @param vy         The component of speed in the y direction relative to the field.
    *                   Positive y is to your left when standing behind the alliance wall.
    * @param omega      The angular rate of the robot.
-   * @param robotAngle The angle of the robot as measured by a gyroscope.
-   *                   Remember that this should be CCW positive.
+   * @param robotAngle The angle of the robot as measured by a gyroscope. The robot's angle
+   *                   is considered to be zero when it is facing directly away from your
+   *                   alliance station wall. Remember that this should be CCW positive.
    * @return ChassisSpeeds object representing the speeds in the robot's frame of reference.
    */
   public static ChassisSpeeds fromFieldRelativeSpeeds(
