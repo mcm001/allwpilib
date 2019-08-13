@@ -33,8 +33,6 @@ public class SwerveDriveOdometryTest {
                 new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState());
         var pose = m_odometry.updateWithTime(0.10, wheelSpeeds);
 
-        System.out.println("pose " + pose.getTranslation().getX());
-
         assertAll(
                 () -> assertEquals(5.0 / 10.0, pose.getTranslation().getX(), 0.01),
                 () -> assertEquals(0, pose.getTranslation().getY(), 0.01),
