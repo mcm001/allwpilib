@@ -27,7 +27,7 @@ class SwerveDriveKinematicsTest {
       new SwerveDriveKinematics(m_fl, m_fr, m_bl, m_br);
 
   @Test
-  void testStraightLineInverseKinematics() {
+  void testStraightLineInverseKinematics() { // test inverse kinematics going in a straight line
 
     ChassisSpeeds speeds = new ChassisSpeeds(5, 0, 0);
     var moduleStates = m_kinematics.toSwerveModuleStates(speeds);
@@ -45,7 +45,7 @@ class SwerveDriveKinematicsTest {
   }
 
   @Test
-  void testStraightLineForwardKinematics() {
+  void testStraightLineForwardKinematics() { // test forward kinematics going in a straight line
     SwerveModuleState state = new SwerveModuleState(5.0, Rotation2d.fromDegrees(90.0));
     var chassisSpeeds = m_kinematics.toChassisSpeeds(state, state, state, state);
 
@@ -128,7 +128,7 @@ class SwerveDriveKinematicsTest {
     }
 
     @Test
-    void testOffCenterCORInverseKinematics() {
+    void testOffCenterCORRotationInverseKinematics() {
 
         ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 2*Math.PI);
         var moduleStates = m_kinematics.toSwerveModuleStates(speeds, m_fl);
@@ -155,7 +155,7 @@ class SwerveDriveKinematicsTest {
     }
 
     @Test
-    void testOffCenterCORForwardKinematics() {
+    void testOffCenterCORRotationForwardKinematics() {
         SwerveModuleState fl_state = new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0));
         SwerveModuleState fr_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(0.0));
         SwerveModuleState bl_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(-90));
@@ -176,6 +176,61 @@ class SwerveDriveKinematicsTest {
                 () -> assertEquals(75.398, chassisSpeeds.vx, 0.1),
                 () -> assertEquals(-75.398, chassisSpeeds.vy, 0.1),
                 () -> assertEquals(2 * Math.PI, chassisSpeeds.omega, 0.1)
+        );
+    }
+
+    private void assertModuleState(SwerveModuleState expected, SwerveModuleState actual, SwerveModuleState tolerance) {
+      assertAll(
+              () -> assertEquals(expected.speed, actual.speed, tolerance.speed),
+              () -> assertEquals(expected.angle.getDegrees(), actual.angle.getDegrees(), tolerance.angle.getDegrees())
+        );
+    }
+
+    /**
+     * Test the rotation of the robot about a non-central point with both linear and angular velocities
+     */
+    @Test
+    void testOffCenterCORRotationAndTranslationInverseKinematics() {
+
+        ChassisSpeeds speeds = new ChassisSpeeds(0.0, 3.0, 1.5);
+        var moduleStates = m_kinematics.toSwerveModuleStates(speeds, new Translation2d(24, 0));
+
+        // By equation (13.14) from state-space guide, our wheels/angles will be as follows (+-1 degree or speed)
+        SwerveModuleState[] expectedStates = new SwerveModuleState[]{
+                new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19)),
+                new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81)),
+                new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44)),
+                new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56))
+        };
+        var kTolerance = new SwerveModuleState(0.1, Rotation2d.fromDegrees(0.1));
+
+        for(int i=0; i<expectedStates.length; i++) {
+            assertModuleState(expectedStates[i], moduleStates[i], kTolerance);
+        }
+    }
+
+    @Test
+    void testOffCenterCORRotationAndTranslationForwardKinematics() {
+        SwerveModuleState fl_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19));
+        SwerveModuleState fr_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81));
+        SwerveModuleState bl_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44));
+        SwerveModuleState br_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56));
+
+        var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
+
+        /*
+        From equation (13.17), we know that chassis motion is th dot product of the
+        pseudoinverse of the inverseKinematics matrix (with the center of rotation at
+        (0,0) -- we don't want the motion of the center of rotation, we want it of
+        the center of the robot). These above SwerveModuleStates are known to be from
+        a velocity of [[0][3][1.5]] about (0, 24), and the expected numbers have been
+        calculated using Numpy's linalg.pinv function.
+        */
+
+        assertAll(
+                () -> assertEquals(0.0, chassisSpeeds.vx, 0.1),
+                () -> assertEquals(-33.0, chassisSpeeds.vy, 0.1),
+                () -> assertEquals(1.5, chassisSpeeds.omega, 0.1)
         );
     }
 
