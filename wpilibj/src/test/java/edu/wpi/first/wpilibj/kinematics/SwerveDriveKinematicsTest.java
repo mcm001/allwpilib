@@ -7,13 +7,13 @@
 
 package edu.wpi.first.wpilibj.kinematics;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
-
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SwerveDriveKinematicsTest {
   private static final double kEpsilon = 1E-9;
@@ -63,175 +63,175 @@ class SwerveDriveKinematicsTest {
     var moduleStates = m_kinematics.toSwerveModuleStates(speeds);
 
     assertAll(
-            () -> assertEquals(5.0, moduleStates[0].speed, kEpsilon),
-            () -> assertEquals(5.0, moduleStates[1].speed, kEpsilon),
-            () -> assertEquals(5.0, moduleStates[2].speed, kEpsilon),
-            () -> assertEquals(5.0, moduleStates[3].speed, kEpsilon),
-            () -> assertEquals(90.0, moduleStates[0].angle.getDegrees(), kEpsilon),
-            () -> assertEquals(90.0, moduleStates[1].angle.getDegrees(), kEpsilon),
-            () -> assertEquals(90.0, moduleStates[2].angle.getDegrees(), kEpsilon),
-            () -> assertEquals(90.0, moduleStates[3].angle.getDegrees(), kEpsilon)
+        () -> assertEquals(5.0, moduleStates[0].speed, kEpsilon),
+        () -> assertEquals(5.0, moduleStates[1].speed, kEpsilon),
+        () -> assertEquals(5.0, moduleStates[2].speed, kEpsilon),
+        () -> assertEquals(5.0, moduleStates[3].speed, kEpsilon),
+        () -> assertEquals(90.0, moduleStates[0].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(90.0, moduleStates[1].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(90.0, moduleStates[2].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(90.0, moduleStates[3].angle.getDegrees(), kEpsilon)
     );
   }
 
-    @Test
-    void testStraightStrafeForwardKinematics() {
-        SwerveModuleState state = new SwerveModuleState(5.0, Rotation2d.fromDegrees(0.0));
-        var chassisSpeeds = m_kinematics.toChassisSpeeds(state, state, state, state);
+  @Test
+  void testStraightStrafeForwardKinematics() {
+    SwerveModuleState state = new SwerveModuleState(5.0, Rotation2d.fromDegrees(0.0));
+    var chassisSpeeds = m_kinematics.toChassisSpeeds(state, state, state, state);
 
-        assertAll(
-                () -> assertEquals(5.0, chassisSpeeds.vx, kEpsilon),
-                () -> assertEquals(0.0, chassisSpeeds.vy, kEpsilon),
-                () -> assertEquals(0.0, chassisSpeeds.omega, kEpsilon)
-        );
+    assertAll(
+        () -> assertEquals(5.0, chassisSpeeds.vx, kEpsilon),
+        () -> assertEquals(0.0, chassisSpeeds.vy, kEpsilon),
+        () -> assertEquals(0.0, chassisSpeeds.omega, kEpsilon)
+    );
+  }
+
+  @Test
+  void testTurnInPlaceInverseKinematics() {
+
+    ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 2*Math.PI);
+    var moduleStates = m_kinematics.toSwerveModuleStates(speeds);
+
+    /*
+    The circumference of the wheels about the COR is pi * diameter, or 2 * pi * radius
+    the radius is the sqrt(12^2in + 12^2in), or 16.9706in, so the circumference the wheels
+    trace out is 106.629190516in. since we want our robot to rotate at 1 rotation per second,
+    our wheels must trace out 1 rotation (or 106.63 inches) per second.
+      */
+
+    assertAll(
+        () -> assertEquals(106.63, moduleStates[0].speed, 0.1),
+        () -> assertEquals(106.63, moduleStates[1].speed, 0.1),
+        () -> assertEquals(106.63, moduleStates[2].speed, 0.1),
+        () -> assertEquals(106.63, moduleStates[3].speed, 0.1),
+        () -> assertEquals(135.0, moduleStates[0].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(45.0, moduleStates[1].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(-135.0, moduleStates[2].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(-45.0, moduleStates[3].angle.getDegrees(), kEpsilon)
+    );
+  }
+
+  @Test
+  void testTurnInPlaceForwardKinematics() {
+    SwerveModuleState fl_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(135));
+    SwerveModuleState fr_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(45));
+    SwerveModuleState bl_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(-135));
+    SwerveModuleState br_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(-45));
+
+    var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
+
+    assertAll(
+        () -> assertEquals(0.0, chassisSpeeds.vx, kEpsilon),
+        () -> assertEquals(0.0, chassisSpeeds.vy, kEpsilon),
+        () -> assertEquals(2 * Math.PI, chassisSpeeds.omega, 0.1)
+    );
+  }
+
+  @Test
+  void testOffCenterCORRotationInverseKinematics() {
+
+    ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 2*Math.PI);
+    var moduleStates = m_kinematics.toSwerveModuleStates(speeds, m_fl);
+
+    /*
+    This one is a bit trickier. Because we are rotating about the front-left wheel,
+    it should be parked at 0 degrees and 0 speed. The front-right and back-left wheels both travel an
+    arc with radius 24 (and circumference 150.796), and the back-right wheel travels an arc with
+    radius sqrt(24^2 + 24^2) and circumference 213.2584. As for angles, the front-right wheel should be
+    pointing straight forward, the back-left wheel should be pointing straight right, and the back-right
+    wheel should be at a -45 degree angle
+    */
+
+    assertAll(
+        () -> assertEquals(0.0, moduleStates[0].speed, 0.1),
+        () -> assertEquals(150.796, moduleStates[1].speed, 0.1),
+        () -> assertEquals(150.796, moduleStates[2].speed, 0.1),
+        () -> assertEquals(213.258, moduleStates[3].speed, 0.1),
+        () -> assertEquals(0.0, moduleStates[0].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(0.0, moduleStates[1].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(-90.0, moduleStates[2].angle.getDegrees(), kEpsilon),
+        () -> assertEquals(-45.0, moduleStates[3].angle.getDegrees(), kEpsilon)
+    );
+  }
+
+  @Test
+  void testOffCenterCORRotationForwardKinematics() {
+    SwerveModuleState fl_state = new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0));
+    SwerveModuleState fr_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(0.0));
+    SwerveModuleState bl_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(-90));
+    SwerveModuleState br_state = new SwerveModuleState(213.258, Rotation2d.fromDegrees(-45));
+
+    var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
+
+    /*
+    We already know that our omega should be 2pi from the previous test. Next, we need to determine
+    the vx and vy of our chassis center. Because our COR is at a 45 degree angle from the center,
+    we know that vx and vy must be the same. Furthermore, we know that the center of mass makes
+    a full revolution about the center of revolution once every second. Therefore, the center of
+    mass must be moving at 106.629in/sec. Recalling that the ratios of a 45/45/90 triagle are
+    1:sqrt(2)/2:sqrt(2)/2, we find that the COM vx is -75.398, and vy is 75.398.
+    */
+
+    assertAll(
+        () -> assertEquals(75.398, chassisSpeeds.vx, 0.1),
+        () -> assertEquals(-75.398, chassisSpeeds.vy, 0.1),
+        () -> assertEquals(2 * Math.PI, chassisSpeeds.omega, 0.1)
+    );
+  }
+
+  private void assertModuleState(SwerveModuleState expected, SwerveModuleState actual, SwerveModuleState tolerance) {
+    assertAll(
+        () -> assertEquals(expected.speed, actual.speed, tolerance.speed),
+        () -> assertEquals(expected.angle.getDegrees(), actual.angle.getDegrees(), tolerance.angle.getDegrees())
+    );
+  }
+
+  /**
+   * Test the rotation of the robot about a non-central point with both linear and angular velocities
+   */
+  @Test
+  void testOffCenterCORRotationAndTranslationInverseKinematics() {
+
+    ChassisSpeeds speeds = new ChassisSpeeds(0.0, 3.0, 1.5);
+    var moduleStates = m_kinematics.toSwerveModuleStates(speeds, new Translation2d(24, 0));
+
+    // By equation (13.14) from state-space guide, our wheels/angles will be as follows (+-1 degree or speed)
+    SwerveModuleState[] expectedStates = new SwerveModuleState[]{
+      new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19)),
+      new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81)),
+      new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44)),
+      new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56))
+    };
+    var kTolerance = new SwerveModuleState(0.1, Rotation2d.fromDegrees(0.1));
+
+    for(int i=0; i<expectedStates.length; i++) {
+      assertModuleState(expectedStates[i], moduleStates[i], kTolerance);
     }
+  }
 
-    @Test
-    void testTurnInPlaceInverseKinematics() {
+  @Test
+  void testOffCenterCORRotationAndTranslationForwardKinematics() {
+    SwerveModuleState fl_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19));
+    SwerveModuleState fr_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81));
+    SwerveModuleState bl_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44));
+    SwerveModuleState br_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56));
 
-        ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 2*Math.PI);
-        var moduleStates = m_kinematics.toSwerveModuleStates(speeds);
+    var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
 
-        /*
-        The circumference of the wheels about the COR is pi * diameter, or 2 * pi * radius
-        the radius is the sqrt(12^2in + 12^2in), or 16.9706in, so the circumference the wheels
-        trace out is 106.629190516in. since we want our robot to rotate at 1 rotation per second,
-        our wheels must trace out 1 rotation (or 106.63 inches) per second.
-         */
+    /*
+    From equation (13.17), we know that chassis motion is th dot product of the
+    pseudoinverse of the inverseKinematics matrix (with the center of rotation at
+    (0,0) -- we don't want the motion of the center of rotation, we want it of
+    the center of the robot). These above SwerveModuleStates are known to be from
+    a velocity of [[0][3][1.5]] about (0, 24), and the expected numbers have been
+    calculated using Numpy's linalg.pinv function.
+    */
 
-        assertAll(
-                () -> assertEquals(106.63, moduleStates[0].speed, 0.1),
-                () -> assertEquals(106.63, moduleStates[1].speed, 0.1),
-                () -> assertEquals(106.63, moduleStates[2].speed, 0.1),
-                () -> assertEquals(106.63, moduleStates[3].speed, 0.1),
-                () -> assertEquals(135.0, moduleStates[0].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(45.0, moduleStates[1].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(-135.0, moduleStates[2].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(-45.0, moduleStates[3].angle.getDegrees(), kEpsilon)
-        );
-    }
-
-    @Test
-    void testTurnInPlaceForwardKinematics() {
-        SwerveModuleState fl_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(135));
-        SwerveModuleState fr_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(45));
-        SwerveModuleState bl_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(-135));
-        SwerveModuleState br_state = new SwerveModuleState(106.629, Rotation2d.fromDegrees(-45));
-
-        var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
-
-        assertAll(
-                () -> assertEquals(0.0, chassisSpeeds.vx, kEpsilon),
-                () -> assertEquals(0.0, chassisSpeeds.vy, kEpsilon),
-                () -> assertEquals(2 * Math.PI, chassisSpeeds.omega, 0.1)
-        );
-    }
-
-    @Test
-    void testOffCenterCORRotationInverseKinematics() {
-
-        ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 2*Math.PI);
-        var moduleStates = m_kinematics.toSwerveModuleStates(speeds, m_fl);
-
-        /*
-        This one is a bit trickier. Because we are rotating about the front-left wheel,
-        it should be parked at 0 degrees and 0 speed. The front-right and back-left wheels both travel an
-        arc with radius 24 (and circumference 150.796), and the back-right wheel travels an arc with
-        radius sqrt(24^2 + 24^2) and circumference 213.2584. As for angles, the front-right wheel should be
-        pointing straight forward, the back-left wheel should be pointing straight right, and the back-right
-        wheel should be at a -45 degree angle
-         */
-
-        assertAll(
-                () -> assertEquals(0.0, moduleStates[0].speed, 0.1),
-                () -> assertEquals(150.796, moduleStates[1].speed, 0.1),
-                () -> assertEquals(150.796, moduleStates[2].speed, 0.1),
-                () -> assertEquals(213.258, moduleStates[3].speed, 0.1),
-                () -> assertEquals(0.0, moduleStates[0].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(0.0, moduleStates[1].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(-90.0, moduleStates[2].angle.getDegrees(), kEpsilon),
-                () -> assertEquals(-45.0, moduleStates[3].angle.getDegrees(), kEpsilon)
-        );
-    }
-
-    @Test
-    void testOffCenterCORRotationForwardKinematics() {
-        SwerveModuleState fl_state = new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0));
-        SwerveModuleState fr_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(0.0));
-        SwerveModuleState bl_state = new SwerveModuleState(150.796, Rotation2d.fromDegrees(-90));
-        SwerveModuleState br_state = new SwerveModuleState(213.258, Rotation2d.fromDegrees(-45));
-
-        var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
-
-        /*
-        We already know that our omega should be 2pi from the previous test. Next, we need to determine
-        the vx and vy of our chassis center. Because our COR is at a 45 degree angle from the center,
-        we know that vx and vy must be the same. Furthermore, we know that the center of mass makes
-        a full revolution about the center of revolution once every second. Therefore, the center of
-        mass must be moving at 106.629in/sec. Recalling that the ratios of a 45/45/90 triagle are
-        1:sqrt(2)/2:sqrt(2)/2, we find that the COM vx is -75.398, and vy is 75.398.
-        */
-
-        assertAll(
-                () -> assertEquals(75.398, chassisSpeeds.vx, 0.1),
-                () -> assertEquals(-75.398, chassisSpeeds.vy, 0.1),
-                () -> assertEquals(2 * Math.PI, chassisSpeeds.omega, 0.1)
-        );
-    }
-
-    private void assertModuleState(SwerveModuleState expected, SwerveModuleState actual, SwerveModuleState tolerance) {
-      assertAll(
-              () -> assertEquals(expected.speed, actual.speed, tolerance.speed),
-              () -> assertEquals(expected.angle.getDegrees(), actual.angle.getDegrees(), tolerance.angle.getDegrees())
-        );
-    }
-
-    /**
-     * Test the rotation of the robot about a non-central point with both linear and angular velocities
-     */
-    @Test
-    void testOffCenterCORRotationAndTranslationInverseKinematics() {
-
-        ChassisSpeeds speeds = new ChassisSpeeds(0.0, 3.0, 1.5);
-        var moduleStates = m_kinematics.toSwerveModuleStates(speeds, new Translation2d(24, 0));
-
-        // By equation (13.14) from state-space guide, our wheels/angles will be as follows (+-1 degree or speed)
-        SwerveModuleState[] expectedStates = new SwerveModuleState[]{
-                new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19)),
-                new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81)),
-                new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44)),
-                new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56))
-        };
-        var kTolerance = new SwerveModuleState(0.1, Rotation2d.fromDegrees(0.1));
-
-        for(int i=0; i<expectedStates.length; i++) {
-            assertModuleState(expectedStates[i], moduleStates[i], kTolerance);
-        }
-    }
-
-    @Test
-    void testOffCenterCORRotationAndTranslationForwardKinematics() {
-        SwerveModuleState fl_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-140.19));
-        SwerveModuleState fr_state = new SwerveModuleState(23.43, Rotation2d.fromDegrees(-39.81));
-        SwerveModuleState bl_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-109.44));
-        SwerveModuleState br_state = new SwerveModuleState(54.08, Rotation2d.fromDegrees(-70.56));
-
-        var chassisSpeeds = m_kinematics.toChassisSpeeds(fl_state, fr_state, bl_state, br_state);
-
-        /*
-        From equation (13.17), we know that chassis motion is th dot product of the
-        pseudoinverse of the inverseKinematics matrix (with the center of rotation at
-        (0,0) -- we don't want the motion of the center of rotation, we want it of
-        the center of the robot). These above SwerveModuleStates are known to be from
-        a velocity of [[0][3][1.5]] about (0, 24), and the expected numbers have been
-        calculated using Numpy's linalg.pinv function.
-        */
-
-        assertAll(
-                () -> assertEquals(0.0, chassisSpeeds.vx, 0.1),
-                () -> assertEquals(-33.0, chassisSpeeds.vy, 0.1),
-                () -> assertEquals(1.5, chassisSpeeds.omega, 0.1)
-        );
-    }
+    assertAll(
+        () -> assertEquals(0.0, chassisSpeeds.vx, 0.1),
+        () -> assertEquals(-33.0, chassisSpeeds.vy, 0.1),
+        () -> assertEquals(1.5, chassisSpeeds.omega, 0.1)
+    );
+  }
 
 }
