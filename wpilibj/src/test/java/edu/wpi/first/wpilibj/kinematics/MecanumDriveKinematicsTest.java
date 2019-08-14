@@ -1,11 +1,11 @@
 package edu.wpi.first.wpilibj.kinematics;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Translation2d;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MecanumDriveKinematicsTest {
 
@@ -31,10 +31,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(3.536, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(3.536, moduleStates.frontRight, 0.1),
-      () -> assertEquals(3.536, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(3.536, moduleStates.rearRight, 0.1)
+        () -> assertEquals(3.536, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(3.536, moduleStates.frontRight, 0.1),
+        () -> assertEquals(3.536, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(3.536, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -50,9 +50,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(5, moduleStates.vx, 0.1),
-      () -> assertEquals(0, moduleStates.vy, 0.1),
-      () -> assertEquals(0, moduleStates.omega, 0.1)
+        () -> assertEquals(5, moduleStates.vx, 0.1),
+        () -> assertEquals(0, moduleStates.vy, 0.1),
+        () -> assertEquals(0, moduleStates.omega, 0.1)
     );
   }
 
@@ -68,10 +68,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(-2.828427, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(2.828427, moduleStates.frontRight, 0.1),
-      () -> assertEquals(2.828427, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(-2.828427, moduleStates.rearRight, 0.1)
+        () -> assertEquals(-2.828427, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(2.828427, moduleStates.frontRight, 0.1),
+        () -> assertEquals(2.828427, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(-2.828427, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -87,9 +87,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(0, moduleStates.vx, 0.1),
-      () -> assertEquals(4, moduleStates.vy, 0.1),
-      () -> assertEquals(0, moduleStates.omega, 0.1)
+        () -> assertEquals(0, moduleStates.vx, 0.1),
+        () -> assertEquals(4, moduleStates.vy, 0.1),
+        () -> assertEquals(0, moduleStates.omega, 0.1)
     );
   }
 
@@ -105,10 +105,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(-106.629191, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(106.629191, moduleStates.frontRight, 0.1),
-      () -> assertEquals(-106.629191, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(106.629191, moduleStates.rearRight, 0.1)
+        () -> assertEquals(-106.629191, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(106.629191, moduleStates.frontRight, 0.1),
+        () -> assertEquals(-106.629191, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(106.629191, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -123,9 +123,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(0, moduleStates.vx, 0.1),
-      () -> assertEquals(0, moduleStates.vy, 0.1),
-      () -> assertEquals(2 * Math.PI, moduleStates.omega, 0.1)
+        () -> assertEquals(0, moduleStates.vx, 0.1),
+        () -> assertEquals(0, moduleStates.vy, 0.1),
+        () -> assertEquals(2 * Math.PI, moduleStates.omega, 0.1)
     );
   }
 
@@ -141,10 +141,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(-17.677670, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(20.506097, moduleStates.frontRight, 0.1),
-      () -> assertEquals(-13.435, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(16.26, moduleStates.rearRight, 0.1)
+        () -> assertEquals(-17.677670, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(20.506097, moduleStates.frontRight, 0.1),
+        () -> assertEquals(-13.435, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(16.26, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -159,9 +159,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(2, moduleStates.vx, 0.1),
-      () -> assertEquals(3, moduleStates.vy, 0.1),
-      () -> assertEquals(1, moduleStates.omega, 0.1)
+        () -> assertEquals(2, moduleStates.vx, 0.1),
+        () -> assertEquals(3, moduleStates.vy, 0.1),
+        () -> assertEquals(1, moduleStates.omega, 0.1)
     );
   }
 
@@ -177,10 +177,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(0, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(16.971, moduleStates.frontRight, 0.1),
-      () -> assertEquals(-16.971, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(33.941, moduleStates.rearRight, 0.1)
+        () -> assertEquals(0, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(16.971, moduleStates.frontRight, 0.1),
+        () -> assertEquals(-16.971, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(33.941, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -195,9 +195,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(12, moduleStates.vx, 0.1),
-      () -> assertEquals(-12, moduleStates.vy, 0.1),
-      () -> assertEquals(1, moduleStates.omega, 0.1)
+        () -> assertEquals(12, moduleStates.vx, 0.1),
+        () -> assertEquals(-12, moduleStates.vy, 0.1),
+        () -> assertEquals(1, moduleStates.omega, 0.1)
     );
   }
 
@@ -213,10 +213,10 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(2.12, moduleStates.frontLeft, 0.1),
-      () -> assertEquals(21.92, moduleStates.frontRight, 0.1),
-      () -> assertEquals(-12.02, moduleStates.rearLeft, 0.1),
-      () -> assertEquals(36.06, moduleStates.rearRight, 0.1)
+        () -> assertEquals(2.12, moduleStates.frontLeft, 0.1),
+        () -> assertEquals(21.92, moduleStates.frontRight, 0.1),
+        () -> assertEquals(-12.02, moduleStates.rearLeft, 0.1),
+        () -> assertEquals(36.06, moduleStates.rearRight, 0.1)
     );
   }
 
@@ -232,9 +232,9 @@ public class MecanumDriveKinematicsTest {
       */
 
     assertAll(
-      () -> assertEquals(17, moduleStates.vx, 0.1),
-      () -> assertEquals(-10, moduleStates.vy, 0.1),
-      () -> assertEquals(1, moduleStates.omega, 0.1)
+        () -> assertEquals(17, moduleStates.vx, 0.1),
+        () -> assertEquals(-10, moduleStates.vy, 0.1),
+        () -> assertEquals(1, moduleStates.omega, 0.1)
     );
   }
 

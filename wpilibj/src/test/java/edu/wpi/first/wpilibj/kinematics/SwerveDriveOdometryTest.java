@@ -1,12 +1,12 @@
 package edu.wpi.first.wpilibj.kinematics;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SwerveDriveOdometryTest {
 
@@ -31,13 +31,14 @@ public class SwerveDriveOdometryTest {
     };
 
     m_odometry.updateWithTime(0.0, 0.0,
-        new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState(), new SwerveModuleState());
+        new SwerveModuleState(), new SwerveModuleState(), 
+        new SwerveModuleState(), new SwerveModuleState());
     var pose = m_odometry.updateWithTime(0.10, wheelSpeeds);
 
     assertAll(
-      () -> assertEquals(5.0 / 10.0, pose.getTranslation().getX(), 0.01),
-      () -> assertEquals(0, pose.getTranslation().getY(), 0.01),
-      () -> assertEquals(0.0, pose.getRotation().getDegrees(), 0.01)
+        () -> assertEquals(5.0 / 10.0, pose.getTranslation().getX(), 0.01),
+        () -> assertEquals(0, pose.getTranslation().getY(), 0.01),
+        () -> assertEquals(0.0, pose.getRotation().getDegrees(), 0.01)
     );
   }
 
@@ -61,9 +62,9 @@ public class SwerveDriveOdometryTest {
     final var pose = m_odometry.updateWithTime(1.0, /*Math.toRadians(90),*/ wheelSpeeds);
 
     assertAll(
-      () -> assertEquals(12.0, pose.getTranslation().getX(), 0.01),
-      () -> assertEquals(12.0, pose.getTranslation().getY(), 0.01),
-      () -> assertEquals(90.0, pose.getRotation().getDegrees(), 0.01)
+        () -> assertEquals(12.0, pose.getTranslation().getX(), 0.01),
+        () -> assertEquals(12.0, pose.getTranslation().getY(), 0.01),
+        () -> assertEquals(90.0, pose.getRotation().getDegrees(), 0.01)
     );
   }
 }

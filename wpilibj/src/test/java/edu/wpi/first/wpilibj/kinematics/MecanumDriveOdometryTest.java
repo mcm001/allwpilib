@@ -1,11 +1,11 @@
 package edu.wpi.first.wpilibj.kinematics;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Translation2d;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MecanumDriveOdometryTest {
 
@@ -21,17 +21,17 @@ public class MecanumDriveOdometryTest {
 
   @Test
   void testMultipleConsecutiveUpdates() {
-      var wheelSpeeds = new MecanumDriveWheelSpeeds(3.536, 3.536, 3.536, 3.536);
+    var wheelSpeeds = new MecanumDriveWheelSpeeds(3.536, 3.536, 3.536, 3.536);
 
-      m_odometry.updateWithTime(0.0, 0.0, wheelSpeeds);
-      var secondPose = m_odometry.updateWithTime(0.0, 0.0, wheelSpeeds);
+    m_odometry.updateWithTime(0.0, 0.0, wheelSpeeds);
+    var secondPose = m_odometry.updateWithTime(0.0, 0.0, wheelSpeeds);
 
-      assertAll(
+    assertAll(
         () -> assertEquals(secondPose.getTranslation().getX(), 0.0, 0.01),
         () -> assertEquals(secondPose.getTranslation().getY(), 0.0, 0.01),
         () -> assertEquals(secondPose.getRotation().getDegrees(), 0.0, 0.01)
-      );
-    }
+    );
+  }
 
   @Test
   void testTwoIterations() {
@@ -42,9 +42,9 @@ public class MecanumDriveOdometryTest {
     var pose = m_odometry.updateWithTime(0.10, wheelSpeeds);
 
     assertAll(
-      () -> assertEquals(5.0 / 10.0, pose.getTranslation().getX(), 0.01),
-      () -> assertEquals(0, pose.getTranslation().getY(), 0.01),
-      () -> assertEquals(0.0, pose.getRotation().getDegrees(), 0.01)
+        () -> assertEquals(5.0 / 10.0, pose.getTranslation().getX(), 0.01),
+        () -> assertEquals(0, pose.getTranslation().getY(), 0.01),
+        () -> assertEquals(0.0, pose.getRotation().getDegrees(), 0.01)
     );
   }
 
@@ -58,9 +58,9 @@ public class MecanumDriveOdometryTest {
     final var pose = m_odometry.updateWithTime(1.0, /*Math.toRadians(90),*/ wheelSpeeds);
 
     assertAll(
-      () -> assertEquals(12.0, pose.getTranslation().getX(), 0.01),
-      () -> assertEquals(12.0, pose.getTranslation().getY(), 0.01),
-      () -> assertEquals(90.0, pose.getRotation().getDegrees(), 0.01)
+        () -> assertEquals(12.0, pose.getTranslation().getX(), 0.01),
+        () -> assertEquals(12.0, pose.getTranslation().getY(), 0.01),
+        () -> assertEquals(90.0, pose.getRotation().getDegrees(), 0.01)
     );
   }
 
