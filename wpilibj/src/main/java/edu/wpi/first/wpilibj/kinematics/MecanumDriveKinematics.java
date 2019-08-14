@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj.geometry.Translation2d;
  * the robot on the field using encoders and a gyro.
  */
 public class MecanumDriveKinematics {
-  private final SimpleMatrix m_inverseKinematics;
+  private SimpleMatrix m_inverseKinematics;
   private final SimpleMatrix m_forwardKinematics;
 
   private final Translation2d m_frontLeftWheel;
@@ -159,6 +159,6 @@ public class MecanumDriveKinematics {
     m_inverseKinematics.setRow(1, 0, 1, 1, fr.getX() - fr.getY());
     m_inverseKinematics.setRow(2, 0, 1, 1, rl.getX() - rl.getY());
     m_inverseKinematics.setRow(3, 0, 1, -1, -(rr.getX() + rr.getY()));
-    m_inverseKinematics.scale(1 / Math.sqrt(2));
+    m_inverseKinematics = m_inverseKinematics.scale(1.0 / Math.sqrt(2));
   }
 }
