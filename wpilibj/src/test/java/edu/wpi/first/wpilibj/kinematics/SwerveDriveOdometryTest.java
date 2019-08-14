@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.kinematics;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -9,7 +16,6 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 
 public class SwerveDriveOdometryTest {
-
   private final Translation2d m_fl = new Translation2d(12, 12);
   private final Translation2d m_fr = new Translation2d(12, -12);
   private final Translation2d m_bl = new Translation2d(-12, 12);
