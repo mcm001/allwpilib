@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.kinematics;
 
 import org.junit.jupiter.api.Test;
@@ -59,7 +66,7 @@ public class SwerveDriveOdometryTest {
     final var zero = new SwerveModuleState();
 
     m_odometry.updateWithTime(0.0, 0.0, zero, zero, zero, zero);
-    final var pose = m_odometry.updateWithTime(1.0, /*Math.toRadians(90),*/ wheelSpeeds);
+    final var pose = m_odometry.updateWithTime(1.0, wheelSpeeds);
 
     assertAll(
         () -> assertEquals(12.0, pose.getTranslation().getX(), 0.01),
