@@ -7,6 +7,8 @@
 
 #include "frc/spline/QuinticHermiteSpline.h"
 
+#include <iostream>
+
 using namespace frc;
 
 QuinticHermiteSpline::QuinticHermiteSpline(
@@ -42,4 +44,8 @@ QuinticHermiteSpline::QuinticHermiteSpline(
     m_coefficients.template block<2, 1>(4, i) =
         m_coefficients.template block<2, 1>(2, i) * (4 - i);
   }
+  // We need to explicitly set these to zero, otherwise, an Eigen bug will
+  // set them to some absurd value.
+  m_coefficients(4, 5) = 0.0;
+  m_coefficients(5, 5) = 0.0;
 }
