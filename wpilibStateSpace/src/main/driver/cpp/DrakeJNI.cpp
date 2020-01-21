@@ -14,7 +14,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "drake/math/discrete_algebraic_riccati_equation.h"
-#include "edu_wpi_first_wpiutil_math_DrakeJNI.h"
+#include "edu_wpi_first_wpilibj_math_DrakeJNI.h"
 #include "wpi/jni_util.h"
 
 using namespace wpi::java;
@@ -22,12 +22,12 @@ using namespace wpi::java;
 extern "C" {
 
 /*
- * Class:     edu_wpi_first_wpiutil_math_DrakeJNI
+ * Class:     edu_wpi_first_wpilibj_math_DrakeJNI
  * Method:    discreteAlgebraicRiccatiEquation
  * Signature: ([D[D[D[DII[D)V
  */
 JNIEXPORT void JNICALL
-Java_edu_wpi_first_wpiutil_math_DrakeJNI_discreteAlgebraicRiccatiEquation
+Java_edu_wpi_first_wpilibj_math_DrakeJNI_discreteAlgebraicRiccatiEquation
   (JNIEnv* env, jclass, jdoubleArray A, jdoubleArray B, jdoubleArray Q,
    jdoubleArray R, jint states, jint inputs, jdoubleArray S)
 {
@@ -47,12 +47,12 @@ Java_edu_wpi_first_wpiutil_math_DrakeJNI_discreteAlgebraicRiccatiEquation
 }
 
 /*
- * Class:     edu_wpi_first_wpiutil_math_DrakeJNI
+ * Class:     edu_wpi_first_wpilibj_math_DrakeJNI
  * Method:    exp
  * Signature: ([D[D[D[DII[D)V
  */
 JNIEXPORT void JNICALL
-Java_edu_wpi_first_wpiutil_math_DrakeJNI_exp
+Java_edu_wpi_first_wpilibj_math_DrakeJNI_exp
   (JNIEnv* env, jclass, jdoubleArray src, jint rows, jdoubleArray dst)
 {
   Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

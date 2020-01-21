@@ -11,13 +11,11 @@ dependencies {
     implementation project(':cscore')
     implementation project(':hal')
     implementation project(':wpilibj')
-    implementation project(':wpilibc')
     devImplementation project(':wpiutil')
     devImplementation project(':ntcore')
     devImplementation project(':cscore')
     devImplementation project(':hal')
     devImplementation project(':wpilibj')
-    implementation project(':wpilibc')
 }
 
 nativeUtils.exportsConfigs {
@@ -37,6 +35,42 @@ nativeUtils.exportsConfigs {
         }
         x64SymbolFilter = { symbols ->
             symbols.removeIf({ !it.startsWith('NT_') })
+        }
+    }
+}
+
+model {
+    components {}
+    binaries {
+        all {
+            if (!it.buildable || !(it instanceof NativeBinarySpec)) {
+                return
+            }
+            lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
+            // lib project: ':cscore', library: 'cscore', linkage: 'shared'
+            lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
+            lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
+            lib project: ':hal', library: 'hal', linkage: 'shared'
+            lib project: ':hal', library: 'halJNIShared', linkage: 'shared'
+        }
+    }
+    tasks {
+        def c = $.components
+        def found = false
+        def systemArch = getCurrentArch()
+        c.each {
+            if (it in NativeExecutableSpec && it.name == "${nativeName}Dev") {
+                it.binaries.each {
+                    if (!found) {
+                        def arch = it.targetPlatform.name
+                        if (arch == systemArch) {
+                            def filePath = it.tasks.install.installDirectory.get().toString() + File.separatorChar + 'lib'
+
+                            found = true
+                        }
+                    }
+                }
+            }
         }
     }
 }

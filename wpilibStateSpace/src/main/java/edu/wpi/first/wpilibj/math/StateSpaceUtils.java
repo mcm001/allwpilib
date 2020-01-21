@@ -1,5 +1,9 @@
-package edu.wpi.first.wpiutil.math;
+package edu.wpi.first.wpilibj.math;
 
+import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.Num;
+import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
@@ -105,7 +109,7 @@ public class StateSpaceUtils {
         // Make Q symmetric if it isn't already
         var discQ = (Q.plus(Q.transpose()).div(2.0));
 
-        return new SimpleMatrixUtils.Pair<>(discA, discQ);
+        return new SimpleMatrixUtils.Pair<Matrix<States, States>, Matrix<States, States>>(discA, discQ);
     }
 
     /**

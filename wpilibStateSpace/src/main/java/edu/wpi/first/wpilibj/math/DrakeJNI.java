@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package edu.wpi.first.wpiutil.math;
+package edu.wpi.first.wpilibj.math;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;

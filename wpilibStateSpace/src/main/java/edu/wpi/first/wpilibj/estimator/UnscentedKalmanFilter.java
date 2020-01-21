@@ -1,7 +1,7 @@
 package edu.wpi.first.wpilibj.estimator;
 
 import edu.wpi.first.wpiutil.math.*;
-import edu.wpi.first.wpiutil.math.StateSpaceUtils;
+import edu.wpi.first.wpilibj.math.StateSpaceUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;

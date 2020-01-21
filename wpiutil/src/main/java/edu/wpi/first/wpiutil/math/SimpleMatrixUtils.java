@@ -180,7 +180,7 @@ public class SimpleMatrixUtils {
     private final A m_first;
     private final B m_second;
 
-    Pair(A first, B second) {
+    public Pair(A first, B second) {
       m_first = first;
       m_second = second;
     }
