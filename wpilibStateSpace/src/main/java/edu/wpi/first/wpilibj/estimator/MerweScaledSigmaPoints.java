@@ -71,7 +71,7 @@ public class MerweScaledSigmaPoints<States extends Num> {
      *
      */
     public Matrix sigmaPoints(
-            Vector<States> x,
+            Matrix<States, N1> x,
             Matrix<States, States> P) {
 
         double lambda = Math.pow(m_alpha, 2) * (m_states.getNum() + m_kappa) - m_states.getNum();

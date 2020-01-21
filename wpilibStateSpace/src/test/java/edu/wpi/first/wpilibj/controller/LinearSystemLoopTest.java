@@ -27,9 +27,9 @@ public class LinearSystemLoopTest {
                 new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0.05, 1.0),
                 new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.0001), kDt);
 
-        var qElms = new Vector<N2>(new SimpleMatrix(2, 1));
+        var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
         qElms.getStorage().setColumn(0, 0, 0.02, 0.4);
-        var rElms = new Vector<N1>(new SimpleMatrix(1, 1));
+        var rElms = new Matrix<N1, N1>(new SimpleMatrix(1, 1));
         rElms.getStorage().setColumn(0, 0, 12.0);
         var dt = 0.00505;
 

@@ -1,11 +1,10 @@
 package edu.wpi.first.wpilibj.estimator;
 
-import edu.wpi.first.wpilibj.system.RungeKuttaHelper;
 import edu.wpi.first.wpiutil.math.*;
+import edu.wpi.first.wpiutil.math.StateSpaceUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
-import org.opencv.core.Mat;
 
 import java.util.function.BiFunction;
 
@@ -17,7 +16,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
     private final BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<Outputs, N1>> m_h;
     private final Matrix<States,States> m_Q;
     private final Matrix<Outputs, Outputs> m_R;
-    private Vector<States> m_xHat;
+    private Matrix<States, N1> m_xHat;
     private Matrix<States, States> m_P;
     private Matrix m_sigmasF;
 
@@ -60,7 +59,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
      * Resets the observer.
      */
     public void reset() {
-        m_xHat = new Vector<>(new SimpleMatrix(states.getNum(), 1));
+        m_xHat = new Matrix<>(new SimpleMatrix(states.getNum(), 1));
         m_P = new Matrix<>(new SimpleMatrix(states.getNum(), states.getNum()));
     }
 
@@ -207,5 +206,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
             return m_third;
         }
     }
+
+
 
 }

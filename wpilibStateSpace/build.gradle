@@ -39,8 +39,52 @@ nativeUtils.exportsConfigs {
 
 apply plugin: DisableBuildingGTest
 
+nativeUtils.addWpiNativeUtils()
+nativeUtils.withRoboRIO()
+
+
 model {
-    components {}
+    components {
+        WPILibStateSpace(NativeLibrarySpec) {
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/main/native/cpp'
+                        include '**/*.cpp'
+                    }
+                    exportedHeaders {
+                        srcDirs 'src/main/native/include'
+                    }
+                }
+            }
+            binaries.all {
+                lib library: 'WPILibStateSpaceDriver', linkage: 'shared'
+            }
+            nativeUtils.useRequiredLibrary(it, 'wpilib_shared')
+        }
+        WPILibStateSpaceDriver(JniNativeLibrarySpec) {
+            enableCheckTask true
+            javaCompileTasks << compileJava
+            jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.roborio)
+            // Leave these for future proofing
+            jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.raspbian)
+            jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.aarch64bionic)
+            sources {
+                cpp {
+                source {
+                    srcDirs 'src/main/driver/cpp'
+                    include '**/*.cpp'
+                }
+                exportedHeaders {
+                    srcDirs 'src/main/driver/include'
+                }
+                }
+            }
+
+            nativeUtils.useRequiredLibrary(it, "driver_shared")
+        }
+    }
+
     binaries {
         all {
             if (!it.buildable || !(it instanceof NativeBinarySpec)) {

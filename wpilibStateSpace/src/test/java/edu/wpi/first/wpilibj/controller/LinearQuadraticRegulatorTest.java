@@ -5,8 +5,8 @@ import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpiutil.math.MatBuilder;
+import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
-import edu.wpi.first.wpiutil.math.Vector;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 import org.ejml.simple.SimpleMatrix;
@@ -48,9 +48,9 @@ public class LinearQuadraticRegulatorTest {
     @Test
     public void testLQROnElevator() {
 
-        var qElms = new Vector<N2>(new SimpleMatrix(2, 1));
+        var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
         qElms.getStorage().setColumn(0, 0, 0.02, 0.4);
-        var rElms = new Vector<N1>(new SimpleMatrix(1, 1));
+        var rElms = new Matrix<N1, N1>(new SimpleMatrix(1, 1));
         rElms.getStorage().setColumn(0, 0, 12.0);
         var dt = 0.00505;
 
@@ -91,9 +91,9 @@ public class LinearQuadraticRegulatorTest {
     @Test
     public void testLQROnArm() {
 
-        var qElms = new Vector<N2>(new SimpleMatrix(2, 1));
+        var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
         qElms.getStorage().setColumn(0, 0, 0.01745, 0.08726);
-        var rElms = new Vector<N1>(new SimpleMatrix(1, 1));
+        var rElms = new Matrix<N1, N1>(new SimpleMatrix(1, 1));
         rElms.getStorage().setColumn(0, 0, 12.0);
         var dt = 0.00505;
 

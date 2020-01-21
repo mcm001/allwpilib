@@ -67,7 +67,7 @@ public class UnscentedKalmanFilterTest {
         var u = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(12.0, 12.0);
         observer.predict(u, 0.00505);
 
-        var localY = getLocalMeasurementModel(observer.getXhat(), u);
-        observer.correct(u, localY);
+//        var localY = getLocalMeasurementModel(observer.getXhat(), u);
+//        observer.correct(u, localY);
     }
 }

@@ -2,11 +2,7 @@ package edu.wpi.first.wpilibj.system;
 
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Num;
-import edu.wpi.first.wpiutil.math.Vector;
 import edu.wpi.first.wpiutil.math.numbers.N1;
-import edu.wpi.first.wpiutil.math.numbers.N2;
-import org.ejml.dense.row.CommonOps_DDRM;
-import org.ejml.simple.SimpleMatrix;
 
 import java.util.function.BiFunction;
 import java.util.function.DoubleFunction;
@@ -68,7 +64,7 @@ public class RungeKuttaHelper {
      */
     public static <States extends Num, Inputs extends Num> Matrix<States, N1> RungeKutta(
             BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<States, N1>> f,
-            Matrix<States, N1> x, Vector<Inputs> u, double dtSeconds) {
+            Matrix<States, N1> x, Matrix<Inputs, N1> u, double dtSeconds) {
 
         final var halfDt = 0.5 * dtSeconds;
         Matrix<States, N1> k1 = f.apply(x, u);

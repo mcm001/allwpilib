@@ -7,14 +7,14 @@
   "jsonUrl": "",
   "javaDependencies": [
       {
-          "groupId": "edu.wpi.first.wpilibStateSpace",
+          "groupId": "edu.wpi.first.wpilibj",
           "artifactId": "wpilibStateSpace-java",
           "version": "wpilib"
       }
   ],
   "jniDependencies": [
       {
-        "groupId": "edu.wpi.first.wpilibStateSpace",
+        "groupId": "edu.wpi.first.wpilibj",
         "artifactId": "edu.wpi.first.wpilibStateSpace-driver",
         "version": "wpilib",
         "isJar": false,
@@ -32,7 +32,7 @@
   ],
   "cppDependencies": [
       {
-          "groupId": "edu.wpi.first.wpilibStateSpace",
+          "groupId": "edu.wpi.first.wpilibj",
           "artifactId": "wpilibStateSpace-cpp",
           "version": "wpilib",
           "libName": "wpilibOldCommands",
