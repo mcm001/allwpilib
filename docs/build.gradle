@@ -12,6 +12,7 @@ evaluationDependsOn(':wpilibc')
 evaluationDependsOn(':wpilibj')
 evaluationDependsOn(':wpilibOldCommands')
 evaluationDependsOn(':wpilibNewCommands')
+evaluationDependsOn(':wpilibStateSpace')
 
 def baseArtifactIdCpp = 'documentation'
 def artifactGroupIdCpp = 'edu.wpi.first.wpilibc'

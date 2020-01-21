@@ -1,0 +1,54 @@
+{
+  "fileName": "WPILibStateSpace.json",
+  "name": "WPILib-State-Space",
+  "version": "2020.0.0",
+  "uuid": "unknown",
+  "mavenUrls": [],
+  "jsonUrl": "",
+  "javaDependencies": [
+      {
+          "groupId": "edu.wpi.first.wpilibStateSpace",
+          "artifactId": "wpilibStateSpace-java",
+          "version": "wpilib"
+      }
+  ],
+  "jniDependencies": [
+      {
+        "groupId": "edu.wpi.first.wpilibStateSpace",
+        "artifactId": "edu.wpi.first.wpilibStateSpace-driver",
+        "version": "wpilib",
+        "isJar": false,
+        "skipInvalidPlatforms": true,
+        "validPlatforms": [
+            "linuxathena",
+            "linuxraspbian",
+            "linuxaarch64bionic",
+            "windowsx86-64",
+            "windowsx86",
+            "linuxx86-64",
+            "osxx86-64"
+        ]
+      }
+  ],
+  "cppDependencies": [
+      {
+          "groupId": "edu.wpi.first.wpilibStateSpace",
+          "artifactId": "wpilibStateSpace-cpp",
+          "version": "wpilib",
+          "libName": "wpilibOldCommands",
+          "headerClassifier": "headers",
+          "sourcesClassifier": "sources",
+          "sharedLibrary": true,
+          "skipInvalidPlatforms": true,
+          "binaryPlatforms": [
+              "linuxathena",
+              "linuxraspbian",
+              "linuxaarch64bionic",
+              "windowsx86-64",
+              "windowsx86",
+              "linuxx86-64",
+              "osxx86-64"
+          ]
+      }
+  ]
+}
