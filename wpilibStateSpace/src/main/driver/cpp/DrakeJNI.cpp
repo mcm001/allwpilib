@@ -49,7 +49,7 @@ Java_edu_wpi_first_wpilibj_math_DrakeJNI_discreteAlgebraicRiccatiEquation
 /*
  * Class:     edu_wpi_first_wpilibj_math_DrakeJNI
  * Method:    exp
- * Signature: ([D[D[D[DII[D)V
+ * Signature: ([DI[D)V
  */
 JNIEXPORT void JNICALL
 Java_edu_wpi_first_wpilibj_math_DrakeJNI_exp
