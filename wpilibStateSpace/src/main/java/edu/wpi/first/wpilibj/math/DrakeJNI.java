@@ -75,7 +75,7 @@ public final class DrakeJNI {
       double[] S);
 
   /**
-   * Computes the matrix exp
+   * Computes the matrix exp.
    * @param src Array representing the matrix to be exponentiated.
    * @param rows how many rows there are.
    * @param dst where the result will be stored.
