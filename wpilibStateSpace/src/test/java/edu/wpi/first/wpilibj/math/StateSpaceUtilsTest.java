@@ -1,7 +1,10 @@
-package edu.wpi.first.wpiutil.math;
+package edu.wpi.first.wpilibj.math;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import edu.wpi.first.wpiutil.math.MatBuilder;
+import edu.wpi.first.wpiutil.math.Nat;
 
 public class StateSpaceUtilsTest {
 

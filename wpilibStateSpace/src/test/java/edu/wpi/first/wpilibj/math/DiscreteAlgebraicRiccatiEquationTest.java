@@ -1,8 +1,11 @@
-package edu.wpi.first.wpiutil.math;
+package edu.wpi.first.wpilibj.math;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import edu.wpi.first.wpilibj.math.Drake;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DiscreteAlgebraicRiccatiEquationTest {

@@ -4,17 +4,14 @@ ext {
 }
 
 apply from: "${rootDir}/shared/jni/setupBuild.gradle"
-// apply from: "${rootDir}/shared/opencv.gradle"
 
 dependencies {
     implementation project(':wpiutil')
     implementation project(':ntcore')
-    // implementation project(':cscore')
     implementation project(':hal')
     implementation project(':wpilibj')
     devImplementation project(':wpiutil')
     devImplementation project(':ntcore')
-    // devImplementation project(':cscore')
     devImplementation project(':hal')
     devImplementation project(':wpilibj')
 }
@@ -32,10 +29,10 @@ nativeUtils.exportsConfigs {
     }
     wpilibStateSpaceJNI {
         x86SymbolFilter = { symbols ->
-            symbols.removeIf({ !it.startsWith('NT_') })
+            // symbols.removeIf({ !it.startsWith('NT_') })
         }
         x64SymbolFilter = { symbols ->
-            symbols.removeIf({ !it.startsWith('NT_') })
+            // symbols.removeIf({ !it.startsWith('NT_') })
         }
     }
 }
@@ -50,46 +47,23 @@ model {
             // }
 
             binaries.all { binary ->
-                // if (!(it instanceof NativeBinarySpec)) return
-                // if (it.component.name != 'hal' && it.component.name != 'halBase') return
-                // if (it.targetPlatform.name != nativeUtils.wpi.platforms.roborio) return
-                // nativeUtils.useRequiredLibrary(it, 'netcomm_shared', 'chipobject_shared', 'visa_shared')
-
-                // if (!it.buildable || !(it instanceof NativeBinarySpec)) {
-                //     return
-                // }
-                // lib project: ':hal', library: 'hal', linkage: 'shared'
-                // lib project: ':hal', library: 'halJNIShared', linkage: 'shared'
-
-                // lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
-                // lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
-                // project(':hal').addHalDependency(it, 'shared')
-                // lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
-
-                // if (it.component.name == "${nativeName}Dev") {
-                //   lib project: ':ntcore', library: 'ntcoreJNIShared', linkage: 'shared'
-                // }
-
-                // lib project: ':wpilibOldCommands', library: 'wpilibOldCommands', linkage: 'shared'
-                // lib project: ':wpilibNewCommands', library: 'wpilibNewCommands', linkage: 'shared'
                 lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
                 lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
-                // lib project: ':cscore', library: 'cscore', linkage: 'shared'
                 lib project: ':ntcore', library: 'ntcoreJNIShared', linkage: 'shared'
-                // lib project: ':cscore', library: 'cscoreJNIShared', linkage: 'shared'
-                // lib project: ':cscore', library: 'cscore', linkage: 'static'
                 project(':hal').addHalDependency(binary, 'shared')
                 project(':hal').addHalJniDependency(binary)
                 lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
-                // lib project: ':cameraserver', library: 'cameraserver', linkage: 'shared'
                 if (binary.targetPlatform.name == nativeUtils.wpi.platforms.roborio) {
                     nativeUtils.useRequiredLibrary(binary, 'netcomm_shared', 'chipobject_shared', 'visa_shared', 'ni_runtime_shared')
                 }
             }
         }
     }
-    
-    
+
+    // binaries {
+
+    // }
+
     tasks {
         def c = $.components
         def found = false
