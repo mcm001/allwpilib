@@ -35,7 +35,7 @@
           "groupId": "edu.wpi.first.wpilibj",
           "artifactId": "wpilibStateSpace-cpp",
           "version": "wpilib",
-          "libName": "wpilibOldCommands",
+          "libName": "wpilibStateSpace",
           "headerClassifier": "headers",
           "sourcesClassifier": "sources",
           "sharedLibrary": true,
