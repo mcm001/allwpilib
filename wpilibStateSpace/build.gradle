@@ -4,6 +4,7 @@ ext {
 }
 
 apply from: "${rootDir}/shared/jni/setupBuild.gradle"
+apply from: "${rootDir}/shared/opencv.gradle"
 
 dependencies {
     implementation project(':wpiutil')
@@ -41,37 +42,54 @@ nativeUtils.exportsConfigs {
 
 model {
     components {
-        // all {
-        //     it.sources.each {
-        //         it.exportedHeaders {
-        //             srcDirs 'src/main/native/include'
-        //         }
-        //     }
-        // }
-    }
-    binaries {
         all {
-            if (!(it instanceof NativeBinarySpec)) return
-            if (it.component.name != 'hal' && it.component.name != 'halBase') return
-            if (it.targetPlatform.name != nativeUtils.wpi.platforms.roborio) return
-            nativeUtils.useRequiredLibrary(it, 'netcomm_shared', 'chipobject_shared', 'visa_shared')
+            // it.sources.each {
+            //     it.exportedHeaders {
+            //         srcDirs 'src/main/native/include'
+            //     }
+            // }
 
-            if (!it.buildable || !(it instanceof NativeBinarySpec)) {
-                return
-            }
-            lib project: ':hal', library: 'hal', linkage: 'shared'
-            lib project: ':hal', library: 'halJNIShared', linkage: 'shared'
+            binaries.all { binary ->
+                // if (!(it instanceof NativeBinarySpec)) return
+                // if (it.component.name != 'hal' && it.component.name != 'halBase') return
+                // if (it.targetPlatform.name != nativeUtils.wpi.platforms.roborio) return
+                // nativeUtils.useRequiredLibrary(it, 'netcomm_shared', 'chipobject_shared', 'visa_shared')
 
-            lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
-            lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
-            project(':hal').addHalDependency(it, 'shared')
-            lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
+                // if (!it.buildable || !(it instanceof NativeBinarySpec)) {
+                //     return
+                // }
+                // lib project: ':hal', library: 'hal', linkage: 'shared'
+                // lib project: ':hal', library: 'halJNIShared', linkage: 'shared'
 
-            if (it.component.name == "${nativeName}Dev") {
-              lib project: ':ntcore', library: 'ntcoreJNIShared', linkage: 'shared'
+                // lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
+                // lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
+                // project(':hal').addHalDependency(it, 'shared')
+                // lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
+
+                // if (it.component.name == "${nativeName}Dev") {
+                //   lib project: ':ntcore', library: 'ntcoreJNIShared', linkage: 'shared'
+                // }
+
+                // lib project: ':wpilibOldCommands', library: 'wpilibOldCommands', linkage: 'shared'
+                // lib project: ':wpilibNewCommands', library: 'wpilibNewCommands', linkage: 'shared'
+                lib project: ':wpilibc', library: 'wpilibc', linkage: 'shared'
+                lib project: ':ntcore', library: 'ntcore', linkage: 'shared'
+                lib project: ':cscore', library: 'cscore', linkage: 'shared'
+                lib project: ':ntcore', library: 'ntcoreJNIShared', linkage: 'shared'
+                lib project: ':cscore', library: 'cscoreJNIShared', linkage: 'shared'
+                lib project: ':cscore', library: 'cscore', linkage: 'static'
+                project(':hal').addHalDependency(binary, 'shared')
+                project(':hal').addHalJniDependency(binary)
+                lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
+                lib project: ':cameraserver', library: 'cameraserver', linkage: 'shared'
+                if (binary.targetPlatform.name == nativeUtils.wpi.platforms.roborio) {
+                    nativeUtils.useRequiredLibrary(binary, 'netcomm_shared', 'chipobject_shared', 'visa_shared', 'ni_runtime_shared')
+                }
             }
         }
     }
+    
+    
     tasks {
         def c = $.components
         def found = false
