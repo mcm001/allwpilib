@@ -2,6 +2,15 @@ package edu.wpi.first.wpilibj.system.plant;
 
 public class DCMotor {
 
+    public final double nominalVoltageVolts;
+    public final double stallTorqueNewtonMeters;
+    public final double stallCurrentAmps;
+    public final double freeCurrentAmps;
+    public final double freeSpeedRadPerSec;
+    public final double Rohms;
+    public final double KvRadPerSecPerVolt;
+    public final double KtNMPerAmp;
+
     public DCMotor(double nominalVoltageVolts,
                    double stallTorqueNewtonMeters,
                    double stallCurrentAmps,
@@ -18,18 +27,6 @@ public class DCMotor {
         this.KtNMPerAmp = stallTorqueNewtonMeters / stallCurrentAmps;
     }
 
-    public final double nominalVoltageVolts;
-    public final double stallTorqueNewtonMeters;
-    public final double stallCurrentAmps;
-    public final double freeCurrentAmps;
-    public final double freeSpeedRadPerSec;
-
-    public final double Rohms;
-
-    public final double KvRadPerSecPerVolt;
-
-    public final double KtNMPerAmp;
-
     public static DCMotor getCIM(int numMotors) {
         return new DCMotor(12,
                 2.42 * numMotors, 133,
@@ -43,5 +40,8 @@ public class DCMotor {
     }
 
 
-
+    public static DCMotor getNEO(int numMotors) {
+        return new DCMotor(12, 2.6 * numMotors,
+                105, 1.8, 5676 / 60d * 2 * Math.PI);
+    }
 }

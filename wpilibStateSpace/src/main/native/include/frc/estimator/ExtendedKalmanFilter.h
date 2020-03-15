@@ -55,11 +55,8 @@ class ExtendedKalmanFilter {
     Reset();
 
     Eigen::Matrix<double, States, States> contA =
-        NumericalJacobianX<States, States, Inputs>(
-            [this](const auto& x, const auto& u, units::second_t dt) {
-              return RungeKutta(m_f, x, u, dt);
-            },
-            m_xHat, Vector<Inputs>::Zero(), dt);
+        NumericalJacobianX<States, States, Inputs>(m_f, m_xHat,
+                                                   Vector<Inputs>::Zero());
     Eigen::Matrix<double, Outputs, States> C =
         NumericalJacobianX<Outputs, States, Inputs>(m_h, m_xHat,
                                                     Vector<Inputs>::Zero());
@@ -70,7 +67,8 @@ class ExtendedKalmanFilter {
 
     m_discR = DiscretizeR(m_contR, dt);
 
-    if (IsStabilizable<States, Outputs>(discA.transpose(), C.transpose())) {
+    if (IsStabilizable<States, Outputs>(discA.transpose(), C.transpose()) &&
+        Outputs <= States) {
       m_initP = drake::math::DiscreteAlgebraicRiccatiEquation(
           discA.transpose(), C.transpose(), discQ, m_discR);
     } else {
