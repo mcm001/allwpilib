@@ -29,7 +29,7 @@ import org.ejml.simple.SimpleMatrix;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 public class KalmanFilter<States extends Num, Inputs extends Num,
-        Outputs extends Num> {
+        Outputs extends Num> implements KalmanTypeFilter<States, Inputs, Outputs> {
 
     /**
      * The states of the system.
@@ -123,6 +123,15 @@ public class KalmanFilter<States extends Num, Inputs extends Num,
      */
     public Matrix<States, States> getP() {
         return m_P;
+    }
+
+    /**
+     * Sets the entire error covariance matrix P.
+     *
+     * @param newP The new value of P to use.
+     */
+    public void setP(Matrix<States, States> newP) {
+        m_P = newP;
     }
 
     /**

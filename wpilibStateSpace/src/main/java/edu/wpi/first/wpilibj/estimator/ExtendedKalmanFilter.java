@@ -13,7 +13,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
 import java.util.function.BiFunction;
 
 
-public class ExtendedKalmanFilter<States extends Num, Inputs extends Num, Outputs extends Num> {
+public class ExtendedKalmanFilter<States extends Num, Inputs extends Num, Outputs extends Num> implements KalmanTypeFilter<States, Inputs, Outputs> {
 
     private final boolean m_useRungeKutta;
 
@@ -222,17 +222,17 @@ public class ExtendedKalmanFilter<States extends Num, Inputs extends Num, Output
      * @param y      Measurement vector.
      * @param h      A vector-valued function of x and u that returns the measurement
      *               vector.
-     * @param R      Discrete measurement noise covariance matrix.
+     * @param discR  Discrete measurement noise covariance matrix.
      */
     public <Rows extends Num> void correct(
             Nat<Rows> rows, Matrix<Inputs, N1> u,
             Matrix<Rows, N1> y,
             BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<Rows, N1>> h,
-            Matrix<Rows, Rows> R
+            Matrix<Rows, Rows> discR
     ) {
         final var C = NumericalJacobian.numericalJacobianX(rows, m_states, h, m_xHat, u);
 
-        final var S = C.times(m_P).times(C.transpose()).plus(R);
+        final var S = C.times(m_P).times(C.transpose()).plus(discR);
 
         // We want to put K = PC^T S^-1 into Ax = b form so we can solve it more
         // efficiently.

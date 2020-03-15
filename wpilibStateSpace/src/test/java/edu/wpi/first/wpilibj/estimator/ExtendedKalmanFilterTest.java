@@ -286,14 +286,10 @@ public class ExtendedKalmanFilterTest {
         System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
         System.out.println("Max error (meters):  " + maxError);
 
-//        new SwingWrapper<>(chart).displayChart();
-//        try {
-//            Thread.sleep(1000000000);
-//        } catch (InterruptedException e) {
-//        }
-    }
-
-    private Transform2d getRandomTransform(double xStdDev, double yStdDev, double thetaStdDev, Random rand) {
-        return new Transform2d(new Translation2d(rand.nextGaussian() * xStdDev, rand.nextGaussian() * yStdDev), new Rotation2d(rand.nextGaussian() * thetaStdDev));
+        // new SwingWrapper<>(chart).displayChart();
+        // try {
+        //     Thread.sleep(1000000000);
+        // } catch (InterruptedException e) {
+        // }
     }
 }

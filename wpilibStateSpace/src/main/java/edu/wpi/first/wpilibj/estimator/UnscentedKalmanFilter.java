@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 
 
 public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
-        Outputs extends Num> {
+        Outputs extends Num> implements KalmanTypeFilter<States, Inputs, Outputs> {
 
     private final BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<States, N1>> m_f;
     private final BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<Outputs, N1>> m_h;
@@ -96,8 +96,83 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
     }
 
     /**
+     * Returns the error covariance matrix P.
+     *
+     * @return the error covariance matrix P.
+     */
+    @Override
+    public Matrix<States, States> getP() {
+        return m_P;
+    }
+
+    /**
+     * Sets the entire error covariance matrix P.
+     *
+     * @param newP The new value of P to use.
+     */
+    @Override
+    public void setP(Matrix<States, States> newP) {
+        m_P = newP;
+    }
+
+    /**
+     * Returns an element of the error covariance matrix P.
+     *
+     * @param i Row of P.
+     * @param j Column of P.
+     * @return the value of the error covariance matrix P at (i, j).
+     */
+    @Override
+    public double getP(int i, int j) {
+        return m_P.get(i, j);
+    }
+
+    /**
+     * Returns the state estimate x-hat.
+     *
+     * @return the state estimate x-hat.
+     */
+    @Override
+    public Matrix<States, N1> getXhat() {
+        return m_xHat;
+    }
+
+    /**
+     * Set initial state estimate x-hat.
+     *
+     * @param xHat The state estimate x-hat.
+     */
+    @Override
+    public void setXhat(Matrix<States, N1> xHat) {
+        m_xHat = xHat;
+    }
+
+    /**
+     * Returns an element of the state estimate x-hat.
+     *
+     * @param i Row of x-hat.
+     * @return the value of the state estimate x-hat at i.
+     */
+    @Override
+    public double getXhat(int i) {
+        return m_xHat.get(i, 0);
+    }
+
+    /**
+     * Set an element of the initial state estimate x-hat.
+     *
+     * @param i     Row of x-hat.
+     * @param value Value for element of x-hat.
+     */
+    @Override
+    public void setXhat(int i, double value) {
+        m_xHat.set(i, 0, value);
+    }
+
+    /**
      * Resets the observer.
      */
+    @Override
     public void reset() {
         m_xHat = new Matrix<>(new SimpleMatrix(states.getNum(), 1));
         m_P = new Matrix<>(new SimpleMatrix(states.getNum(), states.getNum()));
@@ -109,6 +184,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
      * @param u         New control input from controller.
      * @param dtSeconds Timestep for prediction.
      */
+    @Override
     public void predict(Matrix<Inputs, N1> u, double dtSeconds) {
         var sigmas = m_pts.sigmaPoints(m_xHat, m_P);
 
@@ -130,6 +206,11 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
 
     }
 
+    @Override
+    public void correct(Matrix<Inputs, N1> u, Matrix<Outputs, N1> y) {
+        correct(u, y, m_h, m_R);
+    }
+
     /**
      * Correct the state estimate x-hat using the measurements in y.
      * <p>
@@ -143,7 +224,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
      *          the measurement vector.
      * @param R Measurement noise covariance matrix.
      */
-    public void Correct(
+    public void correct(
             Matrix<Inputs, N1> u,
             Matrix<Outputs, N1> y,
             BiFunction<Matrix<States, N1>, Matrix<Inputs, N1>, Matrix<Outputs, N1>> h,
