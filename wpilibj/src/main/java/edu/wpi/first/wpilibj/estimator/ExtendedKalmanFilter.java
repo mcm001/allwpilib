@@ -1,15 +1,20 @@
 package edu.wpi.first.wpilibj.estimator;
 
+import java.util.function.BiFunction;
+
 import edu.wpi.first.wpilibj.math.StateSpaceUtils;
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpilibj.system.RungeKutta;
-import edu.wpi.first.wpiutil.math.*;
+import edu.wpi.first.wpiutil.math.Drake;
+import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.MatrixUtils;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.Num;
+import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
-import java.util.function.BiFunction;
-
-
-public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> implements KalmanTypeFilter<S, I, O> {
+public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
+        implements KalmanTypeFilter<S, I, O> {
 
   private final boolean m_useRungeKutta;
 
@@ -40,9 +45,11 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
    *                           the measurement vector.
    * @param stateStdDevs       Standard deviations of model states.
    * @param measurementStdDevs Standard deviations of measurements.
-   * @param useRungeKutta      Whether or not to numerically integrate f; intended for situations where f is continous
+   * @param useRungeKutta      Whether or not to numerically integrate f; intended for situations
+   *                           where f is continous
    * @param dtSeconds          Nominal discretization timestep.
    */
+  @SuppressWarnings("ParameterName")
   public ExtendedKalmanFilter(
           Nat<S> states,
           Nat<I> inputs,
@@ -67,8 +74,10 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
     m_contQ = StateSpaceUtils.makeCovMatrix(states, stateStdDevs);
     var contR = StateSpaceUtils.makeCovMatrix(outputs, measurementStdDevs);
 
-    final var contA = NumericalJacobian.numericalJacobianX(states, states, f, m_xHat, MatrixUtils.zeros(inputs));
-    final var C = NumericalJacobian.numericalJacobianX(outputs, states, h, m_xHat, MatrixUtils.zeros(inputs));
+    final var contA = NumericalJacobian
+            .numericalJacobianX(states, states, f, m_xHat, MatrixUtils.zeros(inputs));
+    final var C = NumericalJacobian
+            .numericalJacobianX(outputs, states, h, m_xHat, MatrixUtils.zeros(inputs));
 
     final var discPair = StateSpaceUtils.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
@@ -98,16 +107,6 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
   }
 
   /**
-   * Sets the entire error covariance matrix P.
-   *
-   * @param newP The new value of P to use.
-   */
-  @Override
-  public void setP(Matrix<S, S> newP) {
-    m_P = newP;
-  }
-
-  /**
    * Returns an element of the error covariance matrix P.
    *
    * @param row Row of P.
@@ -117,6 +116,16 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
   @Override
   public double getP(int row, int col) {
     return m_P.get(row, col);
+  }
+
+  /**
+   * Sets the entire error covariance matrix P.
+   *
+   * @param newP The new value of P to use.
+   */
+  @Override
+  public void setP(Matrix<S, S> newP) {
+    m_P = newP;
   }
 
   /**
@@ -130,6 +139,17 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
   }
 
   /**
+   * Returns an element of the state estimate x-hat.
+   *
+   * @param row Row of x-hat.
+   * @return the value of the state estimate x-hat at i.
+   */
+  @Override
+  public double getXhat(int row) {
+    return m_xHat.get(row, 0);
+  }
+
+  /**
    * Set initial state estimate x-hat.
    *
    * @param xHat The state estimate x-hat.
@@ -140,16 +160,6 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num> i
     m_xHat = xHat;
   }
 
-  /**
-   * Returns an element of the state estimate x-hat.
-   *
-   * @param row Row of x-hat.
-   * @return the value of the state estimate x-hat at i.
-   */
-  @Override
-  public double getXhat(int row) {
-    return m_xHat.get(row, 0);
-  }
 
   /**
    * Set an element of the initial state estimate x-hat.

@@ -1,11 +1,16 @@
 package edu.wpi.first.wpilibj.estimator;
 
+import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.math.StateSpaceUtils;
 import edu.wpi.first.wpilibj.system.LinearSystem;
-import edu.wpi.first.wpiutil.math.*;
+import edu.wpi.first.wpiutil.math.Drake;
+import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.MatrixUtils;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.Num;
+import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
-import org.ejml.simple.SimpleMatrix;
 
 /**
  * Luenberger observers combine predictions from a model and measurements to
