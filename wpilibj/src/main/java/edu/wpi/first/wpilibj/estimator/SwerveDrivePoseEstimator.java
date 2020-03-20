@@ -1,5 +1,6 @@
 package edu.wpi.first.wpilibj.estimator;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Twist2d;
@@ -19,6 +20,7 @@ public class SwerveDrivePoseEstimator {
   private final KalmanFilterLatencyCompensator<N3, N3, N3> m_latencyCompensator;
 
   private final double m_nominalDt; // Seconds
+  private double m_prevTimeSeconds = -1.0;
 
   private Rotation2d m_gyroOffset;
   private Rotation2d m_previousAngle;
@@ -37,7 +39,7 @@ public class SwerveDrivePoseEstimator {
           Rotation2d gyroAngle, Pose2d initialPoseMeters, SwerveDriveKinematics kinematics,
           Matrix<N3, N1> stateStdDevs, Matrix<N3, N1> measurementStdDevs
   ) {
-    this(gyroAngle, initialPoseMeters, kinematics, stateStdDevs, measurementStdDevs, 0.01);
+    this(gyroAngle, initialPoseMeters, kinematics, stateStdDevs, measurementStdDevs, 0.02);
   }
 
   /**
@@ -60,16 +62,8 @@ public class SwerveDrivePoseEstimator {
     var observerSystem = new LinearSystem<>(
             Nat.N3(), Nat.N3(), Nat.N3(),
             MatrixUtils.zeros(Nat.N3(), Nat.N3()), // A
-            new MatBuilder<>(Nat.N3(), Nat.N3()).fill( // B
-                    1, 0, 0,
-                    0, 1, 0,
-                    0, 0, 1
-            ),
-            new MatBuilder<>(Nat.N3(), Nat.N3()).fill( // C
-                    1, 0, 0,
-                    0, 1, 0,
-                    0, 0, 1
-            ),
+            MatrixUtils.eye(Nat.N3()), // B
+            MatrixUtils.eye(Nat.N3()), // C
             MatrixUtils.zeros(Nat.N3(), Nat.N3()), // D
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill( // uMin
                     Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY
@@ -89,27 +83,73 @@ public class SwerveDrivePoseEstimator {
   }
 
   /**
+   * Resets the robot's position on the field.
+   *
+   * <p>You NEED to reset your encoders (to zero) when calling this method.
+   *
+   * <p>The gyroscope angle does not need to be reset here on the user's robot code.
+   * The library automatically takes care of offsetting the gyro angle.
+   *
+   * @param poseMeters The position on the field that your robot is at.
+   * @param gyroAngle  The angle reported by the gyroscope.
+   */
+  public void resetPosition(Pose2d poseMeters, Rotation2d gyroAngle) {
+    m_previousAngle = poseMeters.getRotation();
+    m_gyroOffset = getEstimatedPosition().getRotation().minus(gyroAngle);
+  }
+
+  /**
+   * Gets the pose of the robot at the current time as estimated by the Extended Kalman Filter.
+   *
+   * @return The estimated robot pose in meters.
+   */
+  public Pose2d getEstimatedPosition() {
+    return new Pose2d(
+            m_observer.getXhat(0),
+            m_observer.getXhat(1),
+            new Rotation2d(m_observer.getXhat(2))
+    );
+  }
+
+  /**
    * Add a vision measurement to the Extended Kalman Filter. This will correct the
    * odometry pose estimate while still accounting for measurement noise.
    *
    * <p>This method can be called as infrequently as you want, as long as you are
    * calling {@link DifferentialDrivePoseEstimator#update} every loop.
    *
-   * @param visionRobotPose  The pose of the robot as measured by the vision
-   *                         camera.
-   * @param timestampSeconds The timestamp of the vision measurement in seconds
-   *                         since FPGA startup (i.e. the epoch of this timestamp
-   *                         is the same epoch as
-   *                         {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
-   *                         Timer.getFPGATimestamp}.) This means that you should
-   *                         use Timer.getFPGATimestamp as your time source in
-   *                         this case.
+   * @param visionRobotPoseMeters The pose of the robot as measured by the vision
+   *                              camera.
+   * @param timestampSeconds      The timestamp of the vision measurement in seconds. Note that if
+   *                              you don't use your own time source by calling
+   *                              {@link SwerveDrivePoseEstimator#updateWithTime} then you
+   *                              must use a timestamp with an epoch since FPGA startup
+   *                              (i.e. the epoch of this timestamp is the same epoch as
+   *                              {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
+   *                              Timer.getFPGATimestamp}.) This means that you should
+   *                              use Timer.getFPGATimestamp as your time source in
+   *                              this case.
    */
-  public void addVisionMeasurement(Pose2d visionRobotPose, double timestampSeconds) {
+  public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastMeasurement(
             m_observer, m_nominalDt,
-            poseToVector(visionRobotPose), timestampSeconds
+            poseToVector(visionRobotPoseMeters), timestampSeconds
     );
+  }
+
+  /**
+   * Updates the the Extended Kalman Filter using only wheel encoder information.
+   * Note that this should be called every loop.
+   *
+   * @param gyroAngle   The current gyro angle.
+   * @param wheelStates Velocities and rotations of the swerve modules.
+   * @return The estimated pose of the robot in meters.
+   */
+  public Pose2d update(
+          Rotation2d gyroAngle,
+          SwerveModuleState... wheelStates
+  ) {
+    return updateWithTime(Timer.getFPGATimestamp(), gyroAngle, wheelStates);
   }
 
   /**
@@ -117,14 +157,21 @@ public class SwerveDrivePoseEstimator {
    * Note that this should be called every loop (and the correct loop period must
    * be passed into the constructor of this class.)
    *
-   * @param gyroAngle           The current gyro angle.
-   * @param wheelStates         Velocities and rotations of the swerve modules.
-   * @return The estimated pose of the robot.
+   * @param currentTimeSeconds Time at which this method was called, in seconds.
+   * @param gyroAngle          The current gyroscope angle.
+   * @param wheelStates        Velocities and rotations of the swerve modules.
+   * @return The estimated pose of the robot in meters.
    */
   @SuppressWarnings("LocalVariableName")
-  public Pose2d update(Rotation2d gyroAngle, SwerveModuleState... wheelStates) {
+  public Pose2d updateWithTime(
+          double currentTimeSeconds,
+          Rotation2d gyroAngle, SwerveModuleState... wheelStates
+  ) {
+    double dt = m_prevTimeSeconds >= 0 ? currentTimeSeconds - m_prevTimeSeconds : 0.0;
+    m_prevTimeSeconds = currentTimeSeconds;
+
     var angle = gyroAngle.plus(m_gyroOffset);
-    var omega = angle.minus(m_previousAngle).getRadians() / m_nominalDt;
+    var omega = angle.minus(m_previousAngle).getRadians() / dt;
 
     var chassisSpeeds = m_kinematics.toChassisSpeeds(wheelStates);
     var fieldRelativeVelocities = new Pose2d(0, 0, angle).exp(
@@ -139,8 +186,8 @@ public class SwerveDrivePoseEstimator {
     );
     m_previousAngle = angle;
 
-    m_latencyCompensator.addObserverState(m_observer, u);
-    m_observer.predict(u, m_nominalDt);
+    m_latencyCompensator.addObserverState(m_observer, u, currentTimeSeconds);
+    m_observer.predict(u, dt);
 
     return new Pose2d(
             m_observer.getXhat(0),

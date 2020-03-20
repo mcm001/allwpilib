@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Transform2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
@@ -84,7 +83,7 @@ public class SwerveDrivePoseEstimatorTest {
                 moduleState.speedMetersPerSecond += rand.nextGaussian() * 1;
             }
 
-            var xHat = estimator.update(
+            var xHat = estimator.updateWithTime(
                     groundtruthState.poseMeters.getRotation().plus(new Rotation2d(rand.nextGaussian() * 0.001)),
                     moduleStates);
 

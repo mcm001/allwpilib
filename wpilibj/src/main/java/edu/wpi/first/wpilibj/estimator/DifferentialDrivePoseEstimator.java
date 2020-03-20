@@ -1,5 +1,6 @@
 package edu.wpi.first.wpilibj.estimator;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Twist2d;
@@ -42,15 +43,26 @@ public class DifferentialDrivePoseEstimator {
   private final KalmanFilterLatencyCompensator<N3, N3, N3> m_latencyCompensator;
 
   private final double m_nominalDt; // Seconds
+  private double m_prevTimeSeconds = -1.0;
 
   private Rotation2d m_gyroOffset;
   private Rotation2d m_previousAngle;
 
+  /**
+   * Constructs a DifferentialDrivePose estimator.
+   *
+   * @param gyroAngle          The current gyro angle.
+   * @param initialPoseMeters  The starting pose estimate.
+   * @param stateStdDevs       Standard deviations of model states. Increase these numbers to trust
+   *                           your encoders less.
+   * @param measurementStdDevs Standard deviations of the measurements. Increase these numbers to
+   *                           trust vision less.
+   */
   public DifferentialDrivePoseEstimator(
           Rotation2d gyroAngle, Pose2d initialPoseMeters,
           Matrix<N3, N1> stateStdDevs, Matrix<N3, N1> measurementStdDevs
   ) {
-    this(gyroAngle, initialPoseMeters, stateStdDevs, measurementStdDevs, 0.01);
+    this(gyroAngle, initialPoseMeters, stateStdDevs, measurementStdDevs, 0.02);
   }
 
   /**
@@ -97,44 +109,94 @@ public class DifferentialDrivePoseEstimator {
   }
 
   /**
+   * Resets the robot's position on the field.
+   *
+   * <p>You NEED to reset your encoders (to zero) when calling this method.
+   *
+   * <p>The gyroscope angle does not need to be reset here on the user's robot code.
+   * The library automatically takes care of offsetting the gyro angle.
+   *
+   * @param poseMeters The position on the field that your robot is at.
+   * @param gyroAngle  The angle reported by the gyroscope.
+   */
+  public void resetPosition(Pose2d poseMeters, Rotation2d gyroAngle) {
+    m_previousAngle = poseMeters.getRotation();
+    m_gyroOffset = getEstimatedPosition().getRotation().minus(gyroAngle);
+  }
+
+  /**
+   * Gets the pose of the robot at the current time as estimated by the Extended Kalman Filter.
+   *
+   * @return The estimated robot pose in meters.
+   */
+  public Pose2d getEstimatedPosition() {
+    return new Pose2d(
+            m_observer.getXhat(0),
+            m_observer.getXhat(1),
+            new Rotation2d(m_observer.getXhat(2))
+    );
+  }
+
+  /**
    * Add a vision measurement to the Extended Kalman Filter. This will correct the
    * odometry pose estimate while still accounting for measurement noise.
    *
    * <p>This method can be called as infrequently as you want, as long as you are
    * calling {@link DifferentialDrivePoseEstimator#update} every loop.
    *
-   * @param visionRobotPose  The pose of the robot as measured by the vision
-   *                         camera.
-   * @param timestampSeconds The timestamp of the vision measurement in seconds
-   *                         since FPGA startup (i.e. the epoch of this timestamp
-   *                         is the same epoch as
-   *                         {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
-   *                         Timer.getFPGATimestamp}.) This means that you should
-   *                         use Timer.getFPGATimestamp as your time source in
-   *                         this case.
+   * @param visionRobotPoseMeters The pose of the robot as measured by the vision
+   *                              camera.
+   * @param timestampSeconds      The timestamp of the vision measurement in seconds. Note that if
+   *                              you don't use your own time source by calling
+   *                              {@link DifferentialDrivePoseEstimator#updateWithTime} then you
+   *                              must use a timestamp with an epoch since FPGA startup
+   *                              (i.e. the epoch of this timestamp is the same epoch as
+   *                              {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
+   *                              Timer.getFPGATimestamp}.) This means that you should
+   *                              use Timer.getFPGATimestamp as your time source in
+   *                              this case.
    */
-  public void addVisionMeasurement(Pose2d visionRobotPose, double timestampSeconds) {
+  public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastMeasurement(
             m_observer, m_nominalDt,
-            poseToVector(visionRobotPose), timestampSeconds
+            poseToVector(visionRobotPoseMeters), timestampSeconds
     );
   }
 
   /**
    * Updates the the Extended Kalman Filter using only wheel encoder information.
-   * Note that this should be called every loop (and the correct loop period must
-   * be passed into the constructor of this class.)
+   * Note that this should be called every loop.
    *
    * @param gyroAngle           The current gyro angle.
    * @param leftDistanceMeters  The distance the left wheel has travelled since
    *                            the last loop iteration.
    * @param rightDistanceMeters The distance the left wheel has travelled since
    *                            the last loop iteration.
-   * @return The estimated pose of the robot.
+   * @return The estimated pose of the robot in meters.
    */
-  @SuppressWarnings("LocalVariableName")
   public Pose2d update(
           Rotation2d gyroAngle,
+          double leftDistanceMeters, double rightDistanceMeters
+  ) {
+    return updateWithTime(Timer.getFPGATimestamp(), gyroAngle, leftDistanceMeters,
+            rightDistanceMeters);
+  }
+
+  /**
+   * Updates the the Extended Kalman Filter using only wheel encoder information.
+   * Note that this should be called every loop.
+   *
+   * @param currentTimeSeconds  Time at which this method was called, in seconds.
+   * @param gyroAngle           The current gyro angle.
+   * @param leftDistanceMeters  The distance the left wheel has travelled since
+   *                            the last loop iteration.
+   * @param rightDistanceMeters The distance the left wheel has travelled since
+   *                            the last loop iteration.
+   * @return The estimated pose of the robot in meters.
+   */
+  @SuppressWarnings("LocalVariableName")
+  public Pose2d updateWithTime(
+          double currentTimeSeconds, Rotation2d gyroAngle,
           double leftDistanceMeters, double rightDistanceMeters
   ) {
     var angle = gyroAngle.plus(m_gyroOffset);
@@ -142,14 +204,13 @@ public class DifferentialDrivePoseEstimator {
             angle.minus(m_previousAngle).getRadians());
     m_previousAngle = angle;
 
-    m_latencyCompensator.addObserverState(m_observer, u);
-    m_observer.predict(u, m_nominalDt);
+    double dt = m_prevTimeSeconds >= 0 ? currentTimeSeconds - m_prevTimeSeconds : 0.0;
+    m_prevTimeSeconds = currentTimeSeconds;
 
-    return new Pose2d(
-            m_observer.getXhat(0),
-            m_observer.getXhat(1),
-            new Rotation2d(m_observer.getXhat(2))
-    );
+    m_latencyCompensator.addObserverState(m_observer, u, currentTimeSeconds);
+    m_observer.predict(u, dt);
+
+    return getEstimatedPosition();
   }
 
   // TODO: Deduplicate

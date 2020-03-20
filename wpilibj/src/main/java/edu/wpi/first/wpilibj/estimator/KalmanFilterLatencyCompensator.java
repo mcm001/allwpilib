@@ -18,8 +18,10 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
   }
 
   @SuppressWarnings("ParameterName")
-  public void addObserverState(KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u) {
-    m_pastObserverStates.put(Timer.getFPGATimestamp(), new ObserverState(observer, u));
+  public void addObserverState(
+          KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, double timestampSeconds
+  ) {
+    m_pastObserverStates.put(timestampSeconds, new ObserverState(observer, u));
 
     if (m_pastObserverStates.size() > k_maxPastObserverStates) {
       m_pastObserverStates.remove(m_pastObserverStates.firstKey());
@@ -29,7 +31,7 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
   @SuppressWarnings("ParameterName")
   public void applyPastMeasurement(
           KalmanTypeFilter<S, I, O> observer,
-          double dtSeconds,
+          double nominalDtSeconds,
           Matrix<O, N1> y,
           double timestampSeconds
   ) {
@@ -61,7 +63,7 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
         // measurement time and the time that the inputs were captured at is very small
         observer.correct(st.inputs, y);
       }
-      observer.predict(st.inputs, dtSeconds);
+      observer.predict(st.inputs, nominalDtSeconds); // TODO: remove use of nominal dt
 
       y = null;
     }
