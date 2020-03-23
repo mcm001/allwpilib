@@ -20,7 +20,7 @@ class DifferentialDrivePoseEstimator {
    *                           these numbers to trust your encoders less.
    * @param measurementStdDevs Standard deviations of the measurements. Increase
    *                           these numbers to trust vision less.
-   * @param nominalDtSeconds   The time in seconds between each robot loop.
+   * @param nominalDt          The time in seconds between each robot loop.
    */
   DifferentialDrivePoseEstimator(const Rotation2d& gyroAngle,
                                  const Pose2d& initialPose,
