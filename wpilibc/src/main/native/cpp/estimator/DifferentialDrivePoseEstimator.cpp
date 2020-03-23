@@ -8,13 +8,11 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
     const Vector<3>& stateStdDevs, const Vector<3>& measurementStdDevs,
     units::second_t nominalDt)
-    : m_nominalDt(nominalDt) {
-  m_observer = ExtendedKalmanFilter<3, 3, 3>(
-      [this](const Vector<3>& x, const Vector<3>& u) { return F(x, u); },
-      [this](const Vector<3>& x, const Vector<3>& u) { return x; },
-      StdDevMatrixToArray(stateStdDevs),
-      StdDevMatrixToArray(measurementStdDevs), m_nominalDt);
-
+    : m_observer([](const Vector<3>& x, const Vector<3>& u) { return F(x, u); },
+                 [](const Vector<3>& x, const Vector<3>& u) { return x; },
+                 StdDevMatrixToArray(stateStdDevs),
+                 StdDevMatrixToArray(measurementStdDevs), nominalDt),
+      m_nominalDt(nominalDt) {
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
   m_previousAngle = initialPose.Rotation();
   m_observer.SetXhat(PoseToVector(initialPose));

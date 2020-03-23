@@ -10,19 +10,15 @@ class KalmanFilterLatencyCompensator {
  public:
   class ObserverState {
    public:
-    const Eigen::Matrix<double, States, 1> xHat;
-    const Eigen::Matrix<double, States, States> errorCovariances;
-    const Eigen::Matrix<double, Inputs, 1> inputs;
+    Eigen::Matrix<double, States, 1> xHat;
+    Eigen::Matrix<double, States, States> errorCovariances;
+    Eigen::Matrix<double, Inputs, 1> inputs;
 
-    ObserverState(KalmanTypeFilter<States, Inputs, Outputs> observer,
-                  Eigen::Matrix<double, Inputs, 1> u) {
-      xHat = observer.Xhat();
-      errorCovariances = observer.P();
-      inputs = u;
-    }
+    ObserverState(KalmanTypeFilter observer, Eigen::Matrix<double, Inputs, 1> u)
+        : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
-  void AddObserverState(KalmanTypeFilter<States, Inputs, Outputs> observer,
+  void AddObserverState(KalmanTypeFilter observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
     m_pastObserverStates.insert(std::pair<units::second_t, ObserverState>{
@@ -33,7 +29,7 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  void ApplyPastMeasurement(KalmanTypeFilter<States, Inputs, Outputs> observer,
+  void ApplyPastMeasurement(KalmanTypeFilter observer,
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp) {
@@ -80,7 +76,7 @@ class KalmanFilterLatencyCompensator {
   }
 
  private:
-  constexpr unsigned int kMaxPastObserverStates = 300;
+  unsigned int kMaxPastObserverStates = 300;
   std::map<units::second_t, ObserverState> m_pastObserverStates;
 };
 }  // namespace frc
