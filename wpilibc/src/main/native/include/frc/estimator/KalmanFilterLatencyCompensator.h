@@ -16,7 +16,7 @@ class KalmanFilterLatencyCompensator {
 
     ObserverState(KalmanTypeFilter<States, Inputs, Outputs> observer,
                   Eigen::Matrix<double, Inputs, 1> u) {
-      xHat = observer.XHat();
+      xHat = observer.Xhat();
       errorCovariances = observer.P();
       inputs = u;
     }
@@ -36,9 +36,48 @@ class KalmanFilterLatencyCompensator {
   void ApplyPastMeasurement(KalmanTypeFilter<States, Inputs, Outputs> observer,
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
-                            units::second_t timestamp){
-      // TODO
-  };
+                            units::second_t timestamp) {
+    auto lowIterator = m_pastObserverStates.lower_bound(timestamp);
+    auto highIterator = m_pastObserverStates.upper_bound(timestamp);
+
+    typename std::map<units::second_t, ObserverState>::iterator closestEntry;
+
+    // Find the entry which is closest in time to the timestamp.
+    if (lowIterator != m_pastObserverStates.end() &&
+        highIterator != m_pastObserverStates.end()) {
+      closestEntry = units::math::abs(timestamp - lowIterator->first) <
+                             units::math::abs(timestamp - highIterator->first)
+                         ? lowIterator
+                         : highIterator;
+    } else if (lowIterator == m_pastObserverStates.end() &&
+               highIterator == m_pastObserverStates.end()) {
+      // State map was empty, which means that we got a measurement right at
+      // startup. The only thing we can do is ignore the measurement.
+      return;
+    } else {
+      closestEntry = lowIterator != m_pastObserverStates.end() ? lowIterator
+                                                               : highIterator;
+    }
+
+    std::map<units::second_t, ObserverState> tailMap{
+        closestEntry, m_pastObserverStates.end()};
+
+    units::second_t lastTimestamp = tailMap.begin()->first - nominalDt;
+    for (const auto& [key, st] : tailMap) {
+      if (key == closestEntry->first) {
+        observer.SetP(st.errorCovariances);
+        observer.SetXhat(st.xHat);
+
+        // Note that we correct the observer with inputs closest in time to the
+        // measurement This makes the assumption that the dt is small enough
+        // that the difference between the measurement time and the time that
+        // the inputs were captured at is very small.
+        observer.Correct(st.inputs, y);
+      }
+      observer.Predict(st.inputs, key - lastTimestamp);
+      lastTimestamp = key;
+    }
+  }
 
  private:
   constexpr unsigned int kMaxPastObserverStates = 300;
