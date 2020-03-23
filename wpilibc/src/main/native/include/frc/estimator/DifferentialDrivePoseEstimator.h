@@ -1,12 +1,19 @@
-#pragma once
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
 
-#include "frc/estimator/ExtendedKalmanFilter.h"
-#include "frc/estimator/KalmanFilterLatencyCompensator.h"
-#include "frc/geometry/Rotation2d.h"
-#include "frc/geometry/Pose2d.h"
+#pragma once
 
 #include <Eigen/Core>
 #include <units/units.h>
+
+#include "frc/estimator/ExtendedKalmanFilter.h"
+#include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/geometry/Pose2d.h"
+#include "frc/geometry/Rotation2d.h"
 
 namespace frc {
 

@@ -1,6 +1,14 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
-#include "frc2/Timer.h"
+
 #include "frc/StateSpaceUtil.h"
+#include "frc2/Timer.h"
 
 using namespace frc;
 
@@ -86,10 +94,9 @@ Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(
   // Differential drive forward kinematics
   // v_c = (v_l + v_r) / 2
   units::meter_t dx{(u(0, 0) + u(1, 0)) / 2.0};
-  auto newPose = Pose2d{
-      units::meter_t{x(0, 0)}, units::meter_t{x(1, 0)},
-      Rotation2d{units::radian_t(
-          x(2, 0))}}.Exp({dx, 0_m, units::radian_t(u(2, 0))});
+  auto newPose = Pose2d{units::meter_t{x(0, 0)}, units::meter_t{x(1, 0)},
+                        Rotation2d{units::radian_t(x(2, 0))}}
+                     .Exp({dx, 0_m, units::radian_t(u(2, 0))});
 
   return frc::MakeMatrix<3, 1>(newPose.Translation().X().to<double>(),
                                newPose.Translation().Y().to<double>(),
