@@ -7,6 +7,8 @@
 
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 
+#include <array>
+
 #include "frc/StateSpaceUtil.h"
 #include "frc2/Timer.h"
 
@@ -16,7 +18,7 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
     const Vector<3>& stateStdDevs, const Vector<3>& measurementStdDevs,
     units::second_t nominalDt)
-    : m_observer([](const Vector<3>& x, const Vector<3>& u) { return F(x, u); },
+    : m_observer(&DifferentialDrivePoseEstimator::F,
                  [](const Vector<3>& x, const Vector<3>& u) { return x; },
                  StdDevMatrixToArray(stateStdDevs),
                  StdDevMatrixToArray(measurementStdDevs), nominalDt),
@@ -82,11 +84,9 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
 
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::PoseToVector(
     const Pose2d& pose) {
-  Eigen::Matrix<double, 3, 1> retVal;
-  retVal << pose.Translation().X().to<double>(),
+  return frc::MakeMatrix<3, 1>(pose.Translation().X().to<double>(),
       pose.Translation().Y().to<double>(),
-      pose.Rotation().Radians().to<double>();
-  return retVal;
+      pose.Rotation().Radians().to<double>());
 }
 
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(
