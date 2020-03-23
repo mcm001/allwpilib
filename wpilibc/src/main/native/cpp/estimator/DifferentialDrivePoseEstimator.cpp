@@ -1,19 +1,19 @@
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 #include "frc2/Timer.h"
+#include "frc/StateSpaceUtil.h"
 
 using namespace frc;
 
 DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
-    Eigen::Matrix<double, 3, 1> stateStdDevs,
-    Eigen::Matrix<double, 3, 1> measurementStdDevs, units::second_t nominalDt)
+    const Vector<3>& stateStdDevs, const Vector<3>& measurementStdDevs,
+    units::second_t nominalDt)
     : m_nominalDt(nominalDt) {
   m_observer = ExtendedKalmanFilter<3, 3, 3>(
       [this](const Vector<3>& x, const Vector<3>& u) { return F(x, u); },
       [this](const Vector<3>& x, const Vector<3>& u) { return x; },
-      stateStdDevs, measurementStdDevs, m_nominalDt);
-
-  m_latencyCompensator = KalmanFilterLatencyCompensator<3, 3, 3>();
+      StdDevMatrixToArray(stateStdDevs),
+      StdDevMatrixToArray(measurementStdDevs), m_nominalDt);
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
   m_previousAngle = initialPose.Rotation();
@@ -74,18 +74,21 @@ Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::PoseToVector(
 }
 
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(
-    Eigen::Matrix<double, 3, 1> x, Eigen::Matrix<double, 3, 1> u) {
+    const Vector<3>& x, const Vector<3>& u) {
   // Differential drive forward kinematics
   // v_c = (v_l + v_r) / 2
-
-  units::meter_t dx{(u(0, 0) + u(1, 0)) / 2.0};
-  Pose2d newPose = Pose2d{
+  const units::meter_t dx{(u(0, 0) + u(1, 0)) / 2.0};
+  const auto newPose = Pose2d{
       units::meter_t{x(0, 0)}, units::meter_t{x(1, 0)},
       Rotation2d{units::radian_t(
           x(2, 0))}}.Exp({dx, 0_m, units::radian_t(u(2, 0))});
 
-  Eigen::Matrix<double, 3, 1> retVal;
-  retVal << newPose.Translation().X().to<double>(),
-      newPose.Translation().Y().to<double>(), x(2, 0) + u(2, 0);
-  return retVal;
+  return frc::MakeMatrix<3, 1>(newPose.Translation().X().to<double>(),
+                               newPose.Translation().Y().to<double>(),
+                               x(2, 0) + u(2, 0));
+}
+
+std::array<double, 3> DifferentialDrivePoseEstimator::StdDevMatrixToArray(
+    const Vector<3>& stdDevs) {
+  return std::array<double, 3>{stdDevs(0, 0), stdDevs(1, 0), stdDevs(2, 0)};
 }

@@ -33,7 +33,7 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  void ApplyPastMeasurement(KalmanTypeFilter<States, Inputs, Outputs>* observer,
+  void ApplyPastMeasurement(KalmanTypeFilter<States, Inputs, Outputs> observer,
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp){
