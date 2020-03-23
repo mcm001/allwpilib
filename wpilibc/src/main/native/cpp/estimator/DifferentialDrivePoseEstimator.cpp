@@ -24,6 +24,9 @@ void DifferentialDrivePoseEstimator::ResetPosition(
     const Pose2d& pose, const Rotation2d& gyroAngle) {
   m_previousAngle = pose.Rotation();
   m_gyroOffset = GetEstimatedPosition().Rotation() - gyroAngle;
+
+  m_prevLeftDistance = 0_m;
+  m_prevRightDistance = 0_m;
 }
 
 Pose2d DifferentialDrivePoseEstimator::GetEstimatedPosition() const {
@@ -50,9 +53,16 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
     units::meter_t leftDistance, units::meter_t rightDistance) {
   auto angle = gyroAngle + m_gyroOffset;
 
-  Eigen::Matrix<double, 3, 1> u;
-  u << leftDistance.to<double>(), rightDistance.to<double>(),
-      (angle - m_previousAngle).Radians().to<double>();
+  auto deltaLeftDistance = leftDistance - m_prevLeftDistance;
+  auto deltaRightDistance = rightDistance - m_prevRightDistance;
+
+  m_prevLeftDistance = leftDistance;
+  m_prevRightDistance = rightDistance;
+
+  auto u = frc::MakeMatrix<3, 1>(
+      deltaLeftDistance.to<double>(), deltaRightDistance.to<double>(),
+      (angle - m_previousAngle).Radians().to<double>());
+
   m_previousAngle = angle;
 
   auto dt = m_prevTime >= 0_s ? currentTime - m_prevTime : 0_s;
@@ -77,8 +87,8 @@ Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(
     const Vector<3>& x, const Vector<3>& u) {
   // Differential drive forward kinematics
   // v_c = (v_l + v_r) / 2
-  const units::meter_t dx{(u(0, 0) + u(1, 0)) / 2.0};
-  const auto newPose = Pose2d{
+  units::meter_t dx{(u(0, 0) + u(1, 0)) / 2.0};
+  auto newPose = Pose2d{
       units::meter_t{x(0, 0)}, units::meter_t{x(1, 0)},
       Rotation2d{units::radian_t(
           x(2, 0))}}.Exp({dx, 0_m, units::radian_t(u(2, 0))});

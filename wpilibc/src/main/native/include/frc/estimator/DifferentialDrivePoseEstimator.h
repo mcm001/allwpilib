@@ -137,6 +137,9 @@ class DifferentialDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
+  units::meter_t m_prevLeftDistance = 0_m;
+  units::meter_t m_prevRightDistance = 0_m;
+
   static Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose);
   static Eigen::Matrix<double, 3, 1> F(const Vector<3>& x, const Vector<3>& u);
   static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs);
