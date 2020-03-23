@@ -16,13 +16,12 @@ namespace frc {
 template <int States, int Inputs, int Outputs, typename KalmanTypeFilter>
 class KalmanFilterLatencyCompensator {
  public:
-  class ObserverState {
-   public:
+  struct ObserverState {
     Eigen::Matrix<double, States, 1> xHat;
     Eigen::Matrix<double, States, States> errorCovariances;
     Eigen::Matrix<double, Inputs, 1> inputs;
 
-    ObserverState(KalmanTypeFilter observer, Eigen::Matrix<double, Inputs, 1> u)
+    ObserverState(const KalmanTypeFilter& observer, const Eigen::Matrix<double, Inputs, 1>& u)
         : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
@@ -84,7 +83,7 @@ class KalmanFilterLatencyCompensator {
   }
 
  private:
-  unsigned int kMaxPastObserverStates = 300;
+  static constexpr uint32_t kMaxPastObserverStates = 300;
   std::map<units::second_t, ObserverState> m_pastObserverStates;
 };
 }  // namespace frc

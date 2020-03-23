@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <Eigen/Core>
 #include <units/units.h>
 

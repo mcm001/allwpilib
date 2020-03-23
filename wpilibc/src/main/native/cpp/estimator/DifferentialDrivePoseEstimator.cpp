@@ -7,8 +7,6 @@
 
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 
-#include <array>
-
 #include "frc/StateSpaceUtil.h"
 #include "frc2/Timer.h"
 
