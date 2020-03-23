@@ -16,8 +16,8 @@ class KalmanFilterLatencyCompensator {
 
     ObserverState(KalmanTypeFilter<States, Inputs, Outputs> observer,
                   Eigen::Matrix<double, Inputs, 1> u) {
-      xHat = observer->XHat();
-      errorCovariances = observer->P();
+      xHat = observer.XHat();
+      errorCovariances = observer.P();
       inputs = u;
     }
   };
