@@ -1,9 +1,10 @@
 #pragma once
 
-#include <frc/estimator/ExtendedKalmanFilter.h>
-#include <frc/estimator/KalmanFilterLatencyCompensator.h>
-#include <frc/geometry/Rotation2d.h>
-#include <frc/geometry/Pose2d.h>
+#include "frc/estimator/ExtendedKalmanFilter.h"
+#include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/geometry/Rotation2d.h"
+#include "frc/geometry/Pose2d.h"
+
 #include <Eigen/Core>
 #include <units/units.h>
 
@@ -45,7 +46,8 @@ class DifferentialDrivePoseEstimator {
 
  private:
   ExtendedKalmanFilter<3, 3, 3> m_observer;
-  KalmanFilterLatencyCompensator<3, 3, 3> m_latencyCompensator;
+  KalmanFilterLatencyCompensator<3, 3, 3, ExtendedKalmanFilter<3, 3, 3>>
+      m_latencyCompensator;
 
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
@@ -54,7 +56,8 @@ class DifferentialDrivePoseEstimator {
   Rotation2d m_previousAngle;
 
   static Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose);
-  static Eigen::Matrix<double, 3, 1> F(Eigen::Matrix<double, 3, 1> x, Eigen::Matrix<double, 3, 1> u);
+  static Eigen::Matrix<double, 3, 1> F(Eigen::Matrix<double, 3, 1> x,
+                                       Eigen::Matrix<double, 3, 1> u);
 };
 
 }  // namespace frc
