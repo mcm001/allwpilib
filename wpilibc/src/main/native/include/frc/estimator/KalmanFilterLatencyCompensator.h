@@ -91,6 +91,9 @@ class KalmanFilterLatencyCompensator {
 
     units::second_t lastTimestamp = snapshotsToUse.front().first - nominalDt;
     for (const auto& pair : snapshotsToUse) {
+      observer.Predict(pair.second.inputs, pair.first - lastTimestamp);
+      lastTimestamp = pair.first;
+
       if (pair.first == closestEntry.first) {
         observer.SetP(pair.second.errorCovariances);
         observer.SetXhat(pair.second.xHat);
@@ -101,8 +104,6 @@ class KalmanFilterLatencyCompensator {
         // the inputs were captured at is very small.
         observer.Correct(pair.second.inputs, y);
       }
-      observer.Predict(pair.second.inputs, pair.first - lastTimestamp);
-      lastTimestamp = pair.first;
 
       newSnapshots.emplace_back(pair.first,
                                 ObserverState{observer, pair.second.inputs});
