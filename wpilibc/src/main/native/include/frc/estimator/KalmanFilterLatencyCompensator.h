@@ -84,12 +84,13 @@ class KalmanFilterLatencyCompensator {
     std::pair<units::second_t, ObserverState> closestEntry =
         m_pastObserverStates[indexOfClosestEntry];
 
-    decltype(m_pastObserverStates) tailVector{
+    decltype(m_pastObserverStates) snapshotsToUse{
         m_pastObserverStates.begin() + indexOfClosestEntry,
         m_pastObserverStates.end()};
+    decltype(m_pastObserverStates) newSnapshots;
 
-    units::second_t lastTimestamp = tailVector.front().first - nominalDt;
-    for (const auto& pair : tailVector) {
+    units::second_t lastTimestamp = snapshotsToUse.front().first - nominalDt;
+    for (const auto& pair : snapshotsToUse) {
       if (pair.first == closestEntry.first) {
         observer.SetP(pair.second.errorCovariances);
         observer.SetXhat(pair.second.xHat);
@@ -102,7 +103,16 @@ class KalmanFilterLatencyCompensator {
       }
       observer.Predict(pair.second.inputs, pair.first - lastTimestamp);
       lastTimestamp = pair.first;
+
+      newSnapshots.emplace_back(pair.first,
+                                ObserverState{observer, pair.second.inputs});
     }
+
+    // Replace observer snapshots that haven't been corrected by a measurement
+    // with ones that have been corrected.
+    // TODO This might mess with our binary search.
+    m_pastObserverStates.insert(m_pastObserverStates.end(),
+                                newSnapshots.begin(), newSnapshots.end());
   }
 
  private:
