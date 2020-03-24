@@ -13,6 +13,7 @@
 #include <Eigen/Core>
 #include <units/units.h>
 
+#include "frc/StateSpaceUtil.h"
 #include "frc/estimator/KalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
 #include "frc/geometry/Pose2d.h"
@@ -60,13 +61,13 @@ class SwerveDrivePoseEstimator {
         m_observer, m_nominalDt, PoseToVector(visionRobotPose), timestamp);
   }
 
-  template <typename ModuleStates...>
+  template <typename... ModuleStates>
   Pose2d Update(const Rotation2d& gyroAngle, ModuleStates&&... moduleStates) {
     return UpdateWithTime(frc2::Timer::GetFPGATimestamp(), gyroAngle,
                           moduleStates...);
   }
 
-  template <typename ModuleStates...>
+  template <typename... ModuleStates>
   Pose2d UpdateWithTime(units::second_t currentTime,
                         const Rotation2d& gyroAngle,
                         ModuleStates&&... moduleStates) {
