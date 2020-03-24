@@ -19,7 +19,7 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     : m_observer(&DifferentialDrivePoseEstimator::F,
                  [](const Vector<3>& x, const Vector<3>& u) { return x; },
                  StdDevMatrixToArray(stateStdDevs),
-                 StdDevMatrixToArray(measurementStdDevs), nominalDt),
+                 StdDevMatrixToArray(measurementStdDevs), false, nominalDt),
       m_nominalDt(nominalDt) {
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
   m_previousAngle = initialPose.Rotation();

@@ -28,9 +28,8 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
-                  frc::Pose2d(23_m, 23_m, frc::Rotation2d(173_deg)),
                   frc::Pose2d(54_m, 54_m, frc::Rotation2d())},
-      frc::TrajectoryConfig(0.5_mps, 2.0_mps_sq));
+      frc::TrajectoryConfig(10_mps, 5.0_mps_sq));
 
   frc::DifferentialDriveKinematics kinematics{1.0_m};
   frc::DifferentialDriveOdometry odometry{frc::Rotation2d()};
@@ -38,7 +37,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
 
-  units::second_t dt = 0.01_s;
+  units::second_t dt = 0.02_s;
   units::second_t t = 0.0_s;
 
   units::meter_t leftDistance = 0_m;
@@ -62,33 +61,31 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        // estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateRealTimestamp);
+        estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateRealTimestamp);
       }
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.0 * 1_m,
-                                 distribution(generator) * 0.0 * 1_m),
-              frc::Rotation2d(distribution(generator) * 0.0 * 1_rad));
+              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
+                                 distribution(generator) * 0.1 * 1_m),
+              frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
 
       lastVisionUpdateRealTimestamp = frc2::Timer::GetFPGATimestamp();
       lastVisionUpdateTime = t;
     }
 
-    leftDistance += input.left * dt + units::meter_t(distribution(generator) * 0.0);
-    rightDistance += input.right * dt + units::meter_t(distribution(generator) * 0.0);
+    leftDistance += input.left * dt + units::meter_t(distribution(generator) * 0.1);
+    rightDistance += input.right * dt + units::meter_t(distribution(generator) * 0.1);
 
     auto xhat = estimator.Update(
         groundTruthState.pose.Rotation() +
-            frc::Rotation2d(units::radian_t(distribution(generator) * 0.0)),
+            frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         leftDistance, rightDistance);
 
 
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())
                        .to<double>();
-
-    // std::cout << error << std::endl;
 
     if (error > maxError) {
       maxError = error;
@@ -102,5 +99,5 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
             << errorSum /
                    (trajectory.TotalTime().to<double>() / dt.to<double>())
             << std::endl;
-  std::cout << "Max error (m):" << maxError << std::endl;
+  std::cout << "Max error (m): " << maxError << std::endl;
 }
