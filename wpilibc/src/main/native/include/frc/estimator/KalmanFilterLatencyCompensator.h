@@ -21,14 +21,15 @@ class KalmanFilterLatencyCompensator {
     Eigen::Matrix<double, States, States> errorCovariances;
     Eigen::Matrix<double, Inputs, 1> inputs;
 
-    ObserverState(const KalmanFilterType& observer, const Eigen::Matrix<double, Inputs, 1>& u)
+    ObserverState(const KalmanFilterType& observer,
+                  const Eigen::Matrix<double, Inputs, 1>& u)
         : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
   void AddObserverState(KalmanFilterType observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
-    m_pastObserverStates.insert(std::pair<units::second_t, ObserverState>{
+    m_pastObserverStates.push_back(std::pair<units::second_t, ObserverState>{
         timestamp, ObserverState{observer, u}});
 
     if (m_pastObserverStates.size() > kMaxPastObserverStates) {
@@ -40,50 +41,73 @@ class KalmanFilterLatencyCompensator {
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp) {
-    auto lowIterator = m_pastObserverStates.lower_bound(timestamp);
-    auto highIterator = m_pastObserverStates.upper_bound(timestamp);
-
-    typename std::map<units::second_t, ObserverState>::iterator closestEntry;
-
-    // Find the entry which is closest in time to the timestamp.
-    if (lowIterator != m_pastObserverStates.end() &&
-        highIterator != m_pastObserverStates.end()) {
-      closestEntry = units::math::abs(timestamp - lowIterator->first) <
-                             units::math::abs(timestamp - highIterator->first)
-                         ? lowIterator
-                         : highIterator;
-    } else if (lowIterator == m_pastObserverStates.end() &&
-               highIterator == m_pastObserverStates.end()) {
+    if (m_pastObserverStates.size() == 0) {
       // State map was empty, which means that we got a measurement right at
       // startup. The only thing we can do is ignore the measurement.
       return;
-    } else {
-      closestEntry = lowIterator != m_pastObserverStates.end() ? lowIterator
-                                                               : highIterator;
     }
 
-    std::map<units::second_t, ObserverState> tailMap{
-        closestEntry, m_pastObserverStates.end()};
+    // We will perform a binary search to find the index of the element in the
+    // vector that has a timestamp that is equal to or greater than the vision
+    // measurement timestamp.
 
-    units::second_t lastTimestamp = tailMap.begin()->first - nominalDt;
-    for (const auto& [key, st] : tailMap) {
-      if (key == closestEntry->first) {
-        observer.SetP(st.errorCovariances);
-        observer.SetXhat(st.xHat);
+    // This index starts at one because we use the previous state later on, and
+    // we always want to have a "previous state".
+    int low = 1;
+    int high = m_pastObserverStates.size() - 1;
+
+    while (low != high) {
+      int mid = (low + high) / 2.0;
+      if (m_pastObserverStates[mid].first < timestamp) {
+        // This index and everything under it are less than the requested
+        // timestamp. Therefore, we can discard them.
+        low = mid + 1;
+      } else {
+        // t is at least as large as the element at this index. This means that
+        // anything after it cannot be what we are looking for.
+        high = mid;
+      }
+    }
+
+    // We are simply assigning this index to a new variable to avoid confusion
+    // with variable names.
+    int index = low;
+
+    // High and Low should be the same. The sampled timestamp is greater than or
+    // equal to the vision pose timestamp. We will now find the entry which is
+    // closest in time to the requested timestamp.
+
+    int indexOfClosestEntry =
+        units::math::abs(timestamp - m_pastObserverStates[index - 1].first) <
+                units::math::abs(timestamp - m_pastObserverStates[index].first)
+            ? index - 1
+            : index;
+    std::pair<units::second_t, ObserverState> closestEntry =
+        m_pastObserverStates[indexOfClosestEntry];
+
+    decltype(m_pastObserverStates) tailVector{
+        m_pastObserverStates.begin() + indexOfClosestEntry,
+        m_pastObserverStates.end()};
+
+    units::second_t lastTimestamp = tailVector.front().first - nominalDt;
+    for (const auto& pair : tailVector) {
+      if (pair.first == closestEntry.first) {
+        observer.SetP(pair.second.errorCovariances);
+        observer.SetXhat(pair.second.xHat);
 
         // Note that we correct the observer with inputs closest in time to the
         // measurement This makes the assumption that the dt is small enough
         // that the difference between the measurement time and the time that
         // the inputs were captured at is very small.
-        observer.Correct(st.inputs, y);
+        observer.Correct(pair.second.inputs, y);
       }
-      observer.Predict(st.inputs, key - lastTimestamp);
-      lastTimestamp = key;
+      observer.Predict(pair.second.inputs, pair.first - lastTimestamp);
+      lastTimestamp = pair.first;
     }
   }
 
  private:
   static constexpr uint32_t kMaxPastObserverStates = 300;
-  std::map<units::second_t, ObserverState> m_pastObserverStates;
+  std::vector<std::pair<units::second_t, ObserverState>> m_pastObserverStates;
 };
 }  // namespace frc
