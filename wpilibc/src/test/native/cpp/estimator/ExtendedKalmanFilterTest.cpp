@@ -82,7 +82,8 @@ TEST(ExtendedKalmanFilterTest, Init) {
   frc::ExtendedKalmanFilter<5, 2, 3> observer{Dynamics,
                                               LocalMeasurementModel,
                                               {0.5, 0.5, 10.0, 1.0, 1.0},
-                                              {0.0001, 0.01, 0.01}, true,
+                                              {0.0001, 0.01, 0.01},
+                                              true,
                                               dt};
   Eigen::Matrix<double, 2, 1> u;
   u << 12.0, 12.0;
@@ -103,7 +104,8 @@ TEST(ExtendedKalmanFilterTest, Convergence) {
   frc::ExtendedKalmanFilter<5, 2, 3> observer{Dynamics,
                                               LocalMeasurementModel,
                                               {0.5, 0.5, 10.0, 1.0, 1.0},
-                                              {0.0001, 0.5, 0.5}, true,
+                                              {0.0001, 0.5, 0.5},
+                                              true,
                                               dt};
 
   auto waypoints =

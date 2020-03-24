@@ -83,8 +83,8 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::PoseToVector(
     const Pose2d& pose) {
   return frc::MakeMatrix<3, 1>(pose.Translation().X().to<double>(),
-      pose.Translation().Y().to<double>(),
-      pose.Rotation().Radians().to<double>());
+                               pose.Translation().Y().to<double>(),
+                               pose.Rotation().Radians().to<double>());
 }
 
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(

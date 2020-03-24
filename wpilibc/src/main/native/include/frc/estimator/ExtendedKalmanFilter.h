@@ -48,8 +48,7 @@ class ExtendedKalmanFilter {
                            h,
                        const std::array<double, States>& stateStdDevs,
                        const std::array<double, Outputs>& measurementStdDevs,
-                       bool useRungeKutta,
-                       units::second_t dt)
+                       bool useRungeKutta, units::second_t dt)
       : m_f(f), m_h(h), m_useRungeKutta(useRungeKutta) {
     m_contQ = MakeCovMatrix(stateStdDevs);
     m_contR = MakeCovMatrix(measurementStdDevs);

@@ -49,19 +49,19 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       -std::numeric_limits<double>::max()};
   units::second_t lastVisionUpdateTime{-std::numeric_limits<double>::max()};
 
-
-
-  double maxError = -std::numeric_limits<double>::max(); double errorSum = 0;
+  double maxError = -std::numeric_limits<double>::max();
+  double errorSum = 0;
 
   while (t <= trajectory.TotalTime()) {
     auto groundTruthState = trajectory.Sample(t);
-    auto input = kinematics.ToWheelSpeeds({
-        groundTruthState.velocity, 0_mps,
-        groundTruthState.velocity * groundTruthState.curvature});
+    auto input = kinematics.ToWheelSpeeds(
+        {groundTruthState.velocity, 0_mps,
+         groundTruthState.velocity * groundTruthState.curvature});
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateRealTimestamp);
+        estimator.AddVisionMeasurement(lastVisionPose,
+                                       lastVisionUpdateRealTimestamp);
       }
       lastVisionPose =
           groundTruthState.pose +
@@ -74,14 +74,15 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionUpdateTime = t;
     }
 
-    leftDistance += input.left * dt + units::meter_t(distribution(generator) * 0.1);
-    rightDistance += input.right * dt + units::meter_t(distribution(generator) * 0.1);
+    leftDistance +=
+        input.left * dt + units::meter_t(distribution(generator) * 0.1);
+    rightDistance +=
+        input.right * dt + units::meter_t(distribution(generator) * 0.1);
 
     auto xhat = estimator.Update(
         groundTruthState.pose.Rotation() +
             frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         leftDistance, rightDistance);
-
 
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())
