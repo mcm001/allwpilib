@@ -29,8 +29,7 @@ class KalmanFilterLatencyCompensator {
   void AddObserverState(KalmanFilterType observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
-    m_pastObserverStates.push_back(std::pair<units::second_t, ObserverState>{
-        timestamp, ObserverState{observer, u}});
+    m_pastObserverStates.emplace_back(timestamp, ObserverState{observer, u});
 
     if (m_pastObserverStates.size() > kMaxPastObserverStates) {
       m_pastObserverStates.erase(m_pastObserverStates.begin());
