@@ -16,6 +16,8 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/QR>
 
+#include "frc/geometry/Pose2d.h"
+
 namespace frc {
 namespace detail {
 
@@ -232,6 +234,19 @@ bool IsStabilizable(const Eigen::Matrix<double, States, States>& A,
     }
   }
   return true;
+}
+
+/**
+ * Converts a Pose2d into a vector of [x, y, theta].
+ *
+ * @param pose The pose that is being represented.
+ *
+ * @return The vector.
+ */
+Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose) {
+  return frc::MakeMatrix<3, 1>(pose.Translation().X().to<double>(),
+                               pose.Translation().Y().to<double>(),
+                               pose.Rotation().Radians().to<double>())
 }
 
 }  // namespace frc

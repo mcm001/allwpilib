@@ -118,12 +118,6 @@ class SwerveDrivePoseEstimator {
     return observerSystem;
   }
 
-  static Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose) {
-    return frc::MakeMatrix<3, 1>(pose.Translation().X().to<double>(),
-                                 pose.Translation().Y().to<double>(),
-                                 pose.Rotation().Radians().to<double>());
-  }
-
   static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs) {
     return std::array<double, 3>{stdDevs(0, 0), stdDevs(1, 0), stdDevs(2, 0)};
   }

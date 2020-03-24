@@ -80,13 +80,6 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
   return GetEstimatedPosition();
 }
 
-Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::PoseToVector(
-    const Pose2d& pose) {
-  return frc::MakeMatrix<3, 1>(pose.Translation().X().to<double>(),
-                               pose.Translation().Y().to<double>(),
-                               pose.Rotation().Radians().to<double>());
-}
-
 Eigen::Matrix<double, 3, 1> DifferentialDrivePoseEstimator::F(
     const Vector<3>& x, const Vector<3>& u) {
   // Differential drive forward kinematics
