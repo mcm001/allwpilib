@@ -24,7 +24,7 @@
 TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   frc::DifferentialDrivePoseEstimator estimator{
       frc::Rotation2d(), frc::Pose2d(), frc::MakeMatrix<3, 1>(0.02, 0.02, 0.01),
-      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01)};
+      frc::MakeMatrix<3, 1>(10.0, 10.0, 10.0)};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
@@ -60,8 +60,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        estimator.AddVisionMeasurement(lastVisionPose,
-                                       lastVisionUpdateRealTimestamp);
+        estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
       }
       lastVisionPose =
           groundTruthState.pose +
@@ -79,7 +78,8 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
     rightDistance +=
         input.right * dt + units::meter_t(distribution(generator) * 0.1);
 
-    auto xhat = estimator.Update(
+    auto xhat = estimator.UpdateWithTime(
+        t,
         groundTruthState.pose.Rotation() +
             frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         leftDistance, rightDistance);
@@ -94,6 +94,9 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
     errorSum += error;
 
     t += dt;
+
+    std::cout << xhat.Translation().X().to<double>() << ", "
+              << xhat.Translation().Y().to<double>() << std::endl;
   }
 
   std::cout << "Mean error (m): "

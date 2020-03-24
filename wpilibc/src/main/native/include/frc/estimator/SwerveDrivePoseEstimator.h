@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <iostream>
 #include <limits>
 
 #include <Eigen/Core>
@@ -71,19 +72,20 @@ class SwerveDrivePoseEstimator {
   Pose2d UpdateWithTime(units::second_t currentTime,
                         const Rotation2d& gyroAngle,
                         ModuleStates&&... moduleStates) {
-    auto dt = m_prevTime >= 0_s ? currentTime - m_prevTime : 0_s;
+    auto dt = m_prevTime >= 0_s ? currentTime - m_prevTime : m_nominalDt;
     m_prevTime = currentTime;
 
     auto angle = gyroAngle + m_gyroOffset;
     auto omega = (angle - m_previousAngle).Radians() / dt;
 
     auto chassisSpeeds = m_kinematics.ToChassisSpeeds(moduleStates...);
-    Pose2d fieldRelativeVelocities =
-        Pose2d(0_m, 0_m, angle)
-            .Exp(Twist2d(chassisSpeeds.vx * 1_s, chassisSpeeds.vy * 1_s,
-                         omega * 1_s));
+    Translation2d fieldRelativeVelocities =
+        Translation2d(chassisSpeeds.vx * 1_s, chassisSpeeds.vy * 1_s)
+            .RotateBy(angle);
 
-    auto u = PoseToVector(fieldRelativeVelocities);
+    auto u = frc::MakeMatrix<3, 1>(fieldRelativeVelocities.X().to<double>(),
+                                   fieldRelativeVelocities.Y().to<double>(),
+                                   omega.to<double>());
     m_previousAngle = angle;
 
     m_latencyCompensator.AddObserverState(m_observer, u, currentTime);
@@ -99,7 +101,7 @@ class SwerveDrivePoseEstimator {
   SwerveDriveKinematics<NumModules> m_kinematics;
 
   units::second_t m_nominalDt;
-  units::second_t m_prevTime;
+  units::second_t m_prevTime = -1_s;
 
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;

@@ -26,7 +26,7 @@ class KalmanFilterLatencyCompensator {
         : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
-  void AddObserverState(KalmanFilterType observer,
+  void AddObserverState(const KalmanFilterType& observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
     m_pastObserverSnapshots.emplace_back(timestamp,
@@ -37,7 +37,7 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  void ApplyPastMeasurement(KalmanFilterType observer,
+  void ApplyPastMeasurement(KalmanFilterType& observer,
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp) {
@@ -113,7 +113,9 @@ class KalmanFilterLatencyCompensator {
 
     // Replace observer snapshots that haven't been corrected by a measurement
     // with ones that have been corrected.
-    // TODO This might mess with our binary search.
+    m_pastObserverSnapshots.erase(
+        m_pastObserverSnapshots.begin() + indexOfClosestEntry,
+        m_pastObserverSnapshots.end());
     m_pastObserverSnapshots.insert(m_pastObserverSnapshots.end(),
                                    newSnapshots.begin(), newSnapshots.end());
   }

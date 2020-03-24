@@ -12,6 +12,7 @@
 #include "frc/estimator/SwerveDrivePoseEstimator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/kinematics/SwerveDriveKinematics.h"
+#include "frc/kinematics/SwerveDriveOdometry.h"
 #include "frc/trajectory/TrajectoryGenerator.h"
 #include "gtest/gtest.h"
 
@@ -20,17 +21,20 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       frc::Translation2d{1_m, 1_m}, frc::Translation2d{1_m, -1_m},
       frc::Translation2d{-1_m, -1_m}, frc::Translation2d{-1_m, 1_m}};
 
-  frc::SwerveDrivePoseEstimator estimator{
+  frc::SwerveDrivePoseEstimator<4> estimator{
       frc::Rotation2d(), frc::Pose2d(), kinematics,
-      frc::MakeMatrix<3, 1>(3, 3, 3), frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
+      frc::MakeMatrix<3, 1>(0.01, 0.01, 0.01),
+      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
+
+  frc::SwerveDriveOdometry<4> odometry{kinematics, frc::Rotation2d()};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
                   frc::Pose2d(54_m, 54_m, frc::Rotation2d())},
       frc::TrajectoryConfig(10_mps, 5.0_mps_sq));
 
-  std::random_default_engine generator;
-  std::normal_distrivution<double> distribution(0.0, 1.0);
+  std::default_random_engine generator;
+  std::normal_distribution<double> distribution(0.0, 1.0);
 
   units::second_t dt = 0.02_s;
   units::second_t t = 0_s;
@@ -64,16 +68,17 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
 
     for (auto&& moduleState : moduleStates) {
       moduleState.angle += frc::Rotation2d(distribution(generator) * 0.1_rad);
-      moduleState.speed += distribution(generator) * 1_mps;
+      moduleState.speed += distribution(generator) * 0.1_mps;
     }
 
     auto xhat = estimator.UpdateWithTime(
         t,
         groundTruthState.pose.Rotation() +
-            frc::Rotation2d(distribution(generator) * 0.001),
-        moduleStates);
-    double error =
-        groundTruthState.pose.Translation().Distance(xhat.Translation());
+            frc::Rotation2d(distribution(generator) * 0.001_rad),
+        moduleStates[0], moduleStates[1], moduleStates[2], moduleStates[3]);
+    double error = groundTruthState.pose.Translation()
+                       .Distance(xhat.Translation())
+                       .to<double>();
 
     if (error > maxError) {
       maxError = error;
@@ -81,6 +86,9 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
     errorSum += error;
 
     t += dt;
+
+    std::cout << xhat.Translation().X().to<double>() << ", "
+              << xhat.Translation().Y().to<double>() << std::endl;
   }
 
   std::cout << "Mean error (m): "
