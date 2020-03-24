@@ -11,11 +11,12 @@
 
 #include <units/units.h>
 
-#include "frc/StateSpaceUtils.h"
+#include "frc/StateSpaceUtil.h"
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/DifferentialDriveKinematics.h"
+#include "frc/kinematics/DifferentialDriveOdometry.h"
 #include "frc/trajectory/TrajectoryGenerator.h"
 #include "frc2/Timer.h"
 #include "gtest/gtest.h"
@@ -32,6 +33,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       frc::TrajectoryConfig(0.5_mps, 2.0_mps_sq));
 
   frc::DifferentialDriveKinematics kinematics{1.0_m};
+  frc::DifferentialDriveOdometry odometry{frc::Rotation2d()};
 
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
@@ -39,44 +41,55 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   units::second_t dt = 0.01_s;
   units::second_t t = 0.0_s;
 
+  units::meter_t leftDistance = 0_m;
+  units::meter_t rightDistance = 0_m;
+
   units::second_t kVisionUpdateRate = 0.1_s;
   frc::Pose2d lastVisionPose;
   units::second_t lastVisionUpdateRealTimestamp{
       -std::numeric_limits<double>::max()};
   units::second_t lastVisionUpdateTime{-std::numeric_limits<double>::max()};
 
-  double maxError = -std::numeric_limits<double>::max() double errorSum = 0;
+
+
+  double maxError = -std::numeric_limits<double>::max(); double errorSum = 0;
 
   while (t <= trajectory.TotalTime()) {
     auto groundTruthState = trajectory.Sample(t);
-    auto input = kinematics.ToWheelSpeeds(frc::ChassisSpeeds(
+    auto input = kinematics.ToWheelSpeeds({
         groundTruthState.velocity, 0_mps,
-        groundTruthState.velocity * groundTruthState.curvature));
+        groundTruthState.velocity * groundTruthState.curvature});
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        estimator.AddVisionMeasurement(lastVisionPose)
+        // estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateRealTimestamp);
       }
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
-                                 distribution(generator) * 0.1 * 1_m),
-              frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
+              frc::Translation2d(distribution(generator) * 0.0 * 1_m,
+                                 distribution(generator) * 0.0 * 1_m),
+              frc::Rotation2d(distribution(generator) * 0.0 * 1_rad));
 
       lastVisionUpdateRealTimestamp = frc2::Timer::GetFPGATimestamp();
       lastVisionUpdateTime = t;
     }
 
+    leftDistance += input.left * dt + units::meter_t(distribution(generator) * 0.0);
+    rightDistance += input.right * dt + units::meter_t(distribution(generator) * 0.0);
+
     auto xhat = estimator.Update(
         groundTruthState.pose.Rotation() +
-            frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
-        input.left * dt + distribution(generator) * 0.1,
-        input.right * dt + distribution(generator) * 0.1);
+            frc::Rotation2d(units::radian_t(distribution(generator) * 0.0)),
+        leftDistance, rightDistance);
+
 
     double error = groundTruthState.pose.Translation()
-                       .Distance(xHat.Translation())
+                       .Distance(xhat.Translation())
                        .to<double>();
+
+    // std::cout << error << std::endl;
+
     if (error > maxError) {
       maxError = error;
     }
