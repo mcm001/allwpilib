@@ -13,7 +13,7 @@
 #include <units/units.h>
 
 namespace frc {
-template <int States, int Inputs, int Outputs, typename KalmanTypeFilter>
+template <int States, int Inputs, int Outputs, typename KalmanFilterType>
 class KalmanFilterLatencyCompensator {
  public:
   struct ObserverState {
@@ -21,11 +21,11 @@ class KalmanFilterLatencyCompensator {
     Eigen::Matrix<double, States, States> errorCovariances;
     Eigen::Matrix<double, Inputs, 1> inputs;
 
-    ObserverState(const KalmanTypeFilter& observer, const Eigen::Matrix<double, Inputs, 1>& u)
+    ObserverState(const KalmanFilterType& observer, const Eigen::Matrix<double, Inputs, 1>& u)
         : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
-  void AddObserverState(KalmanTypeFilter observer,
+  void AddObserverState(KalmanFilterType observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
     m_pastObserverStates.insert(std::pair<units::second_t, ObserverState>{
@@ -36,7 +36,7 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  void ApplyPastMeasurement(KalmanTypeFilter observer,
+  void ApplyPastMeasurement(KalmanFilterType observer,
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp) {
