@@ -16,23 +16,24 @@ namespace frc {
 template <int States, int Inputs, int Outputs, typename KalmanFilterType>
 class KalmanFilterLatencyCompensator {
  public:
-  struct ObserverState {
+  struct ObserverSnapshot {
     Eigen::Matrix<double, States, 1> xHat;
     Eigen::Matrix<double, States, States> errorCovariances;
     Eigen::Matrix<double, Inputs, 1> inputs;
 
-    ObserverState(const KalmanFilterType& observer,
-                  const Eigen::Matrix<double, Inputs, 1>& u)
+    ObserverSnapshot(const KalmanFilterType& observer,
+                     const Eigen::Matrix<double, Inputs, 1>& u)
         : xHat(observer.Xhat()), errorCovariances(observer.P()), inputs(u) {}
   };
 
   void AddObserverState(KalmanFilterType observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
-    m_pastObserverStates.emplace_back(timestamp, ObserverState{observer, u});
+    m_pastObserverSnapshots.emplace_back(timestamp,
+                                         ObserverSnapshot{observer, u});
 
-    if (m_pastObserverStates.size() > kMaxPastObserverStates) {
-      m_pastObserverStates.erase(m_pastObserverStates.begin());
+    if (m_pastObserverSnapshots.size() > kMaxPastObserverStates) {
+      m_pastObserverSnapshots.erase(m_pastObserverSnapshots.begin());
     }
   }
 
@@ -40,7 +41,7 @@ class KalmanFilterLatencyCompensator {
                             units::second_t nominalDt,
                             Eigen::Matrix<double, Outputs, 1> y,
                             units::second_t timestamp) {
-    if (m_pastObserverStates.size() == 0) {
+    if (m_pastObserverSnapshots.size() == 0) {
       // State map was empty, which means that we got a measurement right at
       // startup. The only thing we can do is ignore the measurement.
       return;
@@ -53,11 +54,11 @@ class KalmanFilterLatencyCompensator {
     // This index starts at one because we use the previous state later on, and
     // we always want to have a "previous state".
     int low = 1;
-    int high = m_pastObserverStates.size() - 1;
+    int high = m_pastObserverSnapshots.size() - 1;
 
     while (low != high) {
       int mid = (low + high) / 2.0;
-      if (m_pastObserverStates[mid].first < timestamp) {
+      if (m_pastObserverSnapshots[mid].first < timestamp) {
         // This index and everything under it are less than the requested
         // timestamp. Therefore, we can discard them.
         low = mid + 1;
@@ -77,17 +78,18 @@ class KalmanFilterLatencyCompensator {
     // closest in time to the requested timestamp.
 
     int indexOfClosestEntry =
-        units::math::abs(timestamp - m_pastObserverStates[index - 1].first) <
-                units::math::abs(timestamp - m_pastObserverStates[index].first)
+        units::math::abs(timestamp - m_pastObserverSnapshots[index - 1].first) <
+                units::math::abs(timestamp -
+                                 m_pastObserverSnapshots[index].first)
             ? index - 1
             : index;
-    std::pair<units::second_t, ObserverState> closestEntry =
-        m_pastObserverStates[indexOfClosestEntry];
+    std::pair<units::second_t, ObserverSnapshot> closestEntry =
+        m_pastObserverSnapshots[indexOfClosestEntry];
 
-    decltype(m_pastObserverStates) snapshotsToUse{
-        m_pastObserverStates.begin() + indexOfClosestEntry,
-        m_pastObserverStates.end()};
-    decltype(m_pastObserverStates) newSnapshots;
+    decltype(m_pastObserverSnapshots) snapshotsToUse{
+        m_pastObserverSnapshots.begin() + indexOfClosestEntry,
+        m_pastObserverSnapshots.end()};
+    decltype(m_pastObserverSnapshots) newSnapshots;
 
     units::second_t lastTimestamp = snapshotsToUse.front().first - nominalDt;
     for (const auto& pair : snapshotsToUse) {
@@ -106,18 +108,19 @@ class KalmanFilterLatencyCompensator {
       }
 
       newSnapshots.emplace_back(pair.first,
-                                ObserverState{observer, pair.second.inputs});
+                                ObserverSnapshot{observer, pair.second.inputs});
     }
 
     // Replace observer snapshots that haven't been corrected by a measurement
     // with ones that have been corrected.
     // TODO This might mess with our binary search.
-    m_pastObserverStates.insert(m_pastObserverStates.end(),
-                                newSnapshots.begin(), newSnapshots.end());
+    m_pastObserverSnapshots.insert(m_pastObserverSnapshots.end(),
+                                   newSnapshots.begin(), newSnapshots.end());
   }
 
  private:
   static constexpr uint32_t kMaxPastObserverStates = 300;
-  std::vector<std::pair<units::second_t, ObserverState>> m_pastObserverStates;
+  std::vector<std::pair<units::second_t, ObserverSnapshot>>
+      m_pastObserverSnapshots;
 };
 }  // namespace frc
