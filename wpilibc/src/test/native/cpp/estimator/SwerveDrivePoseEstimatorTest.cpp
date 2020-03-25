@@ -43,6 +43,8 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
   frc::Pose2d lastVisionPose;
   units::second_t lastVisionUpdateTime{-std::numeric_limits<double>::max()};
 
+  std::vector<frc::Pose2d> visionPoses;
+
   double maxError = -std::numeric_limits<double>::max();
   double errorSum = 0;
 
@@ -59,6 +61,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
               frc::Translation2d(distribution(generator) * 0.1 * 1_m,
                                  distribution(generator) * 0.1 * 1_m),
               frc::Rotation2d(distribution(generator) * 0.01 * 1_rad));
+      visionPoses.push_back(lastVisionPose);
       lastVisionUpdateTime = t;
     }
 
@@ -66,10 +69,6 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
         {groundTruthState.velocity, 0_mps,
          groundTruthState.velocity * groundTruthState.curvature});
 
-    for (auto&& moduleState : moduleStates) {
-      moduleState.angle += frc::Rotation2d(distribution(generator) * 0.1_rad);
-      moduleState.speed += distribution(generator) * 0.1_mps;
-    }
 
     auto xhat = estimator.UpdateWithTime(
         t,
@@ -89,6 +88,11 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
 
     std::cout << xhat.Translation().X().to<double>() << ", "
               << xhat.Translation().Y().to<double>() << std::endl;
+  }
+
+  std::cout << "Vision Poses" << std::endl;
+  for (const auto& visionPose : visionPoses) {
+    std::cout << visionPose.Translation().X().to<double>() << ", " << visionPose.Translation().Y().to<double>() << std::endl;
   }
 
   std::cout << "Mean error (m): "

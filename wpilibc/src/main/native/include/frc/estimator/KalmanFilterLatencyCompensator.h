@@ -83,41 +83,24 @@ class KalmanFilterLatencyCompensator {
                                  m_pastObserverSnapshots[index].first)
             ? index - 1
             : index;
-    std::pair<units::second_t, ObserverSnapshot> closestEntry =
-        m_pastObserverSnapshots[indexOfClosestEntry];
 
-    decltype(m_pastObserverSnapshots) snapshotsToUse{
-        m_pastObserverSnapshots.begin() + indexOfClosestEntry,
-        m_pastObserverSnapshots.end()};
-    decltype(m_pastObserverSnapshots) newSnapshots;
+    units::second_t lastTimestamp = m_pastObserverSnapshots[indexOfClosestEntry].first - nominalDt;
 
-    units::second_t lastTimestamp = snapshotsToUse.front().first - nominalDt;
-    for (const auto& pair : snapshotsToUse) {
-      observer.Predict(pair.second.inputs, pair.first - lastTimestamp);
-      lastTimestamp = pair.first;
+    for (int i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); ++i) {
+      auto& key = m_pastObserverSnapshots[i].first;
+      auto& snapshot = m_pastObserverSnapshots[i].second;
 
-      if (pair.first == closestEntry.first) {
-        observer.SetP(pair.second.errorCovariances);
-        observer.SetXhat(pair.second.xHat);
+      observer.Predict(snapshot.inputs, key - lastTimestamp);
+      lastTimestamp = key;
 
-        // Note that we correct the observer with inputs closest in time to the
-        // measurement This makes the assumption that the dt is small enough
-        // that the difference between the measurement time and the time that
-        // the inputs were captured at is very small.
-        observer.Correct(pair.second.inputs, y);
+      if (i == indexOfClosestEntry) {
+        observer.SetP(snapshot.errorCovariances);
+        observer.SetXhat(snapshot.xHat);
+        // observer.Correct(snapshot.inputs, y);
       }
 
-      newSnapshots.emplace_back(pair.first,
-                                ObserverSnapshot{observer, pair.second.inputs});
+      snapshot = ObserverSnapshot{observer, snapshot.inputs};
     }
-
-    // Replace observer snapshots that haven't been corrected by a measurement
-    // with ones that have been corrected.
-    m_pastObserverSnapshots.erase(
-        m_pastObserverSnapshots.begin() + indexOfClosestEntry,
-        m_pastObserverSnapshots.end());
-    m_pastObserverSnapshots.insert(m_pastObserverSnapshots.end(),
-                                   newSnapshots.begin(), newSnapshots.end());
   }
 
  private:
