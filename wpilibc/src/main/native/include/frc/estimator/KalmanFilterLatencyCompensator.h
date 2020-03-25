@@ -87,8 +87,7 @@ class KalmanFilterLatencyCompensator {
     units::second_t lastTimestamp = m_pastObserverSnapshots[indexOfClosestEntry].first - nominalDt;
 
     for (int i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); ++i) {
-      auto& key = m_pastObserverSnapshots[i].first;
-      auto& snapshot = m_pastObserverSnapshots[i].second;
+      auto& [key, snapshot] = m_pastObserverSnapshots[i];
 
       if (i == indexOfClosestEntry) {
         observer.SetP(snapshot.errorCovariances);
