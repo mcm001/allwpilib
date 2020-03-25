@@ -58,8 +58,8 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
-                                 distribution(generator) * 0.1 * 1_m),
+              frc::Translation2d(distribution(generator) * 1_m,
+                                 distribution(generator) * 1_m),
               frc::Rotation2d(distribution(generator) * 0.01 * 1_rad));
       visionPoses.push_back(lastVisionPose);
       lastVisionUpdateTime = t;
