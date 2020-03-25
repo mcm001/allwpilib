@@ -29,9 +29,11 @@ class KalmanFilterLatencyCompensator {
   void AddObserverState(const KalmanFilterType& observer,
                         Eigen::Matrix<double, Inputs, 1> u,
                         units::second_t timestamp) {
+    // Add the new state into the vector.
     m_pastObserverSnapshots.emplace_back(timestamp,
                                          ObserverSnapshot{observer, u});
 
+    // Remove the oldest snapshot if the vector exceeds our maximum size.
     if (m_pastObserverSnapshots.size() > kMaxPastObserverStates) {
       m_pastObserverSnapshots.erase(m_pastObserverSnapshots.begin());
     }
@@ -84,8 +86,14 @@ class KalmanFilterLatencyCompensator {
             ? index - 1
             : index;
 
-    units::second_t lastTimestamp = m_pastObserverSnapshots[indexOfClosestEntry].first - nominalDt;
+    units::second_t lastTimestamp =
+        m_pastObserverSnapshots[indexOfClosestEntry].first - nominalDt;
 
+    // We will now go back in time to the state of the system at the time when
+    // the measurement was captured. We will reset the observer to that state,
+    // and apply correction based on the measurement. Then, we will go back
+    // through all observer states until the present and apply past inputs to
+    // get the present estimated state.
     for (int i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); ++i) {
       auto& [key, snapshot] = m_pastObserverSnapshots[i];
 

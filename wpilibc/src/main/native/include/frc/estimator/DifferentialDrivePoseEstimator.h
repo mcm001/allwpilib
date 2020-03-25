@@ -32,7 +32,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  *
  * Update() should be called every robot loop (if your robot loops are faster or
  * slower than the default, then you should change the nominal delta time via
- * the constructor.
+ * the constructor).
  *
  * AddVisionMeasurement() can be called as infrequently as you want; if you
  * never call it, then this class will behave like regular encoder odometry.
