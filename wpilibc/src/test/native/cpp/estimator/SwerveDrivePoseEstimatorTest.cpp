@@ -69,7 +69,6 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
         {groundTruthState.velocity, 0_mps,
          groundTruthState.velocity * groundTruthState.curvature});
 
-
     auto xhat = estimator.UpdateWithTime(
         t,
         groundTruthState.pose.Rotation() +
@@ -92,7 +91,8 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
 
   std::cout << "Vision Poses" << std::endl;
   for (const auto& visionPose : visionPoses) {
-    std::cout << visionPose.Translation().X().to<double>() << ", " << visionPose.Translation().Y().to<double>() << std::endl;
+    std::cout << visionPose.Translation().X().to<double>() << ", "
+              << visionPose.Translation().Y().to<double>() << std::endl;
   }
 
   std::cout << "Mean error (m): "

@@ -23,7 +23,8 @@
 
 TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   frc::DifferentialDrivePoseEstimator estimator{
-      frc::Rotation2d(), frc::Pose2d(), frc::MakeMatrix<3, 1>(0.002, 0.002, 0.001),
+      frc::Rotation2d(), frc::Pose2d(),
+      frc::MakeMatrix<3, 1>(0.002, 0.002, 0.001),
       frc::MakeMatrix<3, 1>(1000.0, 1000.0, 1000.0)};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
