@@ -92,10 +92,13 @@ class KalmanFilterLatencyCompensator {
       if (i == indexOfClosestEntry) {
         observer.SetP(snapshot.errorCovariances);
         observer.SetXhat(snapshot.xHat);
+
+        observer.Predict(snapshot.inputs, key - lastTimestamp);
         observer.Correct(snapshot.inputs, y);
+      } else {
+        observer.Predict(snapshot.inputs, key - lastTimestamp);
       }
 
-      observer.Predict(snapshot.inputs, key - lastTimestamp);
       lastTimestamp = key;
       snapshot = ObserverSnapshot{observer, snapshot.inputs};
     }
