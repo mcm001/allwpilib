@@ -12,7 +12,7 @@
 #include <Eigen/Core>
 #include <units/units.h>
 
-#include "frc/estimator/ExtendedKalmanFilter.h"
+#include "frc/estimator/KalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
@@ -116,8 +116,9 @@ class DifferentialDrivePoseEstimator {
    *
    * @return The estimated pose of the robot.
    */
-  Pose2d Update(const Rotation2d& gyroAngle, units::meter_t leftDistance,
-                units::meter_t rightDistance);
+  Pose2d Update(const Rotation2d& gyroAngle,
+                units::meters_per_second_t leftVelocity,
+                units::meters_per_second_t rightVelocity);
 
   /**
    * Updates the Extended Kalman Filter using only wheel encoder information.
@@ -132,12 +133,12 @@ class DifferentialDrivePoseEstimator {
    */
   Pose2d UpdateWithTime(units::second_t currentTime,
                         const Rotation2d& gyroAngle,
-                        units::meter_t leftDistance,
-                        units::meter_t rightDistance);
+                        units::meters_per_second_t leftVelocity,
+                        units::meters_per_second_t rightVelocity);
 
  private:
-  ExtendedKalmanFilter<3, 3, 3> m_observer;
-  KalmanFilterLatencyCompensator<3, 3, 3, ExtendedKalmanFilter<3, 3, 3>>
+  KalmanFilter<3, 3, 3> m_observer;
+  KalmanFilterLatencyCompensator<3, 3, 3, KalmanFilter<3, 3, 3>>
       m_latencyCompensator;
 
   units::second_t m_nominalDt;
@@ -146,10 +147,7 @@ class DifferentialDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  units::meter_t m_prevLeftDistance = 0_m;
-  units::meter_t m_prevRightDistance = 0_m;
-
-  static Eigen::Matrix<double, 3, 1> F(const Vector<3>& x, const Vector<3>& u);
+  static LinearSystem<3, 3, 3>& GetObserverSystem();
   static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs);
 };
 
