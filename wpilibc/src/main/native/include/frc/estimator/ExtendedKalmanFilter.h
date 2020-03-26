@@ -37,7 +37,6 @@ class ExtendedKalmanFilter {
    *                           the measurement vector.
    * @param stateStdDevs       Standard deviations of model states.
    * @param measurementStdDevs Standard deviations of measurements.
-   * @param useRungeKutta      Whether or not to numerically integrate f.
    * @param dt                 Nominal discretization timestep.
    */
   ExtendedKalmanFilter(std::function<Vector<States>(const Vector<States>&,
@@ -48,8 +47,8 @@ class ExtendedKalmanFilter {
                            h,
                        const std::array<double, States>& stateStdDevs,
                        const std::array<double, Outputs>& measurementStdDevs,
-                       bool useRungeKutta, units::second_t dt)
-      : m_f(f), m_h(h), m_useRungeKutta(useRungeKutta) {
+                       units::second_t dt)
+      : m_f(f), m_h(h) {
     m_contQ = MakeCovMatrix(stateStdDevs);
     m_contR = MakeCovMatrix(measurementStdDevs);
 
@@ -149,12 +148,7 @@ class ExtendedKalmanFilter {
     Eigen::Matrix<double, States, States> discQ;
     DiscretizeAQTaylor<States>(contA, m_contQ, dt, &discA, &discQ);
 
-    if (m_useRungeKutta) {
-      m_xHat = RungeKutta(m_f, m_xHat, u, dt);
-    } else {
-      m_xHat = m_f(m_xHat, u);
-    }
-
+    m_xHat = RungeKutta(m_f, m_xHat, u, dt);
     m_P = discA * m_P * discA.transpose() + discQ;
     m_discR = DiscretizeR<Outputs>(m_contR, dt);
   }
@@ -219,9 +213,6 @@ class ExtendedKalmanFilter {
       m_f;
   std::function<Vector<Outputs>(const Vector<States>&, const Vector<Inputs>&)>
       m_h;
-
-  bool m_useRungeKutta;
-
   Eigen::Matrix<double, States, 1> m_xHat;
   Eigen::Matrix<double, States, States> m_P;
   Eigen::Matrix<double, States, States> m_contQ;
