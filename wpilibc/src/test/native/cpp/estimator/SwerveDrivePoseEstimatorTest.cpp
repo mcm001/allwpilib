@@ -85,14 +85,14 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
 
     t += dt;
 
-   /* std::cout << xhat.Translation().X().to<double>() << ", "
-              << xhat.Translation().Y().to<double>() << std::endl;*/
+    /* std::cout << xhat.Translation().X().to<double>() << ", "
+               << xhat.Translation().Y().to<double>() << std::endl;*/
   }
 
   std::cout << "Vision Poses" << std::endl;
   for (const auto& visionPose : visionPoses) {
-   /* std::cout << visionPose.Translation().X().to<double>() << ", "
-              << visionPose.Translation().Y().to<double>() << std::endl;*/
+    /* std::cout << visionPose.Translation().X().to<double>() << ", "
+               << visionPose.Translation().Y().to<double>() << std::endl;*/
   }
 
   std::cout << "Mean error (m): "

@@ -94,7 +94,8 @@ class KalmanFilterLatencyCompensator {
     // and apply correction based on the measurement. Then, we will go back
     // through all observer states until the present and apply past inputs to
     // get the present estimated state.
-    for (size_t i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); ++i) {
+    for (size_t i = indexOfClosestEntry; i < m_pastObserverSnapshots.size();
+         ++i) {
       auto& [key, snapshot] = m_pastObserverSnapshots[i];
 
       if (i == indexOfClosestEntry) {
