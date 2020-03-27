@@ -61,9 +61,9 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.0 * 1_m,
-                                 distribution(generator) * 0.0 * 1_m),
-              frc::Rotation2d(distribution(generator) * 0.0 * 1_rad));
+              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
+                                 distribution(generator) * 0.1 * 1_m),
+              frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
 
       lastVisionUpdateRealTimestamp = frc2::Timer::GetFPGATimestamp();
       lastVisionUpdateTime = t;
@@ -72,7 +72,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
     auto xhat = estimator.UpdateWithTime(
         t,
         groundTruthState.pose.Rotation() +
-            frc::Rotation2d(units::radian_t(distribution(generator) * 0.0)),
+            frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         input.left, input.right);
 
     double error = groundTruthState.pose.Translation()
