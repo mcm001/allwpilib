@@ -3,6 +3,7 @@ package edu.wpi.first.wpilibj.math;
 import java.util.Random;
 
 import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.decomposition.qr.QRDecompositionHouseholder_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -321,4 +322,21 @@ public final class StateSpaceUtil {
     );
   }
 
+  /**
+   * Decompose a given matrix by QR decomposition with the Householder QR decomposition algorithm.
+   * This will throw a RuntimeException if src is not full rank.
+   *
+   * @param src The matrix to decompose.
+   * @return the decomposed matrix.
+   */
+  public static SimpleMatrix householderQrDecompose(SimpleMatrix src) {
+    var temp = src.copy();
+
+    var decomposer = new QRDecompositionHouseholder_DDRM();
+    if (!(decomposer.decompose(temp.getDDRM()))) {
+        throw new RuntimeException("Householder decomposition failed!");
+    }
+
+    return temp;
+  }
 }
