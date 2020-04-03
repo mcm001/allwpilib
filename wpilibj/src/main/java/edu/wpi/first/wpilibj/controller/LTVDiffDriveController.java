@@ -27,12 +27,8 @@ import org.ejml.simple.SimpleMatrix;
  * magical Beta and Zeta gains.
  */
 public class LTVDiffDriveController {
-
-    //private final double kPositionToleranceMeters;
-    //private final double kVelocityToleranceMps;
-    //private final double kAngleToleranceRad;
     private final double rb;
-    private final LinearSystem m_plant;
+    private final LinearSystem<N2, N2, N2> m_plant;
     private final double m_dtSeconds;
 
     private Matrix<N2, N1> m_appliedU;
@@ -47,24 +43,24 @@ public class LTVDiffDriveController {
     private Matrix<N2, N5> m_K0;
     private Matrix<N2, N5> m_K1;
 
+    private Matrix<N6, N6> m_globalR;
+
+    private boolean m_useLocalMeasurements;
+
+    private Pose2d m_poseTolerance;
+
     private ExtendedKalmanFilter<N10, N2, N3> m_observer;
     private DifferentialDriveKinematics m_kinematics;
 
-    /**
-     * Construct a LTV Unicycle Controller.
-     *
-     * @param qElms     The maximum desired error tolerance for the robot's state,
-     *                  in the form [X, Y, Heading]^T. Units are meters and radians.
-     * @param rElms     The maximum desired control effort by the feedback
-     *                  controller, in the form [vMax, wMax]^T. Units are meters per
-     *                  second and radians per second. Note that this is not the
-     *                  maximum speed of the robot, but rather the maximum effort
-     *                  the feedback controller should apply on top of the
-     *                  trajectory feedforward.
-     * @param dtSeconds The nominal dt of this controller. With command based this
-     *                  is 0.020.
-     */
-    public LTVDiffDriveController(LinearSystem plant, Matrix<N5, N1> qElms, Matrix<N2, N1> rElms, double dtSeconds, double robotWidthMeters) {
+
+    public LTVDiffDriveController(LinearSystem<N2, N2, N2> plant,
+            Matrix<N5, N1> controllerQ,
+            Matrix<N2, N1> controllerR,
+            Matrix<N10, N1> stateStdDevs,
+            Matrix<N3, N1> localMeasurementStdDevs,
+            Matrix<N6, N1> globalMeasurementStdDevs,
+            double dtSeconds,
+            double robotWidthMeters) {
         this.m_plant = plant;
         this.m_dtSeconds = dtSeconds;
         this.rb = robotWidthMeters / 2;
@@ -73,12 +69,16 @@ public class LTVDiffDriveController {
             Nat.N10(), Nat.N2(), Nat.N3(),
             this::getDynamics,
             this::getLocalMeasurementModel,
-            new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
+            stateStdDevs,
+            localMeasurementStdDevs,
             false, dtSeconds);
+                
+        var globalContR = StateSpaceUtil.makeCovMatrix(Nat.N6(), globalMeasurementStdDevs);
 
-        m_localY = MatrixUtils.zeros(Nat.N3(), Nat.N1());
-        m_globalY = MatrixUtils.zeros(Nat.N6(), Nat.N1());
+        m_globalR = StateSpaceUtil.discretizeR(globalContR, dtSeconds);
+
+        m_localY = MatrixUtils.zeros(Nat.N3());
+        m_globalY = MatrixUtils.zeros(Nat.N6());
 
         var x0 = MatrixUtils.zeros(Nat.N10());
         x0.set(State.kLeftVelocity.value, 0, 1e-9);
@@ -91,17 +91,18 @@ public class LTVDiffDriveController {
         var u0 = MatrixUtils.zeros(Nat.N2());
 
         var a0 = NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x0, u0).getStorage()
-                .extractMatrix(0, 0, 5, 5);
+                .extractMatrix(0, 5, 0, 5);
         var a1 = NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x1, u0).getStorage()
-                .extractMatrix(0, 0, 5, 5);
-        m_B = new Matrix<N5, N2>(NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x0, u0)
-                .getStorage().extractMatrix(0, 0, 5, 2));
+                .extractMatrix(0, 5, 0, 5);
+                
+        m_B = new Matrix<>(NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x0, u0)
+                .getStorage().extractMatrix(0, 5, 0, 2));
 
-        m_K0 = new LinearQuadraticRegulator<N5, N2, N3>(new Matrix<>(a0), m_B, qElms, rElms, dtSeconds).getK();
-        m_K1 = new LinearQuadraticRegulator<N5, N2, N3>(new Matrix<>(a1), m_B, qElms, rElms, dtSeconds).getK();
+        m_K0 = new LinearQuadraticRegulator<N5, N2, N3>(new Matrix<>(a0), m_B, controllerQ, controllerR, dtSeconds).getK();
+        m_K1 = new LinearQuadraticRegulator<N5, N2, N3>(new Matrix<>(a1), m_B, controllerQ, controllerR, dtSeconds).getK();
     }
 
-    private Matrix<N10, N1> getDynamics(Matrix<N10, N1> x, Matrix<N2, N1> u) {
+    public Matrix<N10, N1> getDynamics(Matrix<N10, N1> x, Matrix<N2, N1> u) {
         var B = m_plant.getB().getStorage().concatRows(new SimpleMatrix(2, 2));
 
         var A = new Matrix<N4, N7>(new SimpleMatrix(4, 7));
@@ -121,30 +122,60 @@ public class LTVDiffDriveController {
         return result;
     }
 
-    private Matrix<N3, N1> getLocalMeasurementModel(Matrix<N10, N1> x, Matrix<N2, N1> u) {
+    protected Matrix<N3, N1> getLocalMeasurementModel(Matrix<N10, N1> x, Matrix<N2, N1> u) {
         return new MatBuilder<>(Nat.N3(), Nat.N1()).fill(x.get(State.kHeading.value, 0),
                 x.get(State.kLeftPosition.value, 0), x.get(State.kRightPosition.value, 0));
     }
 
-    private Matrix<N6, N1> getGlobalMeasurementModel(Matrix<N10, N1> x, Matrix<N2, N1> u) {
+    protected Matrix<N6, N1> getGlobalMeasurementModel(Matrix<N10, N1> x, Matrix<N2, N1> u) {
         return new MatBuilder<>(Nat.N6(), Nat.N1()).fill(
-            0, 0, 0,
+            x.get(State.kX.value, 0),
+            x.get(State.kY.value, 0),
+            x.get(State.kHeading.value, 0),
             x.get(State.kLeftPosition.value, 0),
             x.get(State.kRightPosition.value, 0),
             (x.get(State.kRightVelocity.value, 0) - x.get(State.kLeftVelocity.value, 0)) / (2.0 * rb)
         );
     }
 
-   /**
-    * Returns whether the drivetrain controller is at the goal waypoint.
-    */
-   public boolean atGoal(Pose2d goal) {
+  /**
+   * Returns if the controller is at the reference pose on the trajectory.
+   * Note that this is different than if the robot has traversed the entire
+   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d)}
+   * method.
+   *
+   * @return If the robot is within the specified tolerance of the
+   */
+   public boolean atReference() {
        Pose2d ref = new Pose2d(
            m_r.get(State.kX.value, 0),
            m_r.get(State.kY.value, 0),
            new Rotation2d(m_r.get(State.kHeading.value, 0)));
-        return ref.equals(goal) && true;
+
+        Pose2d current = new Pose2d(
+            getStates().get(State.kX.value, 0),
+            getStates().get(State.kY.value, 0),
+            new Rotation2d(getStates().get(State.kHeading.value, 0)));
+
+        var poseError = ref.relativeTo(current);
+
+        var translationError = poseError.getTranslation();
+        var rotationError = poseError.getRotation();
+        var tolTranslate = m_poseTolerance.getTranslation();
+        var tolRotate = m_poseTolerance.getRotation();
+        return Math.abs(translationError.getX()) < tolTranslate.getX()
+            && Math.abs(translationError.getY()) < tolTranslate.getY()
+            && Math.abs(rotationError.getRadians()) < tolRotate.getRadians();
    }
+
+    /**
+     * Set the tolerance for if the robot is {@link #atReference()} or not.
+     *
+     * @param poseTolerance The new pose tolerance.
+     */
+    public void setTolerance(final Pose2d poseTolerance) {
+        this.m_poseTolerance = poseTolerance;
+    }
 
     /**
      * Set inputs.
@@ -153,8 +184,8 @@ public class LTVDiffDriveController {
      * @param rightUVolts Voltage applied to the right drivetrain
      */
     public void setMeasuredInputs(double leftUVolts, double rightUVolts) {
-        m_appliedU.set(0, 0, leftUVolts);
-        m_appliedU.set(1, 0, rightUVolts);
+        m_appliedU.set(Input.kLeftVoltage.value, 0, leftUVolts);
+        m_appliedU.set(Input.kRightVoltage.value, 0, rightUVolts);
     }
 
     /**
@@ -165,9 +196,10 @@ public class LTVDiffDriveController {
      * @param rightPosition  Encoder count of right side in meters.
      */
     public void setMeasuredLocalOutputs(double headingRadians, double leftPosition, double rightPosition) {
-        m_localY.set(0, 0, headingRadians);
-        m_localY.set(1, 0, leftPosition);
-        m_localY.set(2, 0, rightPosition);
+        m_useLocalMeasurements = true;
+        m_localY.set(LocalOutput.kHeading.value, 0, headingRadians);
+        m_localY.set(LocalOutput.kLeftPosition.value, 0, leftPosition);
+        m_localY.set(LocalOutput.kRightPosition.value, 0, rightPosition);
     }
 
     /**
@@ -183,26 +215,45 @@ public class LTVDiffDriveController {
      */
     public void setMeasuredGlobalOutputs(double xMeters, double yMeters, double headingRadians,
             double leftPositionMeters, double rightPositionMeters, double angularVelocityRadPerSec) {
-        m_globalY.set(0, 0, xMeters);
-        m_globalY.set(1, 0, yMeters);   
-        m_globalY.set(2, 0, headingRadians);
-        m_globalY.set(3, 0, leftPositionMeters);      
-        m_globalY.set(4, 0, rightPositionMeters);
-        m_globalY.set(5, 0, angularVelocityRadPerSec);  
+        m_useLocalMeasurements = false;
+        m_globalY.set(GlobalOutput.kX.value, 0, xMeters);
+        m_globalY.set(GlobalOutput.kY.value, 0, yMeters);   
+        m_globalY.set(GlobalOutput.kHeading.value, 0, headingRadians);
+        m_globalY.set(GlobalOutput.kLeftPosition.value, 0, leftPositionMeters);      
+        m_globalY.set(GlobalOutput.kRightPosition.value, 0, rightPositionMeters);
+        m_globalY.set(GlobalOutput.kAngularVelocity.value, 0, angularVelocityRadPerSec);  
     }
 
+    
+    /** 
+     * @return Matrix<N10, N1>
+     */
     public Matrix<N10, N1> getReferences() {
         return m_nextR;
     }
 
+    
+    /** 
+     * @return Matrix<N10, N1>
+     */
     public Matrix<N10, N1> getStates() {
         return m_observer.getXhat();
     }
 
+    
+    /** 
+     * Returns the inputs of the controller in the form [LeftVoltage, RightVoltage].
+     * 
+     * @return Matrix<N2, N1> The inputs.
+     */
     public Matrix<N2, N1> getInputs() {
         return m_cappedU;
     }
 
+    
+    /** 
+     * @return Matrix<N3, N1>
+     */
     public Matrix<N3, N1> getOutputs() {
         return m_localY;
     }
@@ -251,6 +302,7 @@ public class LTVDiffDriveController {
         K.set(1, 3, K.get(0, 4));
         K.set(1, 4, K.get(0, 3));
 
+        @SuppressWarnings("unused")
         Matrix<N2, N1> uError = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(
             x.get(State.kLeftVoltageError.value, 0),
             x.get(State.kRightVoltageError.value, 0));
@@ -274,28 +326,28 @@ public class LTVDiffDriveController {
      * The reference pose, linear velocity, and angular velocity should come from a
      * {@link Trajectory}.
      *
-     * @param currentPose                   The current position of the robot.
      * @param poseRef                       The desired pose of the robot.
      * @param linearVelocityRefMetersPerSec The desired linear velocity of the
      *                                      robot.
      * @param angularVelocityRefRadPerSec   The desired angular velocity of the
      *                                      robot.
-     * @return The next calculated output.
+     * @return The control input as a {@link DifferentialDriveMotorVoltages}.
      */
-    public DifferentialDriveMotorVoltages calculate(Pose2d currentPose, Pose2d poseRef, double linearVelocityRefMetersPerSec,
+    public DifferentialDriveMotorVoltages calculate(Pose2d poseRef, double linearVelocityRefMetersPerSec,
             double angularVelocityRefRadPerSec) {
 
         var wheelVelocities = m_kinematics
                 .toWheelSpeeds(new ChassisSpeeds(linearVelocityRefMetersPerSec, 0, angularVelocityRefRadPerSec));
 
-        m_observer.correct(m_appliedU, m_localY);
+        if(m_useLocalMeasurements){
+            m_observer.correct(m_appliedU, m_localY);
+        } else {
+            m_observer.correct(Nat.N6(), m_appliedU, m_globalY, this::getGlobalMeasurementModel, m_globalR);
+        }
 
         m_nextR = new MatBuilder<>(Nat.N10(), Nat.N1()).fill(poseRef.getTranslation().getX(),
                 poseRef.getTranslation().getY(), poseRef.getRotation().getRadians(),
-                wheelVelocities.leftMetersPerSecond, wheelVelocities.rightMetersPerSecond, 0.0, 0.0, 0.0, 0.0, 0.0 // 0s
-                                                                                                                   // for
-                                                                                                                   // now
-        );
+                wheelVelocities.leftMetersPerSecond, wheelVelocities.rightMetersPerSecond, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         // Compute feedforward
         var rdot = (m_nextR.getStorage().extractMatrix(0, 0, 5, 1).minus(m_r.getStorage().extractMatrix(0, 0, 5, 1)))
@@ -315,7 +367,7 @@ public class LTVDiffDriveController {
        m_r = m_nextR;
        m_observer.predict(m_cappedU, m_dtSeconds);
 
-       return new DifferentialDriveMotorVoltages(m_cappedU.get(0, 0), m_cappedU.get(1, 0));
+       return new DifferentialDriveMotorVoltages(m_cappedU.get(Input.kLeftVoltage.value, 0), m_cappedU.get(Input.kRightVoltage.value, 0));
    }
 
    /**
@@ -327,8 +379,8 @@ public class LTVDiffDriveController {
     * @param desiredState The desired pose, linear velocity, and angular velocity
     *                     from a trajectory.
     */
-   public DifferentialDriveMotorVoltages calculate(Pose2d currentPose, Trajectory.State desiredState) {
-       return calculate(currentPose, desiredState.poseMeters,
+   public DifferentialDriveMotorVoltages calculate(Trajectory.State desiredState) {
+       return calculate(desiredState.poseMeters,
                desiredState.velocityMetersPerSecond,
                desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter);
    }
@@ -337,7 +389,10 @@ public class LTVDiffDriveController {
     * Resets any internal state.
     */
    public void reset() {
-
+        m_observer.reset();
+        m_r = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+        m_nextR = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+        m_cappedU = MatrixUtils.zeros(Nat.N2(), Nat.N1());
    }
 
    /**
@@ -346,7 +401,19 @@ public class LTVDiffDriveController {
     * @param initialPose Initial pose for state estimate.
     */
    public void reset(Pose2d initialPose) {
+        m_observer.reset();
 
+        var xHat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+
+        xHat.set(0, 0, initialPose.getTranslation().getX());
+        xHat.set(1, 0, initialPose.getTranslation().getY());
+        xHat.set(2, 0, initialPose.getTranslation().getY());
+
+        m_observer.setXhat(xHat);
+
+        m_r = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+        m_nextR = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+        m_cappedU = MatrixUtils.zeros(Nat.N2(), Nat.N1());
    }
 
    private void scaleCappedU(Matrix<N2, N1> u){

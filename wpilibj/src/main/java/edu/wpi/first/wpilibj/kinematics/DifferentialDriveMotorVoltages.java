@@ -8,31 +8,31 @@
 package edu.wpi.first.wpilibj.kinematics;
 
 /**
- * Represents the wheel speeds for a differential drive drivetrain.
+ * Represents the motor voltages for a differential drive drivetrain.
  */
 @SuppressWarnings("MemberName")
 public class DifferentialDriveMotorVoltages {
   /**
-   * Speed of the left side of the robot.
+   * Voltage of the left side of the robot.
    */
   public double leftVolts;
 
   /**
-   * Speed of the right side of the robot.
+   * Voltage of the right side of the robot.
    */
   public double rightVolts;
 
   /**
-   * Constructs a DifferentialDriveWheelSpeeds with zeros for left and right speeds.
+   * Constructs a DifferentialDriveMotorVoltages with zeros for left and right voltages.
    */
   public DifferentialDriveMotorVoltages() {
   }
 
   /**
-   * Constructs a DifferentialDriveWheelSpeeds.
+   * Constructs a DifferentialDriveMotorVoltages.
    *
-   * @param leftMetersPerSecond  The left speed.
-   * @param rightMetersPerSecond The right speed.
+   * @param leftVolts  The left voltage.
+   * @param rightVolts The right voltage.
    */
   public DifferentialDriveMotorVoltages(double leftVolts, double rightVolts) {
     this.leftVolts = leftVolts;
