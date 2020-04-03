@@ -1,6 +1,7 @@
 package edu.wpi.first.wpilibj.estimator;
 
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import edu.wpi.first.wpiutil.math.Matrix;
@@ -10,7 +11,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
 class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num> {
   private static final int k_maxPastObserverStates = 300;
 
-  private final TreeMap<Double, ObserverSnapshot> m_pastObserverSnapshots;
+  private final NavigableMap<Double, ObserverSnapshot> m_pastObserverSnapshots;
 
   KalmanFilterLatencyCompensator() {
     m_pastObserverSnapshots = new TreeMap<>();
@@ -63,15 +64,16 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
       if (y != null) {
         observer.setP(st.errorCovariances);
         observer.setXhat(st.xHat);
+      }
+
+      observer.predict(st.inputs, entry.getKey() - lastTimestamp);
+      lastTimestamp = entry.getKey();
+      if (y != null) {
         // Note that we correct the observer with inputs closest in time to the measurement
         // This makes the assumption that the dt is small enough that the difference between the
         // measurement time and the time that the inputs were captured at is very small
-        observer.predict(st.inputs, entry.getKey() - lastTimestamp);
         observer.correct(st.inputs, y);
-      } else {
-        observer.predict(st.inputs, entry.getKey() - lastTimestamp);
       }
-      lastTimestamp = entry.getKey();
 
       newSnapshots.put(entry.getKey(), new ObserverSnapshot(observer, st.inputs));
 

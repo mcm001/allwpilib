@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.estimator;
 
 import org.ejml.simple.SimpleMatrix;
@@ -9,7 +16,6 @@ import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -106,6 +112,7 @@ public class KalmanFilter<S extends Num, I extends Num,
    *
    * @return the error covariance matrix P.
    */
+  @Override
   public Matrix<S, S> getP() {
     return m_P;
   }
@@ -145,9 +152,10 @@ public class KalmanFilter<S extends Num, I extends Num,
   /**
    * Set an element of the initial state estimate x-hat.
    *
-   * @param row     Row of x-hat.
+   * @param row   Row of x-hat.
    * @param value Value for element of x-hat.
    */
+  @Override
   public void setXhat(int row, double value) {
     m_plant.setX(row, value);
   }
@@ -220,10 +228,10 @@ public class KalmanFilter<S extends Num, I extends Num,
    * is not provided (the two-argument version of this function).
    *
    * @param <R> Number of rows in the result of f(x, u).
-   * @param u      Same control input used in the predict step.
-   * @param y      Measurement vector.
-   * @param C      Output matrix.
-   * @param r      Measurement noise covariance matrix.
+   * @param u   Same control input used in the predict step.
+   * @param y   Measurement vector.
+   * @param C   Output matrix.
+   * @param r   Measurement noise covariance matrix.
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public <R extends Num> void correct(
@@ -247,7 +255,7 @@ public class KalmanFilter<S extends Num, I extends Num,
     // K^T = S^T.solve(CP^T)
     // K = (S^T.solve(CP^T))^T
 
-    SimpleMatrix K = SimpleMatrixUtils.lltDecompose(S.transpose().getStorage())
+    SimpleMatrix K = S.transpose().getStorage()
             .solve((C.times(m_P.transpose())).getStorage()).transpose();
 
     m_plant.setX(x.plus(new Matrix<>(K.mult((y.minus(new Matrix<>(C.times(x).getStorage()

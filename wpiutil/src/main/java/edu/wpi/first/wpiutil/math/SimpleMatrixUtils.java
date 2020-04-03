@@ -207,6 +207,12 @@ public class SimpleMatrixUtils {
     return SimpleMatrix.wrap(chol.getT(null));
   }
 
+  /**
+   * Compute the Hoseholder QR decomposition of a matrix.
+   * @param src the source matrix.
+   * @return the decomposed matrix.
+   * @throws RuntimeException if the decomposition fails.
+   */
   public static SimpleMatrix householderQrDecompose(SimpleMatrix src) {
     var temp = src.copy();
 

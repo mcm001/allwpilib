@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.estimator;
 
 import java.util.Arrays;
@@ -16,7 +23,6 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
@@ -83,7 +89,7 @@ public class ExtendedKalmanFilterTest {
                       ExtendedKalmanFilterTest::getDynamics,
                       ExtendedKalmanFilterTest::getLocalMeasurementModel,
                       VecBuilder.fill(0.5, 0.5, 10.0, 1.0, 1.0),
-                      VecBuilder.fill(0.0001, 0.01, 0.01), true, dtSeconds);
+                      VecBuilder.fill(0.0001, 0.01, 0.01), dtSeconds);
 
       Matrix<N2, N1> u = VecBuilder.fill(12.0, 12.0);
       observer.predict(u, dtSeconds);
@@ -111,7 +117,7 @@ public class ExtendedKalmanFilterTest {
                     ExtendedKalmanFilterTest::getDynamics,
                     ExtendedKalmanFilterTest::getLocalMeasurementModel,
                     VecBuilder.fill(0.5, 0.5, 10.0, 1.0, 1.0),
-                    VecBuilder.fill(0.001, 0.01, 0.01), true, dtSeconds);
+                    VecBuilder.fill(0.001, 0.01, 0.01), dtSeconds);
 
     List<Pose2d> waypoints = Arrays.asList(new Pose2d(2.75, 22.521, new Rotation2d()),
             new Pose2d(24.73, 19.68, Rotation2d.fromDegrees(5.846)));
@@ -147,7 +153,7 @@ public class ExtendedKalmanFilterTest {
               localY.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(), whiteNoiseStdDevs)));
 
       Matrix<N5, N1> rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(SimpleMatrixUtils.householderQrDecompose(B.getStorage())
+      u = new Matrix<>(B.getStorage()
             .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1()))).getStorage()));
 
       observer.predict(u, dtSeconds);

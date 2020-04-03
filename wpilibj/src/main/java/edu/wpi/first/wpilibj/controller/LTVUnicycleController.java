@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.controller;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -18,7 +25,6 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
  * magical Beta and Zeta gains.
  */
 public class LTVUnicycleController {
-
   @SuppressWarnings("MemberName")
   private final Matrix<N2, N3> m_K0;
   @SuppressWarnings("MemberName")

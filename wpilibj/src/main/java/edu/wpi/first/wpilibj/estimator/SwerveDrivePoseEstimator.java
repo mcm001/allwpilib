@@ -1,9 +1,16 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.estimator;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Twist2d;
+import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
@@ -175,14 +182,13 @@ public class SwerveDrivePoseEstimator {
     var omega = angle.minus(m_previousAngle).getRadians() / dt;
 
     var chassisSpeeds = m_kinematics.toChassisSpeeds(wheelStates);
-    var fieldRelativeVelocities = new Pose2d(0, 0, angle).exp(
-            new Twist2d(chassisSpeeds.vxMetersPerSecond,
-                    chassisSpeeds.vyMetersPerSecond,
-                    omega));
+    var fieldRelativeVelocities = new Translation2d(
+            chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond
+    ).rotateBy(angle);
 
     var u = new MatBuilder<>(Nat.N3(), Nat.N1()).fill(
-            fieldRelativeVelocities.getTranslation().getX(),
-            fieldRelativeVelocities.getTranslation().getY(),
+            fieldRelativeVelocities.getX(),
+            fieldRelativeVelocities.getY(),
             omega
     );
     m_previousAngle = angle;

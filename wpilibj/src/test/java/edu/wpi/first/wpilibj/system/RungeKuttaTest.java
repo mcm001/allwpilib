@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.system;
 
 import org.ejml.simple.SimpleMatrix;
@@ -9,7 +16,6 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RungeKuttaTest {
-
   @Test
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public void testExponential() {

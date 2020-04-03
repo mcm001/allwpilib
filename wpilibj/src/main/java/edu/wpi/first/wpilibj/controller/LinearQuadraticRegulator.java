@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.controller;
 
 import org.ejml.simple.SimpleMatrix;
@@ -7,7 +14,6 @@ import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.Drake;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Num;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -103,9 +109,10 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
 
     var S = Drake.discreteAlgebraicRiccatiEquation(m_discA, m_discB, Q, R);
 
-    m_K = new Matrix<>((m_discB.getStorage().transpose().mult(S).mult(m_discB.getStorage())
-            .plus(R.getStorage())).invert().mult(m_discB.getStorage().transpose()).mult(S)
-            .mult(m_discA.getStorage())); // TODO (HIGH) SWITCH ALGORITHMS
+    var temp = m_discB.getStorage().transpose().mult(S).mult(m_discB.getStorage())
+            .plus(R.getStorage());
+    m_K = new Matrix<>(temp.solve(m_discB.getStorage().transpose().mult(S)
+            .mult(m_discA.getStorage()))); // Eigen: m_k = temp.llt().solve(toSolve)
 
     initializeRandU(B.getNumRows(), B.getNumCols());
     reset();
@@ -229,7 +236,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
   @SuppressWarnings("ParameterName")
   public void update(Matrix<S, N1> x) {
     if (m_enabled) {
-      m_uff = new Matrix<>(SimpleMatrixUtils.householderQrDecompose(m_discB.getStorage())
+      m_uff = new Matrix<>(m_discB.getStorage()
               .solve((m_r.minus(m_discA.times(m_r))).getStorage()));
       m_u = m_K.times(m_r.minus(x)).plus(m_uff);
     }
@@ -247,4 +254,3 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
     m_r = nextR;
   }
 }
-

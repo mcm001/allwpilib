@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.estimator;
 
 import java.util.ArrayList;
@@ -18,9 +25,12 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class MecanumDrivePoseEstimatorTest {
   @Test
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
   public void testAccuracy() {
     var kinematics = new MecanumDriveKinematics(
             new Translation2d(1, 1), new Translation2d(1, -1),
@@ -104,6 +114,10 @@ public class MecanumDrivePoseEstimatorTest {
 
     System.out.println(errorSum / (trajectory.getTotalTimeSeconds() / dt));
     System.out.println(maxError);
+
+    assertEquals(0.0, errorSum / (trajectory.getTotalTimeSeconds() / dt), 0.2);
+    assertEquals(0.0, maxError, 0.2);
+
 
     //    var chartBuilder = new XYChartBuilder();
     //    chartBuilder.title = "The Magic of Sensor Fusion";

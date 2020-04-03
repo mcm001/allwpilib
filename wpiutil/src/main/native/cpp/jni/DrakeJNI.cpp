@@ -7,10 +7,9 @@
 
 #include <jni.h>
 
-#include <Eigen/Core>
-
 #include <iostream>
 
+#include <Eigen/Core>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "drake/math/discrete_algebraic_riccati_equation.h"
@@ -31,24 +30,23 @@ Java_edu_wpi_first_wpiutil_math_DrakeJNI_discreteAlgebraicRiccatiEquation
   (JNIEnv* env, jclass, jdoubleArray A, jdoubleArray B, jdoubleArray Q,
    jdoubleArray R, jint states, jint inputs, jdoubleArray S)
 {
-
   jdouble* nativeA = env->GetDoubleArrayElements(A, nullptr);
   jdouble* nativeB = env->GetDoubleArrayElements(B, nullptr);
   jdouble* nativeQ = env->GetDoubleArrayElements(Q, nullptr);
   jdouble* nativeR = env->GetDoubleArrayElements(R, nullptr);
 
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>> Amat{nativeA,
-                                  states, states};
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>> Bmat{nativeB,                                
-                                  states, inputs};
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>> Qmat{nativeQ,                                
-                                  states, states};
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>> Rmat{nativeR,                                
-                                  inputs, inputs};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Amat{nativeA, states, states};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Bmat{nativeB, states, inputs};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Qmat{nativeQ, states, states};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Rmat{nativeR, inputs, inputs};
 
   Eigen::MatrixXd result =
       drake::math::DiscreteAlgebraicRiccatiEquation(Amat, Bmat, Qmat, Rmat);

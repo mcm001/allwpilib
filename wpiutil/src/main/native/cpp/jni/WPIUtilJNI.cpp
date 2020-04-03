@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -7,16 +7,14 @@
 
 #include <jni.h>
 
-#include <unsupported/Eigen/MatrixFunctions>
-
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <Eigen/QR>
+#include <unsupported/Eigen/MatrixFunctions>
 
 #include "drake/math/discrete_algebraic_riccati_equation.h"
 #include "edu_wpi_first_wpiutil_WPIUtilJNI.h"
 #include "wpi/PortForwarder.h"
-
 #include "wpi/jni_util.h"
 
 using namespace wpi::java;
@@ -31,21 +29,20 @@ bool check_stabilizable(const Eigen::Ref<const Eigen::MatrixXd>& A,
   Eigen::EigenSolver<Eigen::MatrixXd> es(A);
   for (int i = 0; i < n; i++) {
     if (es.eigenvalues()[i].real() * es.eigenvalues()[i].real() +
-        es.eigenvalues()[i].imag() * es.eigenvalues()[i].imag() <
+            es.eigenvalues()[i].imag() * es.eigenvalues()[i].imag() <
         1)
       continue;
 
     Eigen::MatrixXcd E(n, n + m);
     E << es.eigenvalues()[i] * Eigen::MatrixXcd::Identity(n, n) - A, B;
     Eigen::ColPivHouseholderQR<Eigen::MatrixXcd> qr(E);
-    if(qr.rank() != n) {
+    if (qr.rank() != n) {
       return false;
     }
   }
 
   return true;
 }
-
 
 extern "C" {
 
@@ -94,13 +91,13 @@ JNIEXPORT void JNICALL
 Java_edu_wpi_first_wpiutil_WPIUtilJNI_exp
   (JNIEnv* env, jclass, jdoubleArray src, jint rows, jdoubleArray dst)
 {
-
   jdouble* arrayBody = env->GetDoubleArrayElements(src, nullptr);
 
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>> Amat{arrayBody,
-                                   rows, rows};
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Aexp = Amat.exp();
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Amat{arrayBody, rows, rows};
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Aexp =
+      Amat.exp();
 
   env->ReleaseDoubleArrayElements(src, arrayBody, 0);
   env->SetDoubleArrayRegion(dst, 0, rows * rows, Aexp.data());
@@ -113,25 +110,26 @@ Java_edu_wpi_first_wpiutil_WPIUtilJNI_exp
  */
 JNIEXPORT jboolean JNICALL
 Java_edu_wpi_first_wpiutil_WPIUtilJNI_isStabilizable
- (JNIEnv* env, jclass, jint states, jint inputs, jdoubleArray aSrc, jdoubleArray bSrc) {
-
+  (JNIEnv* env, jclass, jint states, jint inputs, jdoubleArray aSrc,
+   jdoubleArray bSrc)
+{
   jdouble* nativeA = env->GetDoubleArrayElements(aSrc, nullptr);
   jdouble* nativeB = env->GetDoubleArrayElements(bSrc, nullptr);
 
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>> A{nativeA,
-                                   states, states};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      A{nativeA, states, states};
 
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>> B{nativeB,
-                                   states, inputs};
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      B{nativeB, states, inputs};
 
-   bool isStabilizable = check_stabilizable(A, B);
+  bool isStabilizable = check_stabilizable(A, B);
 
   env->ReleaseDoubleArrayElements(aSrc, nativeA, 0);
   env->ReleaseDoubleArrayElements(bSrc, nativeB, 0);
 
   return isStabilizable;
- }
+}
 
 }  // extern "C"

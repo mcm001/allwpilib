@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.controller;
 
 import org.ejml.simple.SimpleMatrix;
@@ -13,7 +20,6 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LinearQuadraticRegulatorTest {
-
   public static LinearSystem<N2, N1, N1> elevatorPlant;
   static LinearSystem<N2, N1, N1> armPlant;
 
@@ -91,12 +97,20 @@ public class LinearQuadraticRegulatorTest {
   @SuppressWarnings("LocalVariableName")
   public void testLQROnArm() {
 
+    var motors = DCMotor.getVex775Pro(2);
+
+    var m = 4.0;
+    var r = 0.4;
+    var G = 100.0;
+
+    var plant = LinearSystem.createSingleJointedArmSystem(motors, 1d / 3d * m * r * r, G, 12.0);
+
     var qElms = VecBuilder.fill(0.01745, 0.08726);
     var rElms = VecBuilder.fill(12.0);
     var dt = 0.00505;
 
     var controller = new LinearQuadraticRegulator<>(
-            armPlant, qElms, rElms, dt);
+            plant, qElms, rElms, dt);
 
     var k = controller.getK();
 

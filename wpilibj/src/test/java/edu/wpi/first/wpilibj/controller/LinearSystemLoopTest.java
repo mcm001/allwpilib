@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.controller;
 
 import java.util.ArrayList;
@@ -22,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LinearSystemLoopTest {
-
   public static final double kDt = 0.00505;
   private static final double kPositionStddev = 0.0001;
   private static final Random random = new Random();
@@ -69,7 +75,7 @@ public class LinearSystemLoopTest {
   }
 
   @Test
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
   public void testStateSpaceEnabled() {
 
     m_loop.reset();
@@ -78,14 +84,14 @@ public class LinearSystemLoopTest {
     var constraints = new TrapezoidProfile.Constraints(4, 3);
     m_loop.setNextR(references);
 
+    TrapezoidProfile profile;
+    TrapezoidProfile.State state;
     for (int i = 0; i < 1000; i++) {
-
-      // trapezoidal profile gang
-      var profile = new TrapezoidProfile(
+      profile = new TrapezoidProfile(
               constraints, new TrapezoidProfile.State(m_loop.getXHat(0), m_loop.getXHat(1)),
               new TrapezoidProfile.State(references.get(0, 0), references.get(1, 0))
       );
-      var state = profile.calculate(kDt);
+      state = profile.calculate(kDt);
       m_loop.setNextR(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(state.position, state.velocity));
 
       updateTwoState(m_loop, (random.nextGaussian()) * kPositionStddev);

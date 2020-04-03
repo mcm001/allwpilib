@@ -1,14 +1,22 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.estimator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Transform2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
@@ -17,8 +25,10 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Nat;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class DifferentialDrivePoseEstimatorTest {
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
   @Test
   public void testAccuracy() {
     var estimator = new DifferentialDrivePoseEstimator(new Rotation2d(), new Pose2d(),
@@ -53,9 +63,11 @@ public class DifferentialDrivePoseEstimatorTest {
 
     double maxError = Double.NEGATIVE_INFINITY;
     double errorSum = 0;
+    Trajectory.State groundtruthState;
+    DifferentialDriveWheelSpeeds input;
     while (t <= traj.getTotalTimeSeconds()) {
-      var groundtruthState = traj.sample(t);
-      var input = kinematics.toWheelSpeeds(new ChassisSpeeds(
+      groundtruthState = traj.sample(t);
+      input = kinematics.toWheelSpeeds(new ChassisSpeeds(
               groundtruthState.velocityMetersPerSecond, 0.0,
               // ds/dt * dtheta/ds = dtheta/dt
               groundtruthState.velocityMetersPerSecond * groundtruthState.curvatureRadPerMeter
@@ -65,22 +77,29 @@ public class DifferentialDrivePoseEstimatorTest {
         if (lastVisionPose != null) {
           estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
-        lastVisionPose = groundtruthState.poseMeters.transformBy(new Transform2d(
-                new Translation2d(rand.nextGaussian() * 0.1, rand.nextGaussian() * 0.1),
-                new Rotation2d(rand.nextGaussian() * 0.01)
-        ));
+        var groundPose = groundtruthState.poseMeters;
+        lastVisionPose = new Pose2d(
+                new Translation2d(
+                        groundPose.getTranslation().getX() + rand.nextGaussian() * 0.1,
+                        groundPose.getTranslation().getY() + rand.nextGaussian() * 0.1
+                ),
+                new Rotation2d(rand.nextGaussian() * 0.01).plus(groundPose.getRotation())
+        );
         lastVisionUpdateTime = t;
 
         visionXs.add(lastVisionPose.getTranslation().getX());
         visionYs.add(lastVisionPose.getTranslation().getY());
       }
 
+      input.leftMetersPerSecond += rand.nextGaussian() * 0.02;
+      input.rightMetersPerSecond += rand.nextGaussian() * 0.02;
+
       var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
       var xHat = estimator.updateWithTime(
-          t,
-          groundtruthState.poseMeters.getRotation().plus(rotNoise),
-          input.leftMetersPerSecond * dt + rand.nextGaussian() * 0.02,
-          input.rightMetersPerSecond * dt + rand.nextGaussian() * 0.02);
+              t,
+              groundtruthState.poseMeters.getRotation().plus(rotNoise),
+              input
+      );
 
       double error =
               groundtruthState.poseMeters.getTranslation().getDistance(xHat.getTranslation());
@@ -97,8 +116,17 @@ public class DifferentialDrivePoseEstimatorTest {
       t += dt;
     }
 
-    System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
-    System.out.println("Max error (meters):  " + maxError);
+    assertEquals(
+            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.2,
+            "Incorrect mean error"
+    );
+    assertEquals(
+            0.0, maxError, 0.2,
+            "Incorrect max error"
+    );
+
+    //System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
+    //System.out.println("Max error (meters):  " + maxError);
 
     //var chartBuilder = new XYChartBuilder();
     //chartBuilder.title = "The Magic of Sensor Fusion";
