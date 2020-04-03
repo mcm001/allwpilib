@@ -59,11 +59,12 @@ public class LTVDiffDriveController {
             Matrix<N10, N1> stateStdDevs,
             Matrix<N3, N1> localMeasurementStdDevs,
             Matrix<N6, N1> globalMeasurementStdDevs,
-            double dtSeconds,
-            double robotWidthMeters) {
+            DifferentialDriveKinematics kinematics,
+            double dtSeconds) {
         this.m_plant = plant;
         this.m_dtSeconds = dtSeconds;
-        this.rb = robotWidthMeters / 2;
+        this.m_kinematics = kinematics;
+        this.rb = kinematics.trackWidthMeters / 2;
 
         m_observer = new ExtendedKalmanFilter<>(
             Nat.N10(), Nat.N2(), Nat.N3(),
@@ -76,6 +77,8 @@ public class LTVDiffDriveController {
         var globalContR = StateSpaceUtil.makeCovMatrix(Nat.N6(), globalMeasurementStdDevs);
 
         m_globalR = StateSpaceUtil.discretizeR(globalContR, dtSeconds);
+
+        m_appliedU = MatrixUtils.zeros(Nat.N2());
 
         m_localY = MatrixUtils.zeros(Nat.N3());
         m_globalY = MatrixUtils.zeros(Nat.N6());
@@ -95,7 +98,7 @@ public class LTVDiffDriveController {
         var a1 = NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x1, u0).getStorage()
                 .extractMatrix(0, 5, 0, 5);
                 
-        m_B = new Matrix<>(NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x0, u0)
+        m_B = new Matrix<>(NumericalJacobian.numericalJacobianU(Nat.N10(), Nat.N2(), this::getDynamics, x0, u0)
                 .getStorage().extractMatrix(0, 5, 0, 2));
 
         m_K0 = new LinearQuadraticRegulator<N5, N2, N3>(new Matrix<>(a0), m_B, controllerQ, controllerR, dtSeconds).getK();
@@ -103,12 +106,16 @@ public class LTVDiffDriveController {
     }
 
     public Matrix<N10, N1> getDynamics(Matrix<N10, N1> x, Matrix<N2, N1> u) {
-        var B = m_plant.getB().getStorage().concatRows(new SimpleMatrix(2, 2));
+        Matrix<N4, N2> B = new Matrix<>(new SimpleMatrix(4, 2));
+        B.getStorage().insertIntoThis(0, 0, m_plant.getA().getStorage());
+        B.getStorage().insertIntoThis(2, 0, new SimpleMatrix(2, 2));
 
-        var A = new Matrix<N4, N7>(new SimpleMatrix(4, 7));
+        Matrix<N4, N7> A = new Matrix<>(new SimpleMatrix(4, 7));
         A.getStorage().insertIntoThis(0, 0, m_plant.getA().getStorage());
+
         A.getStorage().insertIntoThis(2, 0, SimpleMatrix.identity(2));
-        A.getStorage().insertIntoThis(0, 4, B);
+        A.getStorage().insertIntoThis(0, 2, new SimpleMatrix(4, 2));
+        A.getStorage().insertIntoThis(0, 4, B.getStorage());
         A.getStorage().setColumn(6, 0, 0, 0, 1, -1);
 
         var v = (x.get(State.kLeftVelocity.value, 0) + x.get(State.kRightVelocity.value, 0)) / 2.0;
@@ -117,8 +124,9 @@ public class LTVDiffDriveController {
         result.set(0, 0, v * Math.cos(x.get(State.kHeading.value, 0)));
         result.set(1, 0, v * Math.sin(x.get(State.kHeading.value, 0)));
         result.set(2, 0, ((x.get(State.kRightVelocity.value, 0) - x.get(State.kLeftVelocity.value, 0)) / (2.0 * rb)));
-        result.getStorage().insertIntoThis(3, 0,
-                A.getStorage().mult(x.getStorage().extractMatrix(3, 3 + 7, 0, 1)).plus(B.mult(u.getStorage())));
+        
+        result.getStorage().insertIntoThis(3, 0, A.times(new Matrix<N7, N1>(x.getStorage().extractMatrix(3, 10, 0, 1))).plus(B.times(u)).getStorage());
+        result.getStorage().insertIntoThis(7, 0, new SimpleMatrix(3, 1));
         return result;
     }
 
@@ -226,7 +234,7 @@ public class LTVDiffDriveController {
 
     
     /** 
-     * @return Matrix<N10, N1>
+     * @return Matrix N10, N1
      */
     public Matrix<N10, N1> getReferences() {
         return m_nextR;
@@ -234,7 +242,7 @@ public class LTVDiffDriveController {
 
     
     /** 
-     * @return Matrix<N10, N1>
+     * @return Matrix N10, N1
      */
     public Matrix<N10, N1> getStates() {
         return m_observer.getXhat();
@@ -244,7 +252,7 @@ public class LTVDiffDriveController {
     /** 
      * Returns the inputs of the controller in the form [LeftVoltage, RightVoltage].
      * 
-     * @return Matrix<N2, N1> The inputs.
+     * @return Matrix N2, N1 The inputs.
      */
     public Matrix<N2, N1> getInputs() {
         return m_cappedU;
@@ -252,7 +260,7 @@ public class LTVDiffDriveController {
 
     
     /** 
-     * @return Matrix<N3, N1>
+     * @return Matrix N3, N1
      */
     public Matrix<N3, N1> getOutputs() {
         return m_localY;
@@ -350,17 +358,18 @@ public class LTVDiffDriveController {
                 wheelVelocities.leftMetersPerSecond, wheelVelocities.rightMetersPerSecond, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         // Compute feedforward
-        var rdot = (m_nextR.getStorage().extractMatrix(0, 0, 5, 1).minus(m_r.getStorage().extractMatrix(0, 0, 5, 1)))
+        var rdot = (m_nextR.getStorage().extractMatrix(0, 5, 0, 1).minus(m_r.getStorage().extractMatrix(0, 5, 0, 1)))
                 .divide(m_dtSeconds);
-        var uff = StateSpaceUtil.householderQrDecompose(m_B.getStorage())
-                .solve(
-               rdot.minus(
-                       getDynamics(m_r, new Matrix<>(new SimpleMatrix(2, 1)))
-                               .getStorage()
-                               .extractMatrix(0, 0, 5, 1)));
 
-       m_cappedU = getController(m_observer.getXhat().getStorage(), m_nextR.getStorage()
-       .extractMatrix(0, 0, 5, 1).plus(uff));
+        var uff = new Matrix<N2, N1>(StateSpaceUtil.householderQrDecompose(m_B.getStorage())
+            .solve(
+               rdot.minus(
+                    getDynamics(m_r, new Matrix<>(new SimpleMatrix(2, 1))).getStorage().extractMatrix(0, 5, 0, 1))
+            ));
+
+       m_cappedU = getController(
+           m_observer.getXhat().getStorage(),
+           m_nextR.getStorage().extractMatrix(0, 5, 0, 1)).plus(uff);
 
        scaleCappedU(m_cappedU);
 
@@ -373,9 +382,8 @@ public class LTVDiffDriveController {
    /**
     * Returns the next output of the controller.
     *
-    * <p>The reference pose and desired state should come from a {@link Trajectory}.
+    * <p>The desired state should come from a {@link Trajectory}.
     *
-    * @param currentPose  The current pose.
     * @param desiredState The desired pose, linear velocity, and angular velocity
     *                     from a trajectory.
     */

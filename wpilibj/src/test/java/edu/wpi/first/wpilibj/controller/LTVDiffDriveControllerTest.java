@@ -60,8 +60,8 @@ class LTVDiffDriveControllerTest {
         new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
         new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
         new MatBuilder<>(Nat.N6(), Nat.N1()).fill(0.005, 0.005, 0.005, 0.0001, 0.005, 0.005),
-        0.02,
-        1);
+        new DifferentialDriveKinematics(1),
+        0.02);
 
     final var waypoints = new ArrayList<Pose2d>();
 
@@ -88,7 +88,10 @@ class LTVDiffDriveControllerTest {
 
     var u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
 
-    /*for (int i = 0; i < (totalTime / kDt); ++i) {
+    controller.setTolerance(new Pose2d(0.1, 0.1, new Rotation2d(0.1)));
+
+
+    for (int i = 0; i < (totalTime); i += kDt) {
       var y = controller.getLocalMeasurementModel(x, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
 
       controller.setMeasuredLocalOutputs(y.get(0, 0), y.get(1, 0), y.get(2, 0));
@@ -100,7 +103,9 @@ class LTVDiffDriveControllerTest {
 
       x = RungeKutta.rungeKutta(controller::getDynamics, x, u, kDt);
 
+      System.out.println(inputs.leftVolts);
+      
       assertTrue(controller.atReference());
-    }*/
+    }
   }
 }
