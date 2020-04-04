@@ -48,6 +48,7 @@ public class LTVDiffDriveController {
     private boolean m_useLocalMeasurements;
 
     private Pose2d m_poseTolerance;
+    private double m_velocityTolerance;
 
     private ExtendedKalmanFilter<N10, N2, N3> m_observer;
     private DifferentialDriveKinematics m_kinematics;
@@ -72,7 +73,7 @@ public class LTVDiffDriveController {
             this::getLocalMeasurementModel,
             stateStdDevs,
             localMeasurementStdDevs,
-            false, dtSeconds);
+            dtSeconds);
                 
         var globalContR = StateSpaceUtil.makeCovMatrix(Nat.N6(), globalMeasurementStdDevs);
 
@@ -82,6 +83,8 @@ public class LTVDiffDriveController {
 
         m_localY = MatrixUtils.zeros(Nat.N3());
         m_globalY = MatrixUtils.zeros(Nat.N6());
+
+        reset();
 
         var x0 = MatrixUtils.zeros(Nat.N10());
         x0.set(State.kLeftVelocity.value, 0, 1e-9);
@@ -107,7 +110,7 @@ public class LTVDiffDriveController {
 
     public Matrix<N10, N1> getDynamics(Matrix<N10, N1> x, Matrix<N2, N1> u) {
         Matrix<N4, N2> B = new Matrix<>(new SimpleMatrix(4, 2));
-        B.getStorage().insertIntoThis(0, 0, m_plant.getA().getStorage());
+        B.getStorage().insertIntoThis(0, 0, m_plant.getB().getStorage());
         B.getStorage().insertIntoThis(2, 0, new SimpleMatrix(2, 2));
 
         Matrix<N4, N7> A = new Matrix<>(new SimpleMatrix(4, 7));
@@ -149,40 +152,39 @@ public class LTVDiffDriveController {
   /**
    * Returns if the controller is at the reference pose on the trajectory.
    * Note that this is different than if the robot has traversed the entire
-   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d)}
+   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d, double)}
    * method.
    *
    * @return If the robot is within the specified tolerance of the
    */
    public boolean atReference() {
-       Pose2d ref = new Pose2d(
-           m_r.get(State.kX.value, 0),
-           m_r.get(State.kY.value, 0),
-           new Rotation2d(m_r.get(State.kHeading.value, 0)));
+       Matrix<N5, N1> error = new Matrix<>(m_r.getStorage().extractMatrix(0,5,0, 1).minus((m_observer.getXhat().getStorage().extractMatrix(0,5,0, 1))));
 
-        Pose2d current = new Pose2d(
-            getStates().get(State.kX.value, 0),
-            getStates().get(State.kY.value, 0),
-            new Rotation2d(getStates().get(State.kHeading.value, 0)));
+       System.out.println("X " + error.get(0, 0));
+       System.out.println("Y " + error.get(1, 0));
+       System.out.println("Rotation " + error.get(2, 0));
+       System.out.println("Vel1 " + error.get(3, 0));
+       System.out.println("Vel2 " + error.get(4, 0) + '\n');
 
-        var poseError = ref.relativeTo(current);
 
-        var translationError = poseError.getTranslation();
-        var rotationError = poseError.getRotation();
-        var tolTranslate = m_poseTolerance.getTranslation();
+       var tolTranslate = m_poseTolerance.getTranslation();
         var tolRotate = m_poseTolerance.getRotation();
-        return Math.abs(translationError.getX()) < tolTranslate.getX()
-            && Math.abs(translationError.getY()) < tolTranslate.getY()
-            && Math.abs(rotationError.getRadians()) < tolRotate.getRadians();
+        return Math.abs(error.get(0,0)) < tolTranslate.getX()
+            && Math.abs(error.get(1,0)) < tolTranslate.getY()
+            && Math.abs(error.get(2,0)) < tolRotate.getRadians()
+            && Math.abs(error.get(3,0)) < m_velocityTolerance
+            && Math.abs(error.get(4,0)) < m_velocityTolerance;
    }
 
     /**
      * Set the tolerance for if the robot is {@link #atReference()} or not.
      *
      * @param poseTolerance The new pose tolerance.
+     * @param velocityTolerance The velocity tolerance.
      */
-    public void setTolerance(final Pose2d poseTolerance) {
+    public void setTolerance(final Pose2d poseTolerance, final double velocityTolerance) {
         this.m_poseTolerance = poseTolerance;
+        this.m_velocityTolerance = velocityTolerance;
     }
 
     /**
@@ -284,7 +286,7 @@ public class LTVDiffDriveController {
         return getGlobalMeasurementModel(m_observer.getXhat(), MatrixUtils.zeros(Nat.N2()));
     }
 
-    public Matrix<N2, N1> getController(SimpleMatrix x, SimpleMatrix r) {
+    public Matrix<N2, N1> getController(Matrix<N10, N1> x, Matrix<N5, N1> r) {
         // This implements the linear time-varying differential drive controller in
         // theorem 8.6.2 of https://tavsys.net/controls-in-frc.
         double kx = m_K0.get(0, 0);
@@ -295,7 +297,7 @@ public class LTVDiffDriveController {
         double ktheta1 = m_K1.get(0, 2);
         double kvpos1 = m_K1.get(0, 3);
 
-        double v = (x.get(State.kLeftVelocity.value) + x.get(State.kRightVelocity.value)) / 2.0;
+        double v = (x.get(State.kLeftVelocity.value, 0) + x.get(State.kRightVelocity.value, 0)) / 2.0;
         double sqrtAbsV = Math.sqrt(Math.abs(v));
 
         var K = new Matrix<N2, N5>(new SimpleMatrix(2, 5));
@@ -303,7 +305,7 @@ public class LTVDiffDriveController {
         K.set(0, 1, (ky0 + (ky1 - ky0) * sqrtAbsV) * Math.signum(v));
         K.set(0, 2, ktheta1 * sqrtAbsV);
         K.set(0, 3, kvpos0 + (kvpos1 - kvpos0) * sqrtAbsV);
-        K.set(0, 4, kvneg0 + (kvpos1 - kvpos0) * sqrtAbsV);
+        K.set(0, 4, kvneg0 - (kvpos1 - kvpos0) * sqrtAbsV);
         K.set(1, 0, kx);
         K.set(1, 1, -K.get(0, 1));
         K.set(1, 2, -K.get(0, 2));
@@ -321,7 +323,7 @@ public class LTVDiffDriveController {
         K.set(1, 0, -Math.sin(x.get(2, 0)));
         K.set(1, 1, Math.cos(x.get(2, 0)));
 
-        Matrix<N5, N1> error = new Matrix<N5, N1>(r.minus(x.extractMatrix(0, 5, 0, 1)));
+        Matrix<N5, N1> error = new Matrix<>(r.getStorage().minus(x.getStorage().extractMatrix(0, 5, 0, 1)));
 
         error.set(State.kHeading.value, 0, normalizeAngle(error.get(State.kHeading.value, 0)));
 
@@ -343,7 +345,6 @@ public class LTVDiffDriveController {
      */
     public DifferentialDriveMotorVoltages calculate(Pose2d poseRef, double linearVelocityRefMetersPerSec,
             double angularVelocityRefRadPerSec) {
-
         var wheelVelocities = m_kinematics
                 .toWheelSpeeds(new ChassisSpeeds(linearVelocityRefMetersPerSec, 0, angularVelocityRefRadPerSec));
 
@@ -358,18 +359,18 @@ public class LTVDiffDriveController {
                 wheelVelocities.leftMetersPerSecond, wheelVelocities.rightMetersPerSecond, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         // Compute feedforward
-        var rdot = (m_nextR.getStorage().extractMatrix(0, 5, 0, 1).minus(m_r.getStorage().extractMatrix(0, 5, 0, 1)))
-                .divide(m_dtSeconds);
+        var rdot = new Matrix<N5, N1>((m_nextR.getStorage().extractMatrix(0, 5, 0, 1).minus(m_r.getStorage().extractMatrix(0, 5, 0, 1)))
+                .divide(m_dtSeconds));
 
         var uff = new Matrix<N2, N1>(StateSpaceUtil.householderQrDecompose(m_B.getStorage())
             .solve(
-               rdot.minus(
+               rdot.getStorage().minus(
                     getDynamics(m_r, new Matrix<>(new SimpleMatrix(2, 1))).getStorage().extractMatrix(0, 5, 0, 1))
             ));
 
        m_cappedU = getController(
-           m_observer.getXhat().getStorage(),
-           m_nextR.getStorage().extractMatrix(0, 5, 0, 1)).plus(uff);
+            m_observer.getXhat(),
+               new Matrix<>(m_nextR.getStorage().extractMatrix(0, 5, 0, 1))).plus(uff);
 
        scaleCappedU(m_cappedU);
 
@@ -472,7 +473,7 @@ public class LTVDiffDriveController {
    }
 
    private enum LocalOutput {
-       kHeading(0), kLeftPosition(1), kRightPosition(1);
+       kHeading(0), kLeftPosition(1), kRightPosition(2);
 
        private int value;
 
