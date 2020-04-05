@@ -50,7 +50,7 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
  * <p>y = [[x, y, theta]]^T from vision
  */
 public class DifferentialDrivePoseEstimator {
-  private final ExtendedKalmanFilter<N3, N3, N3> m_observer;
+  private final UnscentedKalmanFilter<N3, N3, N3> m_observer;
   private final KalmanFilterLatencyCompensator<N3, N3, N3> m_latencyCompensator;
 
   private final double m_nominalDt; // Seconds
@@ -95,7 +95,7 @@ public class DifferentialDrivePoseEstimator {
   ) {
     m_nominalDt = nominalDtSeconds;
 
-    m_observer = new ExtendedKalmanFilter<>(
+    m_observer = new UnscentedKalmanFilter<>(
             Nat.N3(), Nat.N3(), Nat.N3(),
             this::f, (x, u) -> x,
             stateStdDevs, measurementStdDevs,
