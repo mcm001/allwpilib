@@ -138,7 +138,7 @@ public class UnscentedKalmanFilterTest {
               localY.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(), whiteNoiseStdDevs)));
 
       Matrix<N5, N1> rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(SimpleMatrixUtils.householderQrDecompose(B.getStorage())
+      u = new Matrix<>(B.getStorage()
               .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1()))).getStorage()));
 
       observer.predict(u, dtSeconds);
