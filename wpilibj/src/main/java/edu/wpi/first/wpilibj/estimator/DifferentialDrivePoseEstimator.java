@@ -40,7 +40,7 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
  *
  * <p>Our state-space system is:
  *
- * <p>x = [[x, y, dtheta]]^T in the field coordinate system.
+ * <p>x = [[x, y, theta]]^T in the field coordinate system.
  *
  * <p>u = [[vx, vy, omega]]^T (robot-relative velocities) -- NB: using velocities make things
  * considerably easier, because it means that teams don't have to worry about getting an accurate
