@@ -19,6 +19,15 @@ import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
+/**
+ * Kalman filters combine predictions from a model and measurements to give an estimate of the true
+ * system state. This is useful because many states cannot be measured directly as a result of
+ * sensor noise, or because the state is "hidden".
+ *
+ * <p>The Extended Kalman filter is just like the {@link KalmanFilter Kalman filter}, but we make a
+ * linear approximation of nonlinear dynamics and/or nonlinear measurement models. This means that
+ * the EKF works with nonlinear systems.
+ */
 public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
         implements KalmanTypeFilter<S, I, O> {
   private final Nat<S> m_states;
@@ -265,7 +274,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     // K^T = S^T.solve(CP^T)
     // K = (S^T.solve(CP^T))^T
     //
-    // Now we have the optimal Kalman gain
+    // Now we have the Kalman gain
     final var K = new Matrix<S, R>(S.getStorage().transpose()
             .solve(C.times(m_P.transpose()).getStorage()).transpose());
 

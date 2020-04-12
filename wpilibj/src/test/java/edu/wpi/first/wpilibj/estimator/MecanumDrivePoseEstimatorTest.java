@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Transform2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.MecanumDriveKinematics;
@@ -38,7 +37,9 @@ public class MecanumDrivePoseEstimatorTest {
 
     var estimator = new MecanumDrivePoseEstimator(
             new Rotation2d(), new Pose2d(), kinematics,
-            VecBuilder.fill(0.01, 0.01, 0.01), VecBuilder.fill(0.1, 0.1, 0.1)
+            VecBuilder.fill(0.01, 0.01, 0.01),
+            VecBuilder.fill(0.05),
+            VecBuilder.fill(0.1, 0.1, 0.1)
     );
 
     var odometry = new MecanumDriveOdometry(kinematics, new Rotation2d());
@@ -74,10 +75,13 @@ public class MecanumDrivePoseEstimatorTest {
         if (lastVisionPose != null) {
           estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
-        lastVisionPose = groundTruthState.poseMeters.transformBy(
-                new Transform2d(new Translation2d(rand.nextGaussian() * 1.0,
-                        rand.nextGaussian() * 1.0),
-                        new Rotation2d(rand.nextGaussian() * 0.05))
+        lastVisionPose = new Pose2d(
+            new Translation2d(
+                groundTruthState.poseMeters.getTranslation().getX() + rand.nextGaussian() * 0.1,
+                groundTruthState.poseMeters.getTranslation().getY() + rand.nextGaussian() * 0.1
+            ),
+            new Rotation2d(
+                    rand.nextGaussian() * 0.01).plus(groundTruthState.poseMeters.getRotation())
         );
         lastVisionUpdateTime = t;
         visionXs.add(lastVisionPose.getTranslation().getX());
@@ -112,12 +116,14 @@ public class MecanumDrivePoseEstimatorTest {
       t += dt;
     }
 
-    System.out.println(errorSum / (trajectory.getTotalTimeSeconds() / dt));
-    System.out.println(maxError);
-
-    assertEquals(0.0, errorSum / (trajectory.getTotalTimeSeconds() / dt), 0.2);
-    assertEquals(0.0, maxError, 0.2);
-
+    assertEquals(
+            0.0, errorSum / (trajectory.getTotalTimeSeconds() / dt), 0.06,
+            "Incorrect mean error"
+    );
+    assertEquals(
+            0.0, maxError, 0.12,
+            "Incorrect max error"
+    );
 
     //    var chartBuilder = new XYChartBuilder();
     //    chartBuilder.title = "The Magic of Sensor Fusion";

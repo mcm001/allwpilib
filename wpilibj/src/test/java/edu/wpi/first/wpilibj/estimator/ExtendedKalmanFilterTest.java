@@ -60,7 +60,7 @@ public class ExtendedKalmanFilterTest {
     result.set(1, 0, v * Math.sin(x.get(2, 0)));
     result.set(2, 0, (vr - vl) / (2.0 * rb));
     result.set(3, 0, k1 * ((C1 * vl) + (C2 * Vl)) + k2 * ((C1 * vr) + (C2 * Vr)));
-    result.set(4, 0, k2 * ((C1 * vl) + (C2 * Vl)) + k1 * ((C1 * vr) + (C2 * vr)));
+    result.set(4, 0, k2 * ((C1 * vl) + (C2 * Vl)) + k1 * ((C1 * vr) + (C2 * Vr)));
     return result;
   }
 

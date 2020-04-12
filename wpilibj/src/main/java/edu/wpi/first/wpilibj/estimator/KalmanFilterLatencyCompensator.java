@@ -1,89 +1,114 @@
 package edu.wpi.first.wpilibj.estimator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.function.BiConsumer;
 
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num> {
   private static final int k_maxPastObserverStates = 300;
 
-  private final NavigableMap<Double, ObserverSnapshot> m_pastObserverSnapshots;
+  private final List<Map.Entry<Double, ObserverSnapshot>> m_pastObserverSnapshots;
 
   KalmanFilterLatencyCompensator() {
-    m_pastObserverSnapshots = new TreeMap<>();
+    m_pastObserverSnapshots = new ArrayList<>();
   }
 
   @SuppressWarnings("ParameterName")
   public void addObserverState(
-          KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, double timestampSeconds
+          KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY,
+          double timestampSeconds
   ) {
-    m_pastObserverSnapshots.put(timestampSeconds, new ObserverSnapshot(observer, u));
+    m_pastObserverSnapshots.add(Map.entry(
+            timestampSeconds, new ObserverSnapshot(observer, u, localY)
+    ));
 
     if (m_pastObserverSnapshots.size() > k_maxPastObserverStates) {
-      m_pastObserverSnapshots.remove(m_pastObserverSnapshots.firstKey());
+      m_pastObserverSnapshots.remove(0);
     }
   }
 
   @SuppressWarnings("ParameterName")
-  public void applyPastMeasurement(
+  public <R extends Num> void applyPastGlobalMeasurement(
+          Nat<R> rows,
           KalmanTypeFilter<S, I, O> observer,
           double nominalDtSeconds,
-          Matrix<O, N1> y,
-          double timestampSeconds
+          Matrix<R, N1> globalMeasurement,
+          BiConsumer<Matrix<I, N1>, Matrix<R, N1>> globalMeasurementCorrect,
+          double globalMeasurementTimestampSeconds
   ) {
-    var low = m_pastObserverSnapshots.floorEntry(timestampSeconds);
-    var high = m_pastObserverSnapshots.ceilingEntry(timestampSeconds);
-
-    // Find the entry closest in time to timestampSeconds
-    Map.Entry<Double, ObserverSnapshot> closestEntry = null;
-    if (low != null && high != null) {
-      closestEntry =
-              Math.abs(timestampSeconds - low.getKey()) < Math.abs(timestampSeconds - high.getKey())
-                      ? low : high;
-    } else {
-      closestEntry = low != null ? low : high;
-    }
-    if (closestEntry == null) {
-      // State map was empty, which means that we got a past measurement right at startup
-      // The only thing we can really do is ignore the measurement
+    if (m_pastObserverSnapshots.size() == 0) {
+      // State map was empty, which means that we got a past measurement right at startup. The only
+      // thing we can really do is ignore the measurement.
       return;
     }
 
-    var newSnapshots = new TreeMap<Double, ObserverSnapshot>();
-    var snapshotsToUse = m_pastObserverSnapshots.tailMap(closestEntry.getKey(), true);
+    // This index starts at one because we use the previous state later on, and we always want to
+    // have a "previous state".
+    int maxIdx = m_pastObserverSnapshots.size() - 1;
+    int low = 1;
+    int high = Math.max(maxIdx, 1);
 
-    double lastTimestamp = snapshotsToUse.firstEntry() != null
-            ? snapshotsToUse.firstEntry().getKey() - nominalDtSeconds : 0;
-    for (var entry : snapshotsToUse.entrySet()) {
-      var st = entry.getValue();
-
-      if (y != null) {
-        observer.setP(st.errorCovariances);
-        observer.setXhat(st.xHat);
+    while (low != high) {
+      int mid = (low + high) / 2;
+      if (m_pastObserverSnapshots.get(mid).getKey() < globalMeasurementTimestampSeconds) {
+        // This index and everything under it are less than the requested timestamp. Therefore, we
+        // can discard them.
+        low = mid + 1;
+      } else {
+        // t is at least as large as the element at this index. This means that anything after it
+        // cannot be what we are looking for.
+        high = mid;
       }
-
-      observer.predict(st.inputs, entry.getKey() - lastTimestamp);
-      lastTimestamp = entry.getKey();
-      if (y != null) {
-        // Note that we correct the observer with inputs closest in time to the measurement
-        // This makes the assumption that the dt is small enough that the difference between the
-        // measurement time and the time that the inputs were captured at is very small
-        observer.correct(st.inputs, y);
-      }
-
-      newSnapshots.put(entry.getKey(), new ObserverSnapshot(observer, st.inputs));
-
-      y = null;
     }
 
-    // Replace observer snapshots that haven't been corrected by "y" for ones that have
-    // This is a 1:1 replacement of uncorrected to corrected snapshots
-    snapshotsToUse.clear();
-    m_pastObserverSnapshots.putAll(newSnapshots);
+    // We are simply assigning this index to a new variable to avoid confusion
+    // with variable names.
+    int index = low;
+    double timestamp = globalMeasurementTimestampSeconds;
+    int indexOfClosestEntry =
+        Math.abs(timestamp - m_pastObserverSnapshots.get(index - 1).getKey())
+            <= Math.abs(timestamp - m_pastObserverSnapshots.get(Math.min(index, maxIdx)).getKey())
+            ? index - 1
+            : index;
+
+    double lastTimestamp =
+            m_pastObserverSnapshots.get(indexOfClosestEntry).getKey() - nominalDtSeconds;
+
+    // We will now go back in time to the state of the system at the time when
+    // the measurement was captured. We will reset the observer to that state,
+    // and apply correction based on the measurement. Then, we will go back
+    // through all observer states until the present and apply past inputs to
+    // get the present estimated state.
+    for (int i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); i++) {
+      var key = m_pastObserverSnapshots.get(i).getKey();
+      var snapshot = m_pastObserverSnapshots.get(i).getValue();
+
+      if (i == indexOfClosestEntry) {
+        observer.setP(snapshot.errorCovariances);
+        observer.setXhat(snapshot.xHat);
+      }
+
+      observer.predict(snapshot.inputs, key - lastTimestamp);
+      observer.correct(snapshot.inputs, snapshot.localMeasurements);
+
+      if (i == indexOfClosestEntry) {
+        // Note that the measurement is at a timestep close but probably not exactly equal to the
+        // timestep for which we called predict.
+        // This makes the assumption that the dt is small enough that the difference between the
+        // measurement time and the time that the inputs were captured at is very small.
+        globalMeasurementCorrect.accept(snapshot.inputs, globalMeasurement);
+      }
+      lastTimestamp = key;
+
+      m_pastObserverSnapshots.set(i, Map.entry(key,
+              new ObserverSnapshot(observer, snapshot.inputs, snapshot.localMeasurements)));
+    }
   }
 
   /**
@@ -94,13 +119,17 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
     public final Matrix<S, N1> xHat;
     public final Matrix<S, S> errorCovariances;
     public final Matrix<I, N1> inputs;
+    public final Matrix<O, N1> localMeasurements;
 
     @SuppressWarnings("ParameterName")
-    private ObserverSnapshot(KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u) {
+    private ObserverSnapshot(
+            KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY
+    ) {
       this.xHat = observer.getXhat();
       this.errorCovariances = observer.getP();
 
       inputs = u;
+      localMeasurements = localY;
     }
   }
 }

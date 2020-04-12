@@ -39,7 +39,8 @@ public class SwerveDrivePoseEstimatorTest {
     );
     var estimator = new SwerveDrivePoseEstimator(
             new Rotation2d(), new Pose2d(), kinematics,
-            VecBuilder.fill(3, 3, 3),
+            VecBuilder.fill(0.1, 0.1, 0.1),
+            VecBuilder.fill(0.05),
             VecBuilder.fill(0.1, 0.1, 0.1)
     );
 
@@ -74,10 +75,14 @@ public class SwerveDrivePoseEstimatorTest {
         if (lastVisionPose != null) {
           estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
-        lastVisionPose = groundtruthState.poseMeters.transformBy(
-                new Transform2d(new Translation2d(rand.nextGaussian() * 0.1,
-                        rand.nextGaussian() * 0.1),
-                        new Rotation2d(rand.nextGaussian() * 0.01)));
+        lastVisionPose = new Pose2d(
+                new Translation2d(
+                    groundtruthState.poseMeters.getTranslation().getX() + rand.nextGaussian() * 0.1,
+                    groundtruthState.poseMeters.getTranslation().getY() + rand.nextGaussian() * 0.1
+                ),
+                new Rotation2d(
+                    rand.nextGaussian() * 0.01).plus(groundtruthState.poseMeters.getRotation())
+        );
         lastVisionUpdateTime = t;
 
         visionXs.add(lastVisionPose.getTranslation().getX());
@@ -97,7 +102,7 @@ public class SwerveDrivePoseEstimatorTest {
       var xHat = estimator.updateWithTime(
               t,
               groundtruthState.poseMeters.getRotation()
-                      .plus(new Rotation2d(rand.nextGaussian() * 0.001)),
+                      .plus(new Rotation2d(rand.nextGaussian() * 0.05)),
               moduleStates);
 
       double error =
@@ -116,11 +121,11 @@ public class SwerveDrivePoseEstimatorTest {
     }
 
     assertEquals(
-            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.2,
+            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.15,
             "Incorrect mean error"
     );
     assertEquals(
-            0.0, maxError, 0.2,
+            0.0, maxError, 0.34,
             "Incorrect max error"
     );
 

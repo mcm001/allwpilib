@@ -14,6 +14,16 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
+/**
+ * A Kalman filter combines predictions from a model and measurements to give an estimate of the
+ * true ystem state. This is useful because many states cannot be measured directly as a result of
+ * sensor noise, or because the state is "hidden".
+ *
+ * <p>The Unscented Kalman filter is similar to the {@link KalmanFilter Kalman filter}, except that
+ * it propagates carefully chosen points called sigma points through the non-linear model to obtain
+ * an estimate of the true covariance (as opposed to a linearized version of it). This means that
+ * the UKF works with nonlinear systems.
+ */
 @SuppressWarnings("MemberName")
 public class UnscentedKalmanFilter<S extends Num, I extends Num,
         O extends Num> implements KalmanTypeFilter<S, I, O> {

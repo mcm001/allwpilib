@@ -8,8 +8,11 @@
 package edu.wpi.first.wpilibj.estimator;
 
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
+
+import java.util.function.BiFunction;
 
 @SuppressWarnings("ParameterName")
 interface KalmanTypeFilter<S extends Num, I extends Num, O extends Num> {
