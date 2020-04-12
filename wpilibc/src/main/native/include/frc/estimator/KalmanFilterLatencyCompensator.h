@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -45,10 +46,11 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
+  template<int Rows>
   void ApplyPastMeasurement(
       KalmanFilterType* observer, units::second_t nominalDt,
-      Eigen::Matrix<double, Outputs, 1> y,
-      std::function<void(const Vector<3>& u, const Vector<3>& y)>
+      Eigen::Matrix<double, Rows, 1> y,
+      std::function<void(const Vector<Inputs>& u, const Vector<Rows>& y)>
           globalMeasurementCorrect,
       units::second_t timestamp) {
     if (m_pastObserverSnapshots.size() == 0) {

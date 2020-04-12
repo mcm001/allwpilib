@@ -21,17 +21,17 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
           [](const Vector<5>& x, const Vector<3>& u) {
             return frc::MakeMatrix<3, 1>(x(3, 0), x(4, 0), x(2, 0));
           },
-          StdDevMatrixToArray(stateStdDevs),
-          StdDevMatrixToArray(localMeasurementStdDevs), nominalDt),
+          StdDevMatrixToArray<5>(stateStdDevs),
+          StdDevMatrixToArray<3>(localMeasurementStdDevs), nominalDt),
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
-      frc::MakeCovMatrix(StdDevMatrixToArray(visionMeasurmentStdDevs));
+      frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurmentStdDevs));
   m_visionDiscR = frc::DiscretizeR<3>(visionContR, m_nominalDt);
 
   // Create correction mechanism for vision measurements.
   m_visionCorrect = [&](const Vector<3>& u, const Vector<3>& y) {
-    return m_observer.Correct<3>(
+    m_observer.Correct<3>(
         u, y,
         [](const Vector<5>& x, const Vector<3>&) {
           return x.block<3, 1>(0, 0);
@@ -59,9 +59,9 @@ Pose2d DifferentialDrivePoseEstimator::GetEstimatedPosition() const {
 
 void DifferentialDrivePoseEstimator::AddVisionMeasurement(
     const Pose2d& visionRobotPose, units::second_t timestamp) {
-  m_latencyCompensator.ApplyPastMeasurement(&m_observer, m_nominalDt,
-                                            PoseToVector(visionRobotPose),
-                                            m_visionCorrect, timestamp);
+  m_latencyCompensator.ApplyPastMeasurement<3>(&m_observer, m_nominalDt,
+                                               PoseToVector(visionRobotPose),
+                                               m_visionCorrect, timestamp);
 }
 
 Pose2d DifferentialDrivePoseEstimator::Update(
@@ -122,6 +122,7 @@ std::array<double, Dim> DifferentialDrivePoseEstimator::StdDevMatrixToArray(
   for (unsigned int i = 0; i < Dim; ++i) {
     array[i] = stdDevs(i);
   }
+  return array;
 }
 
 Vector<5> DifferentialDrivePoseEstimator::FillStateVector(
