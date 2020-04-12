@@ -21,14 +21,15 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
           [](const Vector<5>& x, const Vector<3>& u) {
             return frc::MakeMatrix<3, 1>(x(3, 0), x(4, 0), x(2, 0));
           },
-          std::array<double, 5>{stateStdDevs(0, 0), stateStdDevs(1, 0),
-                                stateStdDevs(2, 0), stateStdDevs(3, 0),
-                                stateStdDevs(4, 0)},
+          StdDevMatrixToArray(stateStdDevs),
           StdDevMatrixToArray(localMeasurementStdDevs), nominalDt),
       m_nominalDt(nominalDt) {
+  // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
       frc::MakeCovMatrix(StdDevMatrixToArray(visionMeasurmentStdDevs));
   m_visionDiscR = frc::DiscretizeR<3>(visionContR, m_nominalDt);
+
+  // Create correction mechanism for vision measurements.
   m_visionCorrect = [&](const Vector<3>& u, const Vector<3>& y) {
     return m_observer.Correct<3>(
         u, y,
@@ -40,19 +41,14 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
   m_previousAngle = initialPose.Rotation();
-  m_observer.SetXhat(frc::MakeMatrix<5, 1>(
-      initialPose.Translation().X().to<double>(),
-      initialPose.Translation().Y().to<double>(),
-      initialPose.Rotation().Radians().to<double>(), 0.0, 0.0));
+  m_observer.SetXhat(FillStateVector(initialPose, 0_m, 0_m));
 }
 
 void DifferentialDrivePoseEstimator::ResetPosition(
     const Pose2d& pose, const Rotation2d& gyroAngle) {
   m_previousAngle = pose.Rotation();
   m_gyroOffset = GetEstimatedPosition().Rotation() - gyroAngle;
-  m_observer.SetXhat(frc::MakeMatrix<5, 1>(
-      pose.Translation().X().to<double>(), pose.Translation().Y().to<double>(),
-      pose.Rotation().Radians().to<double>(), 0.0, 0.0));
+  m_observer.SetXhat(FillStateVector(pose, 0_m, 0_m));
 }
 
 Pose2d DifferentialDrivePoseEstimator::GetEstimatedPosition() const {
@@ -119,7 +115,20 @@ Vector<5> DifferentialDrivePoseEstimator::F(const Vector<5>& x,
          frc::MakeMatrix<5, 1>(u(0, 0), u(1, 0), u(2, 0), u(0, 0), u(1, 0));
 }
 
-std::array<double, 3> DifferentialDrivePoseEstimator::StdDevMatrixToArray(
-    const Vector<3>& stdDevs) {
-  return std::array<double, 3>{stdDevs(0, 0), stdDevs(1, 0), stdDevs(2, 0)};
+template <int Dim>
+std::array<double, Dim> DifferentialDrivePoseEstimator::StdDevMatrixToArray(
+    const Vector<Dim>& stdDevs) {
+  std::array<double, Dim> array;
+  for (unsigned int i = 0; i < Dim; ++i) {
+    array[i] = stdDevs(i);
+  }
+}
+
+Vector<5> DifferentialDrivePoseEstimator::FillStateVector(
+    const Pose2d& pose, units::meter_t leftDistance,
+    units::meter_t rightDistance) {
+  return frc::MakeMatrix<5, 1>(
+      pose.Translation().X().to<double>(), pose.Translation().Y().to<double>(),
+      pose.Rotation().Radians().to<double>(), leftDistance.to<double>(),
+      rightDistance.to<double>());
 }

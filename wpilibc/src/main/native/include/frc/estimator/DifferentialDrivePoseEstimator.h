@@ -52,6 +52,22 @@ using Vector = Eigen::Matrix<double, N, 1>;
  */
 class DifferentialDrivePoseEstimator {
  public:
+  /**
+   * Constructs a DifferentialDrivePoseEstimator.
+   *
+   * @param gyroAngle                The gyro angle of the robot.
+   * @param initialPose              The estimated initial pose.
+   * @param stateStdDevs             Standard deviations of the model states.
+   *                                 Increase these to trust your wheel speeds
+   *                                 less.
+   * @param localMeasurementStdDevs  Standard deviations of the encoder
+   *                                 measurements. Increase these to trust
+   *                                 encoder distances less.
+   * @param visionMeasurementStdDevs Standard deviations of the vision
+   *                                 measurements. Increase these to trust
+   *                                 vision less.
+   * @param nominalDt                The period of the loop calling Update().
+   */
   DifferentialDrivePoseEstimator(const Rotation2d& gyroAngle,
                                  const Pose2d& initialPose,
                                  const Vector<5>& stateStdDevs,
@@ -139,15 +155,20 @@ class DifferentialDrivePoseEstimator {
 
   Eigen::Matrix<double, 3, 3> m_visionDiscR;
 
-  static Vector<5> F(const Vector<5>& x, const Vector<3>& u);
-
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
 
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs);
+  template <int Dim>
+  static std::array<double, Dim> StdDevMatrixToArray(
+      const Vector<Dim>& stdDevs);
+
+  static Vector<5> F(const Vector<5>& x, const Vector<3>& u);
+  static Vector<5> FillStateVector(const Pose2d& pose,
+                                   units::meter_t leftDistance,
+                                   units::meter_t rightDistance);
 };
 
 }  // namespace frc
