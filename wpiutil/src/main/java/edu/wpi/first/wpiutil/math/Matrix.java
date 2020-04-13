@@ -13,6 +13,7 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
+import edu.wpi.first.wpiutil.math.SimpleMatrixUtils.Pair;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -348,6 +349,23 @@ public class Matrix<R extends Num, C extends Num> {
    */
   public final Matrix<R, N1> extractColumnVector(int column) {
     return new Matrix<>(this.m_storage.extractVector(false, column));
+  }
+
+  /**
+   * Extracts a matrix of a given size and start position, with this Matrix as
+   * the underlying storage (i.e. changes made to this Matrix will affect the extracted vector.)
+   *
+   * @param height The number of rows of the extracted matrix.
+   * @param width  The number of columns of the extracted matrix.
+   * @param startingLocation A pair with the starting row and column of the extracted matrix.
+   * @return A column vector from the given column.
+   */
+  public final <R2 extends Num, C2 extends Num> Matrix<R2, C2> block(Nat<R2> height, Nat<C2> width, Pair<Integer, Integer> startingLocation) {
+    return new Matrix<>(this.m_storage.extractMatrix(
+      startingLocation.getFirst(),
+      height.getNum() + startingLocation.getFirst(),
+      startingLocation.getSecond(),
+      width.getNum() + startingLocation.getSecond()));
   }
 
   /**

@@ -92,7 +92,19 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
     xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
     double maxAccel = (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
 
-    
+    // When turning about a point inside of the wheelbase (i.e. radius less than half
+    // the trackwidth), the inner wheel's direction changes, but the magnitude remains
+    // the same.  The formula above changes sign for the inner wheel when this happens.
+    // We can accurately account for this by simply negating the inner wheel.
+
+    if ((m_kinematics.trackWidthMeters / 2) > (1 / Math.abs(curvatureRadPerMeter))) {
+      if (velocityMetersPerSecond > 0) {
+        minAccel = -minAccel;
+      } else if (velocityMetersPerSecond < 0) {
+        maxAccel = -maxAccel;
+      }
+    }
+
     return new MinMax(minAccel, maxAccel);
   }
 }
