@@ -129,6 +129,46 @@ public final class StateSpaceUtil {
   }
 
   /**
+   * Discretizes the given continuous A and B matrices.
+   *
+   * <p>Rather than solving a (States + Inputs) x (States + Inputs) matrix
+   * exponential like in DiscretizeAB(), we take advantage of the structure of the
+   * block matrix of A and B.
+   *
+   * <p>1) The exponential of A*t, which is only N x N, is relatively cheap.
+   * 2) The upper-right quarter of the (States + Inputs) x (States + Inputs)
+   * matrix, which we can approximate using a taylor series to several terms
+   * and still be substantially cheaper than taking the big exponential.
+   *
+   * @param contA     Continuous system matrix.
+   * @param contB     Continuous input matrix.
+   * @param dtseconds Discretization timestep.
+   */
+  public static <S extends Num, I extends Num> SimpleMatrixUtils.Pair<Matrix<S, S>, Matrix<S, I>>
+      discretizeABTaylor(Matrix<S, S> contA,
+                         Matrix<S, I> contB,
+                         double dtseconds) {
+    var lastTerm = new Matrix<S, S>(SimpleMatrix.identity(contA.getNumRows()));
+    double lastCoeff = dtseconds;
+
+    var phi12 = lastTerm.times(lastCoeff);
+
+    // i = 6 i.e. 5th order should be enough precision
+    for (int i = 2; i < 6; ++i) {
+      lastTerm = contA.times(lastTerm);
+      lastCoeff *= dtseconds / ((double) i);
+
+      phi12 = phi12.plus(lastTerm.times(lastCoeff));
+    }
+
+    var discB = phi12.times(contB);
+
+    var discA = discretizeA(contA, dtseconds);
+
+    return SimpleMatrixUtils.Pair.of(discA, discB);
+  }
+
+  /**
    * Discretizes the given continuous A and Q matrices.
    *
    * <p>Rather than solving a 2N x 2N matrix exponential like in DiscretizeQ() (which
