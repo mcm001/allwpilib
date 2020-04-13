@@ -42,12 +42,15 @@ class LinearQuadraticRegulator {
    *
    * @param system The plant being controlled.
    * @param Qelems The maximum desired error tolerance for each state.
+   * @param rho    A weighting factor that balances control effort and state excursion. Greater
+   *               values penalize state excursion more heavily. 1 is a good starting value.
    * @param Relems The maximum desired control effort for each input.
    * @param dt     Discretization timestep.
    */
   template <int Outputs>
   LinearQuadraticRegulator(const LinearSystem<States, Inputs, Outputs>& plant,
                            const std::array<double, States>& Qelems,
+                           const double rho,
                            const std::array<double, Inputs>& Relems,
                            units::second_t dt)
       : LinearQuadraticRegulator(plant.A(), plant.B(), Qelems, Relems, dt) {}
@@ -68,7 +71,7 @@ class LinearQuadraticRegulator {
                            units::second_t dt) {
     DiscretizeAB<States, Inputs>(A, B, dt, &m_discA, &m_discB);
 
-    Eigen::Matrix<double, States, States> Q = MakeCostMatrix(Qelems);
+    Eigen::Matrix<double, States, States> Q = MakeCostMatrix(Qelems) * rho;
     Eigen::Matrix<double, Inputs, Inputs> R = MakeCostMatrix(Relems);
 
     Eigen::Matrix<double, States, States> S =

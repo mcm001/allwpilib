@@ -80,23 +80,25 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
    * @param A         Continuous system matrix of the plant being controlled.
    * @param B         Continuous input matrix of the plant being controlled.
    * @param qelms     The maximum desired error tolerance for each state.
+   * @param rho       A weighting factor that balances control effort and state excursion. Greater
+   *                  values penalize state excursion more heavily. 1 is a good starting value.
    * @param relms     The maximum desired control effort for each input.
    * @param dtSeconds Discretization timestep.
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public LinearQuadraticRegulator(Matrix<S, S> A, Matrix<S, I> B,
-                                  Matrix<S, N1> qelms, Matrix<I, N1> relms,
+                                  Matrix<S, N1> qelms, double rho, Matrix<I, N1> relms,
                                   double dtSeconds
   ) {
     this.m_A = A;
     this.m_B = B;
 
-    var discABPair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
 
     // make the cost matrices
-    var Q = StateSpaceUtil.makeCostMatrix(qelms);
+    var Q = StateSpaceUtil.makeCostMatrix(qelms).times(rho);
     var R = StateSpaceUtil.makeCostMatrix(relms);
 
+    var discABPair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
     this.m_discA = discABPair.getFirst();
     this.m_discB = discABPair.getSecond();
 
