@@ -7,6 +7,8 @@
 
 package edu.wpi.first.wpiutil.math;
 
+import java.util.function.BiFunction;
+
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.dense.row.decomposition.qr.QRDecompositionHouseholder_DDRM;
@@ -14,8 +16,6 @@ import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition_F64;
 import org.ejml.simple.SimpleBase;
 import org.ejml.simple.SimpleMatrix;
-
-import java.util.function.BiFunction;
 
 public class SimpleMatrixUtils {
   private SimpleMatrixUtils() {
@@ -58,8 +58,7 @@ public class SimpleMatrixUtils {
 
   @SuppressWarnings({"LocalVariableName", "ParameterName", "LineLength"})
   private static SimpleMatrix dispatchPade(SimpleMatrix U, SimpleMatrix V,
-                                           int nSquarings, BiFunction<SimpleMatrix, SimpleMatrix
-          , SimpleMatrix> solveProvider) {
+                                           int nSquarings, BiFunction<SimpleMatrix, SimpleMatrix, SimpleMatrix> solveProvider) {
     SimpleMatrix P = U.plus(V);
     SimpleMatrix Q = U.negative().plus(V);
 
@@ -115,7 +114,7 @@ public class SimpleMatrixUtils {
   @SuppressWarnings({"MethodName", "LocalVariableName", "ParameterName", "LineLength"})
   private static Pair<SimpleMatrix, SimpleMatrix> _pade9(SimpleMatrix A) {
     double[] b = new double[]{17643225600.0, 8821612800.0, 2075673600, 302702400, 30270240,
-            2162160, 110880, 3960, 90, 1};
+        2162160, 110880, 3960, 90, 1};
     SimpleMatrix ident = eye(A.numRows(), A.numCols());
     SimpleMatrix A2 = A.mult(A);
     SimpleMatrix A4 = A2.mult(A2);
@@ -133,8 +132,8 @@ public class SimpleMatrixUtils {
   @SuppressWarnings({"MethodName", "LocalVariableName", "LineLength", "ParameterName"})
   private static Pair<SimpleMatrix, SimpleMatrix> _pade13(SimpleMatrix A) {
     double[] b = new double[]{64764752532480000.0, 32382376266240000.0, 7771770303897600.0,
-            1187353796428800.0, 129060195264000.0, 10559470521600.0, 670442572800.0,
-            33522128640.0, 1323241920, 40840800, 960960, 16380, 182, 1};
+        1187353796428800.0, 129060195264000.0, 10559470521600.0, 670442572800.0,
+        33522128640.0, 1323241920, 40840800, 960960, 16380, 182, 1};
     SimpleMatrix ident = eye(A.numRows(), A.numCols());
 
     SimpleMatrix A2 = A.mult(A);
@@ -154,7 +153,7 @@ public class SimpleMatrixUtils {
   }
 
   /**
-   * The identy of a square matrix
+   * The identy of a square matrix.
    *
    * @param rows the number of rows (and columns)
    * @return the identiy matrix, rows x rows.
@@ -200,7 +199,9 @@ public class SimpleMatrixUtils {
       for (double matDatum : matData) {
         isZeros = isZeros && Math.abs(matDatum) < 1e-6;
       }
-      if (isZeros) return new SimpleMatrix(temp.numRows(), temp.numCols());
+      if (isZeros) {
+        return new SimpleMatrix(temp.numRows(), temp.numCols());
+      }
 
       throw new RuntimeException("Cholesky decomposition failed! Input matrix:\n" + src.toString());
     }
@@ -242,6 +243,7 @@ public class SimpleMatrixUtils {
       return m_second;
     }
 
+    @SuppressWarnings("ParameterName")
     public static <A, B> Pair<A, B> of(A a, B b) {
       return new Pair<>(a, b);
     }

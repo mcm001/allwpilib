@@ -37,20 +37,57 @@ namespace frc {
 template <int States, int Inputs>
 class LinearQuadraticRegulator {
  public:
+
+   /**
+    * Constructs a controller with the given coefficients and plant.
+    *
+    * @param system The plant being controlled.
+    * @param Qelems The maximum desired error tolerance for each state.
+    * @param Relems The maximum desired control effort for each input.
+    * @param dt     Discretization timestep.
+    */
+   template <int Outputs>
+   LinearQuadraticRegulator(const LinearSystem<States, Inputs, Outputs>& plant,
+                            const std::array<double, States>& Qelems,
+                            const std::array<double, Inputs>& Relems,
+                            units::second_t dt)
+       : LinearQuadraticRegulator(plant.A(), plant.B(), Qelems, 1.0, Relems, dt) {}
+
   /**
    * Constructs a controller with the given coefficients and plant.
    *
    * @param system The plant being controlled.
    * @param Qelems The maximum desired error tolerance for each state.
+   * @param rho    A weighting factor that balances control effort and state excursion. Greater
+   *               values penalize state excursion more heavily. 1 is a good starting value.
    * @param Relems The maximum desired control effort for each input.
    * @param dt     Discretization timestep.
    */
   template <int Outputs>
   LinearQuadraticRegulator(const LinearSystem<States, Inputs, Outputs>& plant,
                            const std::array<double, States>& Qelems,
+                           const double rho,
                            const std::array<double, Inputs>& Relems,
                            units::second_t dt)
-      : LinearQuadraticRegulator(plant.A(), plant.B(), Qelems, Relems, dt) {}
+      : LinearQuadraticRegulator(plant.A(), plant.B(), Qelems, rho, Relems, dt) {}
+
+    /**
+     * Constructs a controller with the given coefficients and plant.
+     *
+     * @param A      Continuous system matrix of the plant being controlled.
+     * @param B      Continuous input matrix of the plant being controlled.
+     * @param Qelems The maximum desired error tolerance for each state.
+     * @param rho    A weighting factor that balances control effort and state excursion. Greater
+     *               values penalize state excursion more heavily. 1 is a good starting value.
+     * @param Relems The maximum desired control effort for each input.
+     * @param dt     Discretization timestep.
+     */
+    LinearQuadraticRegulator(const Eigen::Matrix<double, States, States>& A,
+                             const Eigen::Matrix<double, States, Inputs>& B,
+                             const std::array<double, States>& Qelems,
+                             const std::array<double, Inputs>& Relems,
+                             units::second_t dt)
+      : LinearQuadraticRegulator(A, B, Qelems, 1.0, Relems, dt) {}
 
   /**
    * Constructs a controller with the given coefficients and plant.
@@ -58,17 +95,20 @@ class LinearQuadraticRegulator {
    * @param A      Continuous system matrix of the plant being controlled.
    * @param B      Continuous input matrix of the plant being controlled.
    * @param Qelems The maximum desired error tolerance for each state.
+   * @param rho    A weighting factor that balances control effort and state excursion. Greater
+   *               values penalize state excursion more heavily. 1 is a good starting value.
    * @param Relems The maximum desired control effort for each input.
    * @param dt     Discretization timestep.
    */
   LinearQuadraticRegulator(const Eigen::Matrix<double, States, States>& A,
                            const Eigen::Matrix<double, States, Inputs>& B,
                            const std::array<double, States>& Qelems,
+                           const double rho,
                            const std::array<double, Inputs>& Relems,
                            units::second_t dt) {
     DiscretizeAB<States, Inputs>(A, B, dt, &m_discA, &m_discB);
 
-    Eigen::Matrix<double, States, States> Q = MakeCostMatrix(Qelems);
+    Eigen::Matrix<double, States, States> Q = MakeCostMatrix(Qelems) * rho;
     Eigen::Matrix<double, Inputs, Inputs> R = MakeCostMatrix(Relems);
 
     Eigen::Matrix<double, States, States> S =

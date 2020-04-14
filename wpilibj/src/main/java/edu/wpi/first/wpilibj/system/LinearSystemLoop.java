@@ -49,7 +49,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    * @param controller State-space controller.
    * @param observer   State-space observer.
    */
-  public LinearSystemLoop(Nat<S> states, LinearSystem<S, I, O> plant,
+  public  LinearSystemLoop(Nat<S> states, LinearSystem<S, I, O> plant,
                           LinearQuadraticRegulator<S, I, O> controller,
                           KalmanFilter<S, I, O> observer) {
     this.m_states = states;

@@ -25,7 +25,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 public class LinearQuadraticRegulator<S extends Num, I extends Num,
-        O extends Num> {
+      O extends Num> {
 
   @SuppressWarnings("MemberName")
   private final Matrix<S, S> m_A;
@@ -58,7 +58,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
   private Matrix<S, S> m_discA;
 
   /**
-   * Constructs a controller with the given coefficients and plant.
+   * Constructs a controller with the given coefficients and plant. Rho is defaulted to 1.
    *
    * @param plant     The plant being controlled.
    * @param qelms     The maximum desired error tolerance for each state.
@@ -66,12 +66,33 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
    * @param dtSeconds Discretization timestep.
    */
   public LinearQuadraticRegulator(
-          LinearSystem<S, I, O> plant,
-          Matrix<S, N1> qelms,
-          Matrix<I, N1> relms,
-          double dtSeconds
+        LinearSystem<S, I, O> plant,
+        Matrix<S, N1> qelms,
+        Matrix<I, N1> relms,
+        double dtSeconds
   ) {
-    this(plant.getA(), plant.getB(), qelms, relms, dtSeconds);
+    this(plant.getA(), plant.getB(), qelms, 1.0, relms, dtSeconds);
+  }
+
+  /**
+   * Constructs a controller with the given coefficients and plant.
+   *
+   * @param plant     The plant being controlled.
+   * @param qelms     The maximum desired error tolerance for each state.
+   * @param rho       A weighting factor that balances control effort and state excursion.
+   *                  Greater values penalize state excursion more heavily. 1 is a good starting
+   *                  value.
+   * @param relms     The maximum desired control effort for each input.
+   * @param dtSeconds Discretization timestep.
+   */
+  public LinearQuadraticRegulator(
+        LinearSystem<S, I, O> plant,
+        Matrix<S, N1> qelms,
+        double rho,
+        Matrix<I, N1> relms,
+        double dtSeconds
+  ) {
+    this(plant.getA(), plant.getB(), qelms, rho, relms, dtSeconds);
   }
 
   /**
@@ -88,24 +109,44 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
                                   Matrix<S, N1> qelms, Matrix<I, N1> relms,
                                   double dtSeconds
   ) {
+    this(A, B, qelms, 1.0, relms, dtSeconds);
+  }
+
+  /**
+   * Constructs a controller with the given coefficients and plant.
+   *
+   * @param A         Continuous system matrix of the plant being controlled.
+   * @param B         Continuous input matrix of the plant being controlled.
+   * @param qelms     The maximum desired error tolerance for each state.
+   * @param rho       A weighting factor that balances control effort and state excursion.
+   *                  Greater
+   *                  values penalize state excursion more heavily. 1 is a good starting value.
+   * @param relms     The maximum desired control effort for each input.
+   * @param dtSeconds Discretization timestep.
+   */
+  @SuppressWarnings({"ParameterName", "LocalVariableName"})
+  public LinearQuadraticRegulator(Matrix<S, S> A, Matrix<S, I> B,
+                                  Matrix<S, N1> qelms, double rho, Matrix<I, N1> relms,
+                                  double dtSeconds
+  ) {
     this.m_A = A;
     this.m_B = B;
 
-    var discABPair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
 
     // make the cost matrices
-    var Q = StateSpaceUtil.makeCostMatrix(qelms);
+    var Q = StateSpaceUtil.makeCostMatrix(qelms).times(rho);
     var R = StateSpaceUtil.makeCostMatrix(relms);
 
+    var discABPair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
     this.m_discA = discABPair.getFirst();
     this.m_discB = discABPair.getSecond();
 
     var S = Drake.discreteAlgebraicRiccatiEquation(m_discA, m_discB, Q, R);
 
     var temp = m_discB.getStorage().transpose().mult(S).mult(m_discB.getStorage())
-            .plus(R.getStorage());
+          .plus(R.getStorage());
     m_K = new Matrix<>(temp.solve(m_discB.getStorage().transpose().mult(S)
-            .mult(m_discA.getStorage()))); // Eigen: m_k = temp.llt().solve(toSolve)
+          .mult(m_discA.getStorage()))); // Eigen: m_k = temp.llt().solve(toSolve)
 
     initializeRandU(B.getNumRows(), B.getNumCols());
     reset();
@@ -121,9 +162,9 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
    */
   @SuppressWarnings("ParameterName")
   public LinearQuadraticRegulator(
-          Matrix<S, S> A, Matrix<S, I> B,
-          Matrix<I, S> k,
-          double dtSeconds
+        Matrix<S, S> A, Matrix<S, I> B,
+        Matrix<I, S> k,
+        double dtSeconds
   ) {
     this.m_A = A;
     this.m_B = B;

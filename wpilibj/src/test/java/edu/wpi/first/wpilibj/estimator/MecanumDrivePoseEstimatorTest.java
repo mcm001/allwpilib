@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.MecanumDriveKinematics;
-import edu.wpi.first.wpilibj.kinematics.MecanumDriveOdometry;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
@@ -29,7 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MecanumDrivePoseEstimatorTest {
   @Test
-  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
+  @SuppressWarnings({"LocalVariableName", "PMD.ExcessiveMethodLength",
+        "PMD.AvoidInstantiatingObjectsInLoops"})
   public void testAccuracy() {
     var kinematics = new MecanumDriveKinematics(
             new Translation2d(1, 1), new Translation2d(1, -1),
@@ -41,8 +41,6 @@ public class MecanumDrivePoseEstimatorTest {
             VecBuilder.fill(0.05),
             VecBuilder.fill(0.1, 0.1, 0.1)
     );
-
-    var odometry = new MecanumDriveOdometry(kinematics, new Rotation2d());
 
     var trajectory = TrajectoryGenerator.generateTrajectory(
             List.of(new Pose2d(), new Pose2d(20, 20, Rotation2d.fromDegrees(0)),

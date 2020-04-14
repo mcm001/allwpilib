@@ -41,13 +41,12 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
   private Matrix<O, O> m_discR;
   private Matrix<?, S> m_sigmasF;
 
-  private MerweScaledSigmaPoints<S> m_pts;
+  private final MerweScaledSigmaPoints<S> m_pts;
 
   /**
    * Constructs an Unscented Kalman Filter.
    *
    * @param states             A Nat representing the number of states.
-   * @param inputs             A Nat representing the number of inputs.
    * @param outputs            A Nat representing the number of outputs.
    * @param f                  A vector-valued function of x and u that returns
    *                           the derivative of the state vector.
@@ -58,7 +57,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
    * @param nominalDtSeconds   Nominal discretization timestep.
    */
   @SuppressWarnings("ParameterName")
-  public UnscentedKalmanFilter(Nat<S> states, Nat<I> inputs, Nat<O> outputs,
+  public UnscentedKalmanFilter(Nat<S> states, Nat<O> outputs,
                                BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> f,
                                BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> h,
                                Matrix<S, N1> stateStdDevs,
@@ -80,7 +79,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
     reset();
   }
 
-  @SuppressWarnings({"ParameterName", "LocalVariableName"})
+  @SuppressWarnings({"ParameterName", "LocalVariableName", "PMD.CyclomaticComplexity"})
   private static <S extends Num, C extends Num>
       SimpleMatrixUtils.Pair<Matrix<C, N1>, Matrix<C, C>> unscentedTransform(
           Nat<S> s, Nat<C> dim, Matrix<?, C> sigmas, Matrix<N1, ?> Wm, Matrix<N1, ?> Wc
@@ -209,6 +208,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
    * @param dtSeconds Timestep for prediction.
    */
   @SuppressWarnings({"LocalVariableName", "ParameterName"})
+  @Override
   public void predict(Matrix<I, N1> u, double dtSeconds) {
     // Discretize Q before projecting mean and covariance forward
     Matrix<S, S> contA = NumericalJacobian.numericalJacobianX(m_states, m_states, m_f, m_xHat, u);

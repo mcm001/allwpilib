@@ -33,7 +33,7 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
     }
   }
 
-  @SuppressWarnings("ParameterName")
+  @SuppressWarnings({"ParameterName", "PMD.AvoidInstantiatingObjectsInLoops"})
   public <R extends Num> void applyPastGlobalMeasurement(
           Nat<R> rows,
           KalmanTypeFilter<S, I, O> observer,
@@ -42,7 +42,7 @@ class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O extends Num
           BiConsumer<Matrix<I, N1>, Matrix<R, N1>> globalMeasurementCorrect,
           double globalMeasurementTimestampSeconds
   ) {
-    if (m_pastObserverSnapshots.size() == 0) {
+    if (m_pastObserverSnapshots.isEmpty()) {
       // State map was empty, which means that we got a past measurement right at startup. The only
       // thing we can really do is ignore the measurement.
       return;

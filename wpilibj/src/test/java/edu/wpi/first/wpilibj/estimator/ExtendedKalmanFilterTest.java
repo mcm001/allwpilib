@@ -30,6 +30,7 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
 import edu.wpi.first.wpiutil.math.numbers.N5;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("ParameterName")
 public class ExtendedKalmanFilterTest {
@@ -106,7 +107,7 @@ public class ExtendedKalmanFilterTest {
 
   }
 
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
   @Test
   public void testConvergence() {
     double dtSeconds = 0.00505;
@@ -168,5 +169,12 @@ public class ExtendedKalmanFilterTest {
     var R = StateSpaceUtil.makeCostMatrix(
             VecBuilder.fill(0.01, 0.01, 0.0001, 0.5, 0.5));
     observer.correct(Nat.N5(), u, globalY, ExtendedKalmanFilterTest::getGlobalMeasurementModel, R);
+
+    var finalPosition = trajectory.sample(trajectory.getTotalTimeSeconds());
+    assertEquals(finalPosition.poseMeters.getTranslation().getX(), observer.getXhat(0), 1.0);
+    assertEquals(finalPosition.poseMeters.getTranslation().getY(), observer.getXhat(1), 1.0);
+    assertEquals(finalPosition.poseMeters.getRotation().getRadians(), observer.getXhat(2), 1.0);
+    assertEquals(0.0, observer.getXhat(3), 1.0);
+    assertEquals(0.0, observer.getXhat(4), 1.0);
   }
 }

@@ -109,7 +109,7 @@ public class DifferentialDrivePoseEstimator {
     m_nominalDt = nominalDtSeconds;
 
     m_observer = new UnscentedKalmanFilter<>(
-        Nat.N5(), Nat.N3(), Nat.N3(),
+        Nat.N5(), Nat.N3(),
         this::f,
         (x, u) -> VecBuilder.fill(x.get(3, 0), x.get(4, 0), x.get(2, 0)),
         stateStdDevs, localMeasurementStdDevs,
