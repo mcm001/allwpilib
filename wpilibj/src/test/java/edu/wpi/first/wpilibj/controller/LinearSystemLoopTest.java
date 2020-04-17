@@ -197,4 +197,62 @@ public class LinearSystemLoopTest {
     assertEquals(0.0, m_loop.getXHat(1), 1e-6);
   }
 
+  @Test
+  public void testGenerateFRCDocsGraph() {
+    //    RobotBase.startRobot(Robot::new);
+    var plant = LinearSystem.identifyVelocitySystem(
+          2.9, 0.3, 12.0);
+
+    var kf = new KalmanFilter<>(Nat.N1(), Nat.N1(), plant, VecBuilder.fill(0.1),
+          VecBuilder.fill(10), 0.020);
+
+    var lqr = new LinearQuadraticRegulator<>(plant, VecBuilder.fill(0.1), 1.0,
+          VecBuilder.fill(12.0), 0.020);
+
+    lqr.reset();
+    lqr.enable();
+    kf.setXhat(0, 0);
+
+    ArrayList<Double> refData = new ArrayList<>();
+    ArrayList<Double> xhatData = new ArrayList<>();
+    ArrayList<Double> errorData = new ArrayList<>();
+    ArrayList<Double> inputData = new ArrayList<>();
+    ArrayList<Double> time = new ArrayList<>();
+
+    // simulate over 10 seconds
+    for (int i = 0; i < (1.0 / 0.020); i++) {
+      final var nextRef = (i < 0.5 / 0.020) ? VecBuilder.fill(2.5) : VecBuilder.fill(0.0);
+
+      inputData.add(MathUtil.clamp(lqr.getU(0), -12.0, 12.0));
+      refData.add(lqr.getR(0));
+      xhatData.add(kf.getXhat(0));
+      errorData.add(lqr.getR(0) - kf.getXhat(0));
+      time.add(i * 0.020);
+
+      lqr.update(kf.getXhat(), nextRef);
+      var clampedU = MathUtil.clamp(lqr.getU(0), -12.0, 12.0);
+
+      kf.predict(VecBuilder.fill(clampedU), 0.020);
+    }
+
+    var chart = new XYChartBuilder().width(600).height(400)
+          .title("LQR Example: q=0.1, rho = 1, r=12").build();
+    chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
+
+    chart.addSeries("Reference", time, refData).setMarker(SeriesMarkers.NONE);
+    chart.addSeries("x-hat", time, xhatData).setMarker(SeriesMarkers.NONE);
+    chart.addSeries("Control effort", time, inputData).setMarker(SeriesMarkers.NONE);
+    chart.addSeries("Error", time, errorData).setMarker(SeriesMarkers.NONE);
+
+    assertDoesNotThrow(() -> {
+    });
+
+    //    new SwingWrapper<>(chart).displayChart();
+    //    try {
+    //      Thread.sleep(1000000000);
+    //    } catch (InterruptedException ex) {
+    //      ex.printStackTrace();
+    //    }
+  }
+
 }
