@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("PMD.TooManyMethods")
 public class StateSpaceUtilTest {
-
   @Test
   public void testCostArray() {
     var mat = StateSpaceUtil.makeCostMatrix(

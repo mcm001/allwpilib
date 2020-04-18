@@ -5,12 +5,11 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+#include <iostream>
 #include <limits>
 #include <random>
 
 #include <units/units.h>
-
-#include <iostream>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
@@ -89,11 +88,14 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
     t += dt;
   }
 
-  std::cout << "error sum " << errorSum / (trajectory.TotalTime().to<double>() / dt.to<double>()) << std::endl;
+  std::cout << "error sum "
+            << errorSum /
+                   (trajectory.TotalTime().to<double>() / dt.to<double>())
+            << std::endl;
   std::cout << "max error " << maxError << std::endl;
 
-
-//  EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() / dt.to<double>()),
-//            0.2);
-//  EXPECT_NEAR(0.0, maxError, 0.4);
+  //  EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() /
+  //  dt.to<double>()),
+  //            0.2);
+  //  EXPECT_NEAR(0.0, maxError, 0.4);
 }

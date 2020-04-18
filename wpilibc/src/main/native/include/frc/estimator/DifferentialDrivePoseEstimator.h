@@ -41,10 +41,11 @@ using Vector = Eigen::Matrix<double, N, 1>;
  *
  * x = [[x, y, theta]]^T in the field coordinate system.
  *
- * u = [[d_l, d_r, dtheta]]^T (robot-relative velocities) -- NB: using velocities make things
- * considerably easier, because it means that teams don't have to worry about getting an accurate
- * model. Basically, we suspect that it's easier for teams to get good encoder data than it is for
- * them to perform system identification well enough to get a good model
+ * u = [[d_l, d_r, dtheta]]^T (robot-relative velocities) -- NB: using
+ * velocities make things considerably easier, because it means that teams don't
+ * have to worry about getting an accurate model. Basically, we suspect that
+ * it's easier for teams to get good encoder data than it is for them to perform
+ * system identification well enough to get a good model
  *
  * y = [[x, y, theta]]^T
  */
