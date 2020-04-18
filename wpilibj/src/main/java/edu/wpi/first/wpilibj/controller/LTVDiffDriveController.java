@@ -31,7 +31,7 @@ public class LTVDiffDriveController {
   private final LinearSystem<N2, N2, N2> m_plant;
 
   private Matrix<N5, N1> m_nextR;
-  private Matrix<N2, N1> m_cappedU;
+  private Matrix<N2, N1> m_uncappedU;
 
   private Matrix<N5, N2> m_B;
   private Matrix<N2, N5> m_K0;
@@ -113,7 +113,8 @@ public class LTVDiffDriveController {
     K.set(1, 0, -Math.sin(x.get(2, 0)));
     K.set(1, 1, Math.cos(x.get(2, 0)));
 
-    Matrix<N5, N1> error = r.minus(x);
+    Matrix<N5, N1> error = new Matrix<>(r.getStorage().minus(
+            x.getStorage().extractMatrix(0, 5, 0, 1)));
 
     error.set(State.kHeading.value, 0, normalizeAngle(error.get(State.kHeading.value, 0)));
 
@@ -149,13 +150,13 @@ public class LTVDiffDriveController {
   }
 
   /**
-  * Returns if the controller is at the reference pose on the trajectory.
-  * Note that this is different than if the robot has traversed the entire
-  * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d, double)}
-  * method.
-  *
-  * @return If the robot is within the specified tolerance of the
-  */
+   * Returns if the controller is at the reference pose on the trajectory.
+   * Note that this is different than if the robot has traversed the entire
+   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d, double)}
+   * method.
+   *
+   * @return If the robot is within the specified tolerances.
+   */
   public boolean atReference() {
     var tolTranslate = m_poseTolerance.getTranslation();
     var tolRotate = m_poseTolerance.getRotation();
@@ -181,7 +182,7 @@ public class LTVDiffDriveController {
    * Returns the current controller reference in the form
    * [X, Y, Heading, LeftVelocity, RightVelocity, LeftPosition].
    *
-   * @return Matrix [N10, N1] The reference.
+   * @return Matrix [N5, N1] The reference.
    */
   public Matrix<N5, N1> getReferences() {
     return m_nextR;
@@ -193,28 +194,26 @@ public class LTVDiffDriveController {
    * @return Matrix [N2, N1] The inputs.
    */
   public Matrix<N2, N1> getInputs() {
-    return m_cappedU;
+    return m_uncappedU;
   }
 
   /**
    * Returns the uncapped control input after updating the controller with the given
-   *  reference and current states.
+   * reference and current states.
    *
    * @param currentState  The current state of the robot as a vector.
    * @param stateRef      The reference state vector.
    * @return The control input as a {@link DifferentialDriveMotorVoltages}.
    */
-  public DifferentialDriveMotorVoltages calculate(
+  public Matrix<N2, N1> calculate(
           Matrix<N5, N1> currentState,
           Matrix<N5, N1> stateRef) {
     m_nextR = stateRef;
     m_stateError = m_nextR.minus(currentState);
 
-    m_cappedU = getController(currentState, m_nextR);
+    m_uncappedU = getController(currentState, m_nextR);
 
-    return new DifferentialDriveMotorVoltages(
-            m_cappedU.get(Input.kLeftVoltage.value, 0),
-            m_cappedU.get(Input.kRightVoltage.value, 0));
+    return m_uncappedU;
   }
 
   /**
@@ -225,8 +224,9 @@ public class LTVDiffDriveController {
   * @param currentState  The current state of the robot as a vector.
   * @param desiredState  The desired pose, linear velocity, and angular velocity
   *                      from a trajectory.
+  * @return The control input as a pair of motor voltages [left, right].
   */
-  public DifferentialDriveMotorVoltages calculate(Matrix<N5, N1> currentState,
+  public Matrix<N2, N1> calculate(Matrix<N5, N1> currentState,
                                                   Trajectory.State desiredState) {
     var wheelVelocities = m_kinematics.toWheelSpeeds(
         new ChassisSpeeds(desiredState.velocityMetersPerSecond,
@@ -244,14 +244,14 @@ public class LTVDiffDriveController {
   }
 
   /**
-  * Resets any internal state.
-  */
+   * Resets the internal state of the controller.
+   */
   public void reset() {
     m_nextR = MatrixUtils.zeros(Nat.N5(), Nat.N1());
-    m_cappedU = MatrixUtils.zeros(Nat.N2(), Nat.N1());
+    m_uncappedU = MatrixUtils.zeros(Nat.N2(), Nat.N1());
   }
 
-  private double normalizeAngle(double angle) {
+  public static double normalizeAngle(double angle) {
     final int n_pi_pos = (int) ((angle + Math.PI) / 2.0 / Math.PI);
     angle -= n_pi_pos * 2.0 * Math.PI;
 

@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpiutil.math.numbers.*;
 import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +21,6 @@ import edu.wpi.first.wpilibj.estimator.DifferentialDriveStateEstimator;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.RungeKutta;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
@@ -31,23 +32,25 @@ import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
-import edu.wpi.first.wpiutil.math.numbers.N1;
-import edu.wpi.first.wpiutil.math.numbers.N10;
-import edu.wpi.first.wpiutil.math.numbers.N2;
-import edu.wpi.first.wpiutil.math.numbers.N3;
+
 import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops", "MemberName"})
 class LTVDiffDriveControllerTest {
-  private Matrix<N10, N1> x;
+  private Matrix<N10, N1> trueXhat;
   private Matrix<N2, N1> u;
+
+  private LinearSystem<N2, N2, N2> plant;
 
   private LTVDiffDriveController controller;
   private DifferentialDriveStateEstimator estimator;
-  private LinearSystemFeedForward<N2, N2, N2> feedforward;
+  private LinearSystemFeedForward<N10, N2, N3> feedforward;
+
+  private LinearQuadraticRegulator<N5, N2, N3> lqr;
 
   private DifferentialDriveKinematics kinematics;
 
@@ -57,13 +60,14 @@ class LTVDiffDriveControllerTest {
 
   @BeforeEach
   void setUp() {
-    final LinearSystem<N2, N2, N2> plant = LinearSystem.identifyDrivetrainSystem(
+    plant = LinearSystem.identifyDrivetrainSystem(
             3.02, 0.642, 1.382, 0.08495, 10);
+
     kinematics = new DifferentialDriveKinematics(1);
 
     controller = new LTVDiffDriveController(
             plant,
-            new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.001, 0.002, 20.5, 1.0, 1.0),
+            new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.0625, 0.125, 2.5, 0.95, 0.95),
             new MatBuilder<>(Nat.N2(), Nat.N1()).fill(12.0, 12.0),
             kinematics,
             0.02);
@@ -71,13 +75,12 @@ class LTVDiffDriveControllerTest {
     estimator = new DifferentialDriveStateEstimator(
       plant,
       MatrixUtils.zeros(Nat.N10()),
-      new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.1, 0.1,
-              0.02, 0.02, 0.1, 0.1, 0.01),
-      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.02, 0.02, 0.01),
+      new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
       new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
       kinematics);
 
-    feedforward = new LinearSystemFeedForward<>(plant, 0.02);
+    feedforward = new LinearSystemFeedForward<>(Nat.N10(), Nat.N2(), controller::getDynamics, 0.02);
 
     final var waypoints = new ArrayList<Pose2d>();
     waypoints.add(new Pose2d());
@@ -99,68 +102,88 @@ class LTVDiffDriveControllerTest {
       u.times(12.0 / CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM()));
     }
   }
-
+  
   @Test
   void trackingTest() {
     controller.reset();
     estimator.reset();
     controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.06)), 0.3);
 
+    List<Double> time = new ArrayList<>();
+
     List<Double> trajXs = new ArrayList<>();
     List<Double> trajYs = new ArrayList<>();
+    List<Double> trajHeading = new ArrayList<>();
+    List<Double> trajLeftVel = new ArrayList<>();
+    List<Double> trajRightVel = new ArrayList<>();
+
     List<Double> observerXs = new ArrayList<>();
     List<Double> observerYs = new ArrayList<>();
+    List<Double> observerHeading = new ArrayList<>();
+    List<Double> observerLeftVel = new ArrayList<>();
+    List<Double> observerRightVel = new ArrayList<>();
 
     final double kDt = 0.02;
 
-    x = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+    trueXhat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
     u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
 
     var prevInput = MatrixUtils.zeros(Nat.N2());
 
+    var prevRef = MatrixUtils.zeros(Nat.N5());
+
     double t = 0.0;
 
-    while (t < totalTime) {
-      var y = estimator.getLocalMeasurementModel(x, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
-
+    while (t <= totalTime) {
+      var y = estimator.getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
       var currentState = estimator.updateWithTime(y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
 
       var desiredState = trajectory.sample(t);
 
+      var wheelVelocities = kinematics.toWheelSpeeds(
+        new ChassisSpeeds(desiredState.velocityMetersPerSecond,
+              0,
+              desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
+    
+      Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
+              desiredState.poseMeters.getTranslation().getX(),
+              desiredState.poseMeters.getTranslation().getY(),
+              desiredState.poseMeters.getRotation().getRadians(),
+              wheelVelocities.leftMetersPerSecond,
+              wheelVelocities.rightMetersPerSecond);
+
+      time.add(t);
+
       observerXs.add(currentState.get(0, 0));
       observerYs.add(currentState.get(1, 0));
+      observerHeading.add(currentState.get(2, 0));
+      observerLeftVel.add(currentState.get(3, 0));
+      observerRightVel.add(currentState.get(4, 0));
 
-      trajXs.add(trajectory.sample(t).poseMeters.getTranslation().getX());
-      trajYs.add(trajectory.sample(t).poseMeters.getTranslation().getY());
+      trajXs.add(prevRef.get(0, 0));
+      trajYs.add(prevRef.get(1, 0));
+      trajHeading.add(prevRef.get(2, 0));
+      trajLeftVel.add(prevRef.get(3, 0));
+      trajRightVel.add(prevRef.get(4, 0));
 
+      prevRef = stateRef;
 
-      System.out.println(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)));
+      var augmentedRef = MatrixUtils.zeros(Nat.N10());
+      augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
 
-      var input = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)), desiredState);
-
-      u = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(input.leftVolts, input.rightVolts);
-
-      var futureWheelVelocities = kinematics.toWheelSpeeds(
-              new ChassisSpeeds(trajectory.sample(t + kDt).velocityMetersPerSecond,
-                      0,
-                      trajectory.sample(t + kDt).velocityMetersPerSecond * trajectory.sample(t + kDt).curvatureRadPerMeter));
-
-      u.plus(feedforward.calculate(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(futureWheelVelocities.leftMetersPerSecond, futureWheelVelocities.rightMetersPerSecond)));
-
-      //System.out.println(feedforward.calculate(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(futureWheelVelocities.leftMetersPerSecond, futureWheelVelocities.rightMetersPerSecond)));
+      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
 
-      System.out.println(u);
-
       prevInput = u;
-
-      x = RungeKutta.rungeKutta(controller::getDynamics, x, u, kDt);
 
       t += kDt;
 
+      trueXhat = RungeKutta.rungeKutta(controller::getDynamics, trueXhat, u, kDt);
       //assertTrue(controller.atReference());
     }
+
+    List<XYChart> charts = new ArrayList<XYChart>();
 
     var chartBuilder = new XYChartBuilder();
     chartBuilder.title = "The Magic of Sensor Fusion";
@@ -168,13 +191,191 @@ class LTVDiffDriveControllerTest {
 
     chart.addSeries("Trajectory", trajXs, trajYs);
     chart.addSeries("xHat", observerXs, observerYs);
+    charts.add(chart);
 
-    new SwingWrapper<>(chart).displayChart();
+    var chartBuilderHeading = new XYChartBuilder();
+    chartBuilderHeading.title = "Heading versus Time";
+    var chartHeading = chartBuilderHeading.build();
+
+    chartHeading.addSeries("Trajectory", time, trajHeading);
+    chartHeading.addSeries("xHat", time, observerHeading);
+    charts.add(chartHeading);
+
+    var chartBuilderLeftVelocity = new XYChartBuilder();
+    chartBuilderLeftVelocity.title = "Left Velocity versus Time";
+    var chartLeftVelocity = chartBuilderLeftVelocity.build();
+
+    chartLeftVelocity.addSeries("Trajectory", time, trajLeftVel);
+    chartLeftVelocity.addSeries("xHat", time, observerLeftVel);
+    charts.add(chartLeftVelocity);
+
+    var chartBuilderRightVelocity = new XYChartBuilder();
+    chartBuilderRightVelocity.title = "Right Velocity versus Time";
+    var chartRightVelocity = chartBuilderRightVelocity.build();
+
+    chartRightVelocity.addSeries("Trajectory", time, trajRightVel);
+    chartRightVelocity.addSeries("xHat", time, observerRightVel);
+
+    charts.add(chartRightVelocity);
+
+    new SwingWrapper<>(charts).displayChartMatrix();
     try {
      Thread.sleep(1000000000);
     } catch (InterruptedException e) {
     }
   }
+
+
+  @Test
+  void trackingTestLQR() {
+    estimator.reset();
+
+    List<Double> time = new ArrayList<>();
+
+    List<Double> trajXs = new ArrayList<>();
+    List<Double> trajYs = new ArrayList<>();
+    List<Double> trajHeading = new ArrayList<>();
+    List<Double> trajLeftVel = new ArrayList<>();
+    List<Double> trajRightVel = new ArrayList<>();
+
+    List<Double> observerXs = new ArrayList<>();
+    List<Double> observerYs = new ArrayList<>();
+    List<Double> observerHeading = new ArrayList<>();
+    List<Double> observerLeftVel = new ArrayList<>();
+    List<Double> observerRightVel = new ArrayList<>();
+
+    final double kDt = 0.02;
+
+    trueXhat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+    u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
+
+    var prevInput = MatrixUtils.zeros(Nat.N2());
+
+    var prevRef = MatrixUtils.zeros(Nat.N5());
+
+    double t = 0.0;
+
+    while (t < totalTime) {
+      var y = estimator.getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+      var currentState = estimator.updateWithTime(y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
+
+      var desiredState = trajectory.sample(t);
+
+      var wheelVelocities = kinematics.toWheelSpeeds(
+              new ChassisSpeeds(desiredState.velocityMetersPerSecond,
+                      0,
+                      desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
+
+      Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
+              desiredState.poseMeters.getTranslation().getX(),
+              desiredState.poseMeters.getTranslation().getY(),
+              desiredState.poseMeters.getRotation().getRadians(),
+              wheelVelocities.leftMetersPerSecond,
+              wheelVelocities.rightMetersPerSecond);
+
+      time.add(t);
+
+      observerXs.add(currentState.get(0, 0));
+      observerYs.add(currentState.get(1, 0));
+      observerHeading.add(currentState.get(2, 0));
+      observerLeftVel.add(currentState.get(3, 0));
+      observerRightVel.add(currentState.get(4, 0));
+
+      trajXs.add(prevRef.get(0, 0));
+      trajYs.add(prevRef.get(1, 0));
+      trajHeading.add(prevRef.get(2, 0));
+      trajLeftVel.add(prevRef.get(3, 0));
+      trajRightVel.add(prevRef.get(4, 0));
+
+      prevRef = stateRef;
+
+      var v = (currentState.get(3, 0) + currentState.get(4, 0)) / 2;
+
+      if ( v < 1e-9 ) {
+        v = 1e-9;
+      }
+
+      Matrix<N5, N2> B = new Matrix<>(new SimpleMatrix(5, 2));
+      B.getStorage().insertIntoThis(3, 0, plant.getB().getStorage());
+
+      Matrix<N5, N5> A = new Matrix<>(new SimpleMatrix(5, 5));
+      A.getStorage().insertIntoThis(3, 3, plant.getA().getStorage());
+      A.getStorage().setRow(0, 0, 0, 0, 0, 0.5, 0.5);
+      A.getStorage().setRow(1, 0, 0, 0, v, 0, 0);
+      A.getStorage().setRow(2, 0, 0, 0, 0, -(1 / (2 * (kinematics.trackWidthMeters / 2))), 1 / (2 * (kinematics.trackWidthMeters / 2)));
+
+
+      lqr = new LinearQuadraticRegulator<>(A, B,
+          new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.0625, 0.125, 5.0, 0.95, 0.95),
+          new MatBuilder<>(Nat.N2(), Nat.N1()).fill(12.0, 12.0),
+          0.02);
+
+      var error = stateRef.minus(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)));
+
+      var inRobotFrame = new Matrix<N5, N5>(SimpleMatrix.identity(5));
+
+      error.set(2, 0, LTVDiffDriveController.normalizeAngle(error.get(2, 0)));
+
+      lqr.enable();
+
+      var augmentedRef = MatrixUtils.zeros(Nat.N10());
+      augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
+
+      u = (lqr.getK().times(inRobotFrame).times(error)).plus(feedforward.calculate(augmentedRef));
+
+      System.out.println(u);
+
+      scaleCappedU(u);
+
+      prevInput = u;
+
+      trueXhat = RungeKutta.rungeKutta(controller::getDynamics, trueXhat, u, kDt);
+
+      t += kDt;
+    }
+
+    List<XYChart> charts = new ArrayList<XYChart>();
+
+    var chartBuilder = new XYChartBuilder();
+    chartBuilder.title = "The Magic of Sensor Fusion";
+    var chart = chartBuilder.build();
+
+    chart.addSeries("Trajectory", trajXs, trajYs);
+    chart.addSeries("xHat", observerXs, observerYs);
+    charts.add(chart);
+
+    var chartBuilderHeading = new XYChartBuilder();
+    chartBuilderHeading.title = "Heading versus Time";
+    var chartHeading = chartBuilderHeading.build();
+
+    chartHeading.addSeries("Trajectory", time, trajHeading);
+    chartHeading.addSeries("xHat", time, observerHeading);
+    charts.add(chartHeading);
+
+    var chartBuilderLeftVelocity = new XYChartBuilder();
+    chartBuilderLeftVelocity.title = "Left Velocity versus Time";
+    var chartLeftVelocity = chartBuilderLeftVelocity.build();
+
+    chartLeftVelocity.addSeries("Trajectory", time, trajLeftVel);
+    chartLeftVelocity.addSeries("xHat", time, observerLeftVel);
+    charts.add(chartLeftVelocity);
+
+    var chartBuilderRightVelocity = new XYChartBuilder();
+    chartBuilderRightVelocity.title = "Right Velocity versus Time";
+    var chartRightVelocity = chartBuilderRightVelocity.build();
+
+    chartRightVelocity.addSeries("Trajectory", time, trajRightVel);
+    chartRightVelocity.addSeries("xHat", time, observerRightVel);
+
+    charts.add(chartRightVelocity);
+
+    new SwingWrapper<>(charts).displayChartMatrix();
+    try {
+     Thread.sleep(1000000000);
+    } catch (InterruptedException e) {
+    }
+  }
+
   /*
   @Test
   void trackingTestGlobal() {

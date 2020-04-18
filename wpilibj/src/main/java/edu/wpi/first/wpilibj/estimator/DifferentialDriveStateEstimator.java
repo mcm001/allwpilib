@@ -131,11 +131,12 @@ public class DifferentialDriveStateEstimator {
     m_localY = MatrixUtils.zeros(Nat.N3());
     m_globalY = MatrixUtils.zeros(Nat.N3());
 
+    // Create R (covariances) for global measurements.
     var globalContR = StateSpaceUtil.makeCovMatrix(Nat.N3(), globalMeasurementStdDevs);
     var globalDiscR = StateSpaceUtil.discretizeR(globalContR, m_nominalDt);
 
     m_observer = new UnscentedKalmanFilter<>(
-      Nat.N10(), Nat.N2(), Nat.N3(),
+      Nat.N10(), Nat.N3(),
       this::getDynamics,
       this::getLocalMeasurementModel,
       stateStdDevs,
@@ -143,6 +144,7 @@ public class DifferentialDriveStateEstimator {
       nominalDtSeconds
    );
 
+    // Create correction mechanism for global measurements.
     m_globalCorrect = (u, y) -> m_observer.correct(
       Nat.N3(), u, y,
       this::getGlobalMeasurementModel,
@@ -197,7 +199,7 @@ public class DifferentialDriveStateEstimator {
   }
 
   /**
-   * Set global measurements.
+   * Applies a global measurement with a given timestamp.
    *
    * @param robotPoseMeters  The measured robot pose.
    * @param timestampSeconds The timestamp of the global measurement in seconds. Note that if
@@ -241,9 +243,9 @@ public class DifferentialDriveStateEstimator {
    * Note that this should be called every loop.
    *
    * @param headingRadians The current heading of the robot in radians.
-   * @param leftPosition The distance traveled by the left side of the robot in meters.
-   * @param rightPosition The distance traveled by the right side of the robot in meters.
-   * @param prevInput The control input from the last timestep.
+   * @param leftPosition   The distance traveled by the left side of the robot in meters.
+   * @param rightPosition  The distance traveled by the right side of the robot in meters.
+   * @param prevInput      The control input from the last timestep.
    * @return The robot state estimate.
    */
   public Matrix<N10, N1> update(double headingRadians, double leftPosition,
@@ -262,11 +264,11 @@ public class DifferentialDriveStateEstimator {
    * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController}.
    * Note that this should be called every loop.
    *
-   * @param headingRadians The current heading of the robot in radians.
-   * @param leftPosition The distance traveled by the left side of the robot in meters.
-   * @param rightPosition The distance traveled by the right side of the robot in meters.
-   * @param prevInput The control input from the last timestep.
-   * @param currentTimeSeconds ime at which this method was called, in seconds.
+   * @param headingRadians     The current heading of the robot in radians.
+   * @param leftPosition       The distance traveled by the left side of the robot in meters.
+   * @param rightPosition      The distance traveled by the right side of the robot in meters.
+   * @param prevInput          The control input from the last timestep.
+   * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @return The robot state estimate.
    */
   @SuppressWarnings("VariableDeclarationUsageDistance")
@@ -290,10 +292,10 @@ public class DifferentialDriveStateEstimator {
   }
 
   /**
-  * Resets any internal state with a given initial state.
-  *
-  * @param initialState Initial state for state estimate.
-  */
+   * Resets any internal state with a given initial state.
+   *
+   * @param initialState Initial state for state estimate.
+   */
   public void reset(Matrix<N10, N1> initialState) {
     m_observer.reset();
 

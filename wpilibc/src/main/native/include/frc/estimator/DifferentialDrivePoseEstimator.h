@@ -12,8 +12,9 @@
 #include <Eigen/Core>
 #include <units/units.h>
 
-#include "frc/estimator/KalmanFilter.h"
+#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/kinematics/DifferentialDriveWheelSpeeds.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 
@@ -23,10 +24,10 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * This class wraps an Extended Kalman Filter to fuse latency-compensated vision
- * measurements with differential drive encoder measurements. It will correct
- * for noisy vision measurements and encoder drift. It is intended to be an easy
- * drop-in for DifferentialDriveOdometry. In fact, if you never call
+ * This class wraps an Unscented Kalman Filter to fuse latency-compensated
+ * vision measurements with differential drive encoder measurements. It will
+ * correct for noisy vision measurements and encoder drift. It is intended to be
+ * an easy drop-in for DifferentialDriveOdometry. In fact, if you never call
  * AddVisionMeasurement(), and only call Update(), this will behave exactly the
  * same as DifferentialDriveOdometry.
  *
@@ -41,30 +42,37 @@ using Vector = Eigen::Matrix<double, N, 1>;
  *
  * x = [[x, y, theta]]^T in the field coordinate system.
  *
- * u = [[d_l, d_r, dtheta]]^T (robot-relative velocities) -- NB: using velocities make things
- * considerably easier, because it means that teams don't have to worry about getting an accurate
- * model. Basically, we suspect that it's easier for teams to get good encoder data than it is for
- * them to perform system identification well enough to get a good model
+ * u = [[d_l, d_r, dtheta]]^T (robot-relative velocities) -- NB: using
+ * velocities make things considerably easier, because it means that teams don't
+ * have to worry about getting an accurate model. Basically, we suspect that
+ * it's easier for teams to get good encoder data than it is for them to perform
+ * system identification well enough to get a good model
  *
  * y = [[x, y, theta]]^T
  */
 class DifferentialDrivePoseEstimator {
  public:
   /**
-   * Constructs a DifferentialDrivePose estimator.
+   * Constructs a DifferentialDrivePoseEstimator.
    *
-   * @param gyroAngle          The current gyro angle.
-   * @param initialPose        The starting pose estimate.
-   * @param stateStdDevs       Standard deviations of model states. Increase
-   *                           these numbers to trust your encoders less.
-   * @param measurementStdDevs Standard deviations of the measurements. Increase
-   *                           these numbers to trust vision less.
-   * @param nominalDt          The time in seconds between each robot loop.
+   * @param gyroAngle                The gyro angle of the robot.
+   * @param initialPose              The estimated initial pose.
+   * @param stateStdDevs             Standard deviations of the model states.
+   *                                 Increase these to trust your wheel speeds
+   *                                 less.
+   * @param localMeasurementStdDevs  Standard deviations of the encoder
+   *                                 measurements. Increase these to trust
+   *                                 encoder distances less.
+   * @param visionMeasurementStdDevs Standard deviations of the vision
+   *                                 measurements. Increase these to trust
+   *                                 vision less.
+   * @param nominalDt                The period of the loop calling Update().
    */
   DifferentialDrivePoseEstimator(const Rotation2d& gyroAngle,
                                  const Pose2d& initialPose,
-                                 const Vector<3>& stateStdDevs,
-                                 const Vector<3>& measurementStdDevs,
+                                 const Vector<5>& stateStdDevs,
+                                 const Vector<3>& localMeasurementStdDevs,
+                                 const Vector<3>& visionMeasurementStdDevs,
                                  units::second_t nominalDt = 0.02_s);
 
   /**
@@ -119,8 +127,8 @@ class DifferentialDrivePoseEstimator {
    * @return The estimated pose of the robot.
    */
   Pose2d Update(const Rotation2d& gyroAngle,
-                units::meters_per_second_t leftVelocity,
-                units::meters_per_second_t rightVelocity);
+                const DifferentialDriveWheelSpeeds& wheelSpeeds,
+                units::meter_t leftDistance, units::meter_t rightDistance);
 
   /**
    * Updates the Extended Kalman Filter using only wheel encoder information.
@@ -135,13 +143,17 @@ class DifferentialDrivePoseEstimator {
    */
   Pose2d UpdateWithTime(units::second_t currentTime,
                         const Rotation2d& gyroAngle,
-                        units::meters_per_second_t leftVelocity,
-                        units::meters_per_second_t rightVelocity);
+                        const DifferentialDriveWheelSpeeds& wheelSpeeds,
+                        units::meter_t leftDistance,
+                        units::meter_t rightDistance);
 
  private:
-  KalmanFilter<3, 3, 3> m_observer;
-  KalmanFilterLatencyCompensator<3, 3, 3, KalmanFilter<3, 3, 3>>
+  UnscentedKalmanFilter<5, 3, 3> m_observer;
+  KalmanFilterLatencyCompensator<5, 3, 3, UnscentedKalmanFilter<5, 3, 3>>
       m_latencyCompensator;
+  std::function<void(const Vector<3>& u, const Vector<3>& y)> m_visionCorrect;
+
+  Eigen::Matrix<double, 3, 3> m_visionDiscR;
 
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
@@ -149,8 +161,14 @@ class DifferentialDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static LinearSystem<3, 3, 3>& GetObserverSystem();
-  static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs);
+  template <int Dim>
+  static std::array<double, Dim> StdDevMatrixToArray(
+      const Vector<Dim>& stdDevs);
+
+  static Vector<5> F(const Vector<5>& x, const Vector<3>& u);
+  static Vector<5> FillStateVector(const Pose2d& pose,
+                                   units::meter_t leftDistance,
+                                   units::meter_t rightDistance);
 };
 
 }  // namespace frc

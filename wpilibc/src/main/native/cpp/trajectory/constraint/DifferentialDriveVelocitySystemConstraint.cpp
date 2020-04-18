@@ -29,11 +29,12 @@ units::meters_per_second_t DifferentialDriveVelocitySystemConstraint::MaxVelocit
     Eigen::Vector2d x;
     x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
 
-    if(std::abs(x(0)) > velocity.to<double>() ||  std::abs(x(1)) > velocity.to<double>()){
+    if(std::abs(x(0, 0)) > velocity.to<double>() || 
+       std::abs(x(1, 0)) > velocity.to<double>()) {
         x *= velocity.to<double>() / x.lpNorm<Eigen::Infinity>();
     }
 
-  return units::meters_per_second_t((x(0) + x(1)) / 2.0);
+  return units::meters_per_second_t((x(0, 0) + x(1, 0)) / 2.0);
 }
 
 TrajectoryConstraint::MinMax
@@ -51,15 +52,15 @@ DifferentialDriveVelocitySystemConstraint::MinMaxAcceleration(
 
     // dx/dt for minimum u
     u << -m_maxVoltage.to<double>(), -m_maxVoltage.to<double>();
-    xDot = m_system.A * x + m_system.B * u;
+    xDot = m_system.A() * x + m_system.B() * u;
     units::meters_per_second_squared_t minChassisAcceleration;
-    minChassisAcceleration = units::meters_per_second_squared_t((xDot(0) + xDot(1)) / 2.0);
+    minChassisAcceleration = units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
 
     // dx/dt for maximum u
     u << m_maxVoltage.to<double>(), m_maxVoltage.to<double>();
-    xDot = m_system.A * x + m_system.B * u;
+    xDot = m_system.A() * x + m_system.B() * u;
     units::meters_per_second_squared_t maxChassisAcceleration;
-    maxChassisAcceleration = units::meters_per_second_squared_t((xDot(0) + xDot(1)) / 2.0);
+    maxChassisAcceleration = units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
 
   // When turning about a point inside of the wheelbase (i.e. radius less than
   // half the trackwidth), the inner wheel's direction changes, but the

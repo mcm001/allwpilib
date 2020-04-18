@@ -7,11 +7,16 @@
 
 package edu.wpi.first.wpilibj.controller;
 
+import java.util.function.BiFunction;
+
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
+import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.MatrixUtils;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
@@ -20,6 +25,11 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  *
  * <p>The feedforward is calculated as u_ff = B<sup>+</sup> (r_k+1 - A r_k), were B<sup>+</sup>
  * is the pseudoinverse of B.
+ * 
+ * <p>The feedforward has an overload for model dynamics and calculates B
+ * through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * With the dynamics, the feedforward is calculated as 
+ * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse of B.
  *
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -37,8 +47,17 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    */
   private Matrix<I, N1> m_uff;
 
-  private Matrix<S, I> m_discB;
-  private Matrix<S, S> m_discA;
+  @SuppressWarnings("MemberName")
+  private Matrix<S, I> m_B;
+
+  @SuppressWarnings("MemberName")
+  private Matrix<S, S> m_A;
+
+  private Nat<I> m_inputs;
+
+  private double m_dt;
+
+  private BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> m_f;
 
   /**
    * Constructs a feedforward with the given plant.
@@ -63,16 +82,47 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public LinearSystemFeedForward(Matrix<S, S> A, Matrix<S, I> B,
                                   double dtSeconds) {
+    this.m_dt = dtSeconds;
 
     var discABPair = StateSpaceUtil.discretizeAB(A, B, dtSeconds);
-    this.m_discA = discABPair.getFirst();
-    this.m_discB = discABPair.getSecond();
+    this.m_A = discABPair.getFirst();
+    this.m_B = discABPair.getSecond();
     
     m_r = new Matrix<S, N1>(new SimpleMatrix(B.getNumRows(), 1));
     m_uff = new Matrix<I, N1>(new SimpleMatrix(B.getNumCols(), 1));
 
     reset();
   }
+
+  /**
+   * Constructs a feedforward with given model dynamics.
+   *
+   * @param states    A {@link Nat} representing the number of states.
+   * @param inputs    A {@link Nat} representing the number of inputs.
+   * @param f         A vector-valued function of x(states) and 
+   *                  u(inputs) that returns the derivative of
+   *                  the state vector.
+   * @param dtSeconds The timestep between calls of calculate().
+   */
+  public LinearSystemFeedForward(
+        Nat<S> states,
+        Nat<I> inputs,
+        BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> f,
+        double dtSeconds) {
+    this.m_dt = dtSeconds;
+    this.m_f = f;
+    this.m_inputs = inputs;
+
+
+    this.m_B = NumericalJacobian.numericalJacobianU(states, inputs,
+            m_f, MatrixUtils.zeros(states), MatrixUtils.zeros(inputs));
+
+    m_r = new Matrix<S, N1>(new SimpleMatrix(states.getNum(), 1));
+    m_uff = new Matrix<I, N1>(new SimpleMatrix(inputs.getNum(), 1));
+
+    reset();
+  }
+
 
   /**
    * Returns the previously calculated feedforward as an input vector.
@@ -129,11 +179,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    * @param nextR The future reference state of time k + dt.
    */
   public Matrix<I, N1> calculate(Matrix<S, N1> nextR) {
-    m_uff = new Matrix<>(m_discB.getStorage()
-              .solve((nextR.minus(m_discA.times(m_r))).getStorage()));
-    m_r = nextR;
-
-    return m_uff;
+    return calculate(m_r, nextR);
   }
 
   /**
@@ -142,11 +188,17 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    * @param r The current reference state of time k.
    * @param nextR The future reference state of time k + dt.
    */
-  @SuppressWarnings("ParameterName")
+  @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public Matrix<I, N1> calculate(Matrix<S, N1> r, Matrix<S, N1> nextR) {
-    m_r = r;
-    m_uff = new Matrix<>(m_discB.getStorage()
-            .solve((nextR.minus(m_discA.times(m_r))).getStorage()));
+    if (m_f == null) {
+      m_uff = new Matrix<>(m_B.getStorage()
+              .solve((nextR.minus(m_A.times(r))).getStorage()));
+    } else {
+      var rDot = (nextR.minus(r)).div(m_dt);
+
+      m_uff = new Matrix<>(m_B.getStorage()
+              .solve(rDot.minus(m_f.apply(m_r, MatrixUtils.zeros(m_inputs))).getStorage()));
+    }
     m_r = nextR;
     return m_uff;
   }

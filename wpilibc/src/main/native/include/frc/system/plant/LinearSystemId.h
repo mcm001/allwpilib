@@ -59,9 +59,12 @@ LinearSystem<2, 1, 1> IdentifyPositionSystem(double kV, double kA);
  * @param kAlinear The linear acceleration gain, in volt seconds^2 per distance.
  * @param kVangular The angular velocity gain, in volt seconds per angle.
  * @param kAangular The angular acceleration gain, in volt seconds^2 per angle.
+ * @param maxVoltage The max voltage that can be applied. Control inputs above this will be
+ *                   clamped to it.
  */
 LinearSystem<2, 2, 2> IdentifyDrivetrainSystem(double kVlinear, double kAlinear,
                                                double kVangular,
-                                               double kAangular);
+                                               double kAangular,
+                                               units::volt_t maxVoltage);
 
 }  // namespace frc

@@ -22,6 +22,9 @@
 
 namespace frc {
 
+template <int N>
+using Vector = Eigen::Matrix<double, N, 1>;
+
 class LTVDiffDriveController {
  public:
   LTVDiffDriveController(const LinearSystem<2, 2, 2>& plant,
@@ -30,132 +33,15 @@ class LTVDiffDriveController {
                         const DifferentialDriveKinematics& kinematics,
                         units::second_t dt);
 
-  static Eigen::Matrix<double, 2, 1> GetController(const Eigen::Matrix<double, 10, 1>& x,
-    const Eigen::Matrix<double, 5, 1>& r);
-
-  static Eigen::Matrix<double, 10, 1> GetDynamics(const Eigen::Matrix<double, 10, 1>& x,
-    const Eigen::Matrix<double, 2, 1>& u);
-
   /**
-   * Returns the current controller reference in the form
-   * [X, Y, Heading, LeftVelocity, RightVelocity, LeftPosition,
-   * RightPosition, LeftVoltageError, RightVoltageError,
-   * AngularVelocityError].
+   * Returns if the controller is at the reference pose on the trajectory.
+   * Note that this is different than if the robot has traversed the entire
+   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d, double)}
+   * method.
    *
-   * @return Matrix[10, 1] The reference.
+   * @return If the robot is within the specified tolerances.
    */
-  const Eigen::Matrix<double, 10, 1>& GetReferences() const;
-
-  /**
-   * Returns the states of the controller from the EKF in the form
-   * [X, Y, Heading, LeftVelocity, RightVelocity, LeftPosition,
-   * RightPosition, LeftVoltageError, RightVoltageError,
-   * AngularVelocityError].
-   *
-   * @return Matrix[10, 1] containing the states.
-   */
-  const Eigen::Matrix<double, 10, 1>& GetStates() const;
-
-  /**
-   * Returns the inputs of the controller in the form [LeftVoltage, RightVoltage].
-   *
-   * @return Matrix[2, 1] The inputs.
-   */
-  const Eigen::Matrix<double, 2, 1>& GetInputs() const;
-
-  /**
-   * Returns the set measured outputs of the controller in the from
-   * [Heading, LeftPosition, RightPosition].
-   *
-   * @return Matrix[3, 1] The outputs.
-   */
-  const Eigen::Matrix<double, 3, 1>& GetLocalOutputs() const;
-
-  /**
-   * Returns the set measured outputs of the controller in the from
-   * [X, Y, Heading, LeftPosition, RightPosition, AngularVelocity].
-   *
-   * @return Matrix[6, 1] The outputs.
-   */
-  const Eigen::Matrix<double, 6, 1>& GetGlobalOutputs() const;
-
-  /**
-   * Returns the estimated outputs based on the current state estimate.
-   * <p>
-   * Note: This provides only local measurements.
-   * </p>
-   *
-   * @return Matrix[3, 1] The estimated local outputs.
-   */
-  const Eigen::Matrix<double, 3, 1>& GetEstimatedLocalOutputs() const;
-
-  /**
-   * Returns the estimated outputs based on the current state estimate.
-   * <p>
-   * Note: This provides global measurements (including pose).
-   * </p>
-   *
-   * @return Matrix[6, 1] The estimated global outputs.
-   */
-  const Eigen::Matrix<double, 6, 1>& GetEstimatedGlobalOutputs() const;
-
-  /**
-   * Returns the input as a {@link DifferentialDriveMotorVoltages} of the 
-   * controller after updating it.
-   * <p>
-   * The reference pose, linear velocity, and angular velocity should come from a
-   * {@link Trajectory}.
-   * </p>
-   * 
-   * <p>
-   * Note: This MUST be called every loop at the dt specified in the constructor
-   * for the controller to update properly.
-   * </p>
-   *
-   * @param poseRef                       The desired pose of the robot.
-   * @param linearVelocityRef The desired linear velocity of the
-   *                                      robot.
-   * @param angularVelocityRef   The desired angular velocity of the
-   *                                      robot.
-   * @return The control input as a {@link DifferentialDriveMotorVoltages}.
-   */
-  DifferentialDriveMotorVoltages Calculate(const Pose2d& poseRef,
-                          units::meters_per_second_t linearVelocityRef,
-                          units::radians_per_second_t angularVelocityRef);
-
-  /**
-   * Returns the input as a {@link DifferentialDriveMotorVoltages} of the 
-   * controller after updating it.
-   * <p>
-   * The desired state should come from a {@link Trajectory}.
-   * </p>
-   * 
-   * <p>
-   * Note: This MUST be called every loop at the dt specified in the constructor
-   * for the controller to update properly.
-   * </p>
-   * 
-   * @param currentPose  The current pose.
-   * @param desiredState The desired pose, linear velocity, and angular velocity
-   *                     from a trajectory.
-   * 
-   * @return The control input as a {@link DifferentialDriveMotorVoltages}.
-   */
-  DifferentialDriveMotorVoltages Calculate(const Pose2d& currentPose,
-                          const Trajectory::State& desiredState);
-
-  /**
-   * Resets the internal state of the controller.
-   */
-  void Reset();
-
-  /**
-   * Resets the internal state of the controller with a specified pose for
-   * the initial state estimate.
-   *
-   * @param initialPose Initial pose for state estimate.
-   */
-  void Reset(const Pose2d& initialPose);
+  bool AtReference() const;
 
   /**
    * Set the tolerance for if the robot is {@link #atReference()} or not.
@@ -163,81 +49,104 @@ class LTVDiffDriveController {
    * @param poseTolerance The new pose tolerance.
    * @param velocityTolerance The velocity tolerance.
    */
-  void SetTolerance(const Pose2d& poseTolerance, units::meters_per_second_t velocityTolerance);
+  void SetTolerance(const Pose2d& poseTolerance,
+                   units::meters_per_second_t velocityTolerance);
+
+  
+  /**
+   * Returns the current controller reference in the form
+   * [X, Y, Heading, LeftVelocity, RightVelocity, LeftPosition].
+   *
+   * @return Matrix [5, 1] The reference.
+   */
+  const Vector<5>& GetReferences() const;
 
   /**
-   * Returns if the controller is at the reference pose on the trajectory.
-   * Note that this is different than if the robot has traversed the entire
-   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d, double)}
-   * method.
+   * Returns the inputs of the controller in the form [LeftVoltage, RightVoltage].
    *
-   * @return If the robot is within the specified tolerance of the
+   * @return Matrix[2, 1] The inputs.
    */
-  bool AtReference() const;
+  const Vector<2>& GetInputs() const;
+
+  /**
+   * Returns the uncapped control input after updating the controller with the given
+   * reference and current states.
+   *
+   * @param currentState  The current state of the robot as a vector.
+   * @param stateRef      The reference state vector.
+   * @return The control input as a  pair of motor voltages [left, right].
+   */
+  const Vector<2>& Calculate(
+                          const Vector<5>& currentState,
+                          const Vector<5>& stateRef);
+
+  /**
+  * Returns the next output of the controller.
+  *
+  * <p>The desired state should come from a {@link Trajectory}.
+  *
+  * @param currentState  The current state of the robot as a vector.
+  * @param desiredState  The desired pose, linear velocity, and angular velocity
+  *                      from a trajectory.
+  * @return The control input as a  pair of motor voltages [left, right].
+  */
+  const Vector<2>& Calculate(
+                          const Vector<5>& currentState,
+                          const Trajectory::State& desiredState);
+
+  /**
+   * Resets the internal state of the controller.
+   */
+  void Reset();
+
+  Vector<2> Controller(
+      const Vector<5>& x,
+      const Vector<5>& r);
+
+  Vector<10> Dynamics(
+      const Vector<10>& x,
+      const Vector<2>& u);
 
  private:
-  units::meter_t m_rb;
   LinearSystem<2, 2, 2> m_plant;
-  units::second_t m_dtSeconds;
+  units::meter_t m_rb;
 
-  Eigen::Matrix<double, 2, 1> m_appliedU;
-  Eigen::Matrix<double, 3, 1> m_localY;
-  Eigen::Matrix<double, 6, 1> m_globalY;
-
-  Eigen::Matrix<double, 10, 1> m_r;
-  Eigen::Matrix<double, 10, 1> m_nextR;
-  Eigen::Matrix<double, 2, 1> m_cappedU;
+  Vector<5> m_nextR;
+  Vector<2> m_uncappedU;
 
   Eigen::Matrix<double, 5, 2> m_B;
   Eigen::Matrix<double, 2, 5> m_K0;
   Eigen::Matrix<double, 2, 5> m_K1;
 
-  Eigen::Matrix<double, 6, 6> m_globalR;
-
-  bool m_useLocalMeasurements;
+  Vector<5> m_stateError;
 
   Pose2d m_poseTolerance;
   units::meters_per_second_t m_velocityTolerance;
 
-  ExtendedKalmanFilter<10, 2, 3> m_observer;
   DifferentialDriveKinematics m_kinematics;
 
-  enum State {
-    kX = 0,
-    kY = 1,
-    kHeading = 2,
-    kLeftVelocity = 3,
-    kRightVelocity = 4,
-    kLeftPosition = 5,
-    kRightPosition = 6,
-    kLeftVoltageError = 7,
-    kRightVoltageError = 8,
-    kAngularVelocityError = 8,
+  class State {
+  public:
+      static constexpr int kX = 0;
+      static constexpr int kY = 1;
+      static constexpr int kHeading = 2;
+      static constexpr int kLeftVelocity = 3;
+      static constexpr int kRightVelocity = 4;
+      static constexpr int kLeftPosition = 5;
+      static constexpr int kRightPosition = 6;
+      static constexpr int kLeftVoltageError = 7;
+      static constexpr int kRightVoltageError = 8;
+      static constexpr int kAngularVelocityError = 9;
   };
 
-  enum Input {
-    kLeftVoltage = 0,
-    kRightVoltage = 1
+  class Input {
+  public:
+      static constexpr int kLeftVoltage = 0;
+      static constexpr int kRightVoltage = 1;
   };
+  
+  units::radian_t NormalizeAngle(units::radian_t angle);
 
-  enum LocalOutput {
-    kHeading = 0,
-    kLeftPosition = 1,
-    kRightPosition = 2
-  };
-
-  enum GlobalOutput {
-    kX = 0,
-    kY = 1,
-    kHeading = 2,
-    kLeftPosition = 3,
-    kRightPosition = 4,
-    kAngularVelocity = 5
-  };
-
-  static void sclaeCappedU(Eigen::Matrix<double, 2, 1>* u);
-
-  static units::radian_t NormalizeAngle(units::radian_t angle);
 };
 
 }  // namespace frc

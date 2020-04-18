@@ -24,12 +24,7 @@ namespace frc {
  * Contains the controller coefficients and logic for a linear-quadratic
  * regulator (LQR).
  *
- * LQRs use the control law u = K(r - x). The feedforward uses an inverted plant
- * and is calculated as
- *
- * u_ff = B<sup>+</sup> (r_k+1 - A r_k)
- *
- * where B<sup>+</sup> is the pseudoinverse of B.
+ * LQRs use the control law u = K(r - x)..
  *
  * For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -134,7 +129,6 @@ class LinearQuadraticRegulator {
   void Disable() {
     m_enabled = false;
     m_u.setZero();
-    m_uff.setZero();
   }
 
   /**
@@ -175,25 +169,11 @@ class LinearQuadraticRegulator {
   double U(int i) const { return m_u(i, 0); }
 
   /**
-   * Returns the feedforward component of the control input vector u.
-   */
-  const Eigen::Matrix<double, Inputs, 1>& Uff() const { return m_uff; }
-
-  /**
-   * Returns an element of the feedforward component of the control input vector
-   * u.
-   *
-   * @param i Row of u.
-   */
-  double Uff(int i) const { return m_uff(i, 0); }
-
-  /**
    * Resets the controller.
    */
   void Reset() {
     m_r.setZero();
     m_u.setZero();
-    m_uff.setZero();
   }
 
   /**
@@ -203,8 +183,7 @@ class LinearQuadraticRegulator {
    */
   void Update(const Eigen::Matrix<double, States, 1>& x) {
     if (m_enabled) {
-      m_uff = m_discB.householderQr().solve(m_r - m_discA * m_r);
-      m_u = m_K * (m_r - x) + m_uff;
+      m_u = m_K * (m_r - x);
     }
   }
 
@@ -217,8 +196,7 @@ class LinearQuadraticRegulator {
   void Update(const Eigen::Matrix<double, States, 1>& x,
               const Eigen::Matrix<double, States, 1>& nextR) {
     if (m_enabled) {
-      m_uff = m_discB.householderQr().solve(nextR - m_discA * m_r);
-      m_u = m_K * (m_r - x) + m_uff;
+      m_u = m_K * (m_r - x);
       m_r = nextR;
     }
   }
@@ -234,9 +212,6 @@ class LinearQuadraticRegulator {
 
   // Computed controller output
   Eigen::Matrix<double, Inputs, 1> m_u;
-
-  // Computed feedforward
-  Eigen::Matrix<double, Inputs, 1> m_uff;
 
   // Controller gain
   Eigen::Matrix<double, Inputs, States> m_K;

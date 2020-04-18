@@ -35,7 +35,8 @@ LinearSystem<2, 1, 1> IdentifyPositionSystem(double kV, double kA) {
 
 LinearSystem<2, 2, 2> IdentifyDrivetrainSystem(double kVlinear, double kAlinear,
                                                double kVangular,
-                                               double kAangular) {
+                                               double kAangular,
+                                               units::volt_t maxVoltage) {
   double c = 0.5 / (kAlinear * kAangular);
   double A1 = c * (-kAlinear * kVangular - kVlinear * kAangular);
   double A2 = c * (kAlinear * kVangular - kVlinear * kAangular);
@@ -46,8 +47,8 @@ LinearSystem<2, 2, 2> IdentifyDrivetrainSystem(double kVlinear, double kAlinear,
   auto B = frc::MakeMatrix<2, 2>(B1, B2, B2, B1);
   auto C = frc::MakeMatrix<2, 2>(1.0, 0.0, 0.0, 1.0);
   auto D = frc::MakeMatrix<2, 2>(0.0, 0.0, 0.0, 0.0);
-  auto uMin = frc::MakeMatrix<2, 1>(-12.0, -12.0);
-  auto uMax = frc::MakeMatrix<2, 1>(12.0, 12.0);
+  auto uMin = frc::MakeMatrix<2, 1>(-maxVoltage.to<double>(), -maxVoltage.to<double>());
+  auto uMax = frc::MakeMatrix<2, 1>(maxVoltage.to<double>(), maxVoltage.to<double>());
 
   return LinearSystem<2, 2, 2>(A, B, C, D, uMin, uMax);
 }
