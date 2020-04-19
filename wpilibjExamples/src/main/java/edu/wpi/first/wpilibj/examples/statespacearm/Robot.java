@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package edu.wpi.first.wpilibj.examples.statespaceflywheel;
+package edu.wpi.first.wpilibj.examples.statespacearm;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
@@ -13,32 +13,40 @@ import edu.wpi.first.wpilibj.PWMVictorSPX;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.N2;
 
 /**
  * This is a sample program to demonstrate how to use a state-space controller
- * to control a flywheel.
+ * to control an arm.
  */
 public class Robot extends TimedRobot {
   private static final int kMotorPort = 0;
   private static final int kEncoderAChannel = 0;
   private static final int kEncoderBChannel = 1;
   private static final int kJoystickPort = 0;
-  private static final double kSpinupRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(500.0);
+  private static final double kRaisedPosition = Units.degreesToRadians(90.0);
+  private static final double kLoweredPosition = Units.degreesToRadians(0.0);
 
-  private static final double kFlywheelMomentOfInertia = 0.00032; // kg * m^2
-  private static final double kFlywheelGearing = 1.0; // reduction between motors and encoder,
+  private static final double kArmMOI = 1.2; // Moment of inertia of the arm, in kg * m^2. Can be
+  // estimated with CAD. If finding this constant is difficult, LinearSystem.identifyPositionSystem
+  // may be better.
+  private static final double kArmGearing = 10.0; // reduction between motors and encoder,
   // as output over input. If the flywheel spins slower than the motors, this number should be
   // greater than one.
+
+  private TrapezoidProfile.Constraints m_constraints = new TrapezoidProfile.Constraints(
+        Units.degreesToRadians(45), Units.degreesToRadians(90)); // Max arm speed and acceleration.
+  private TrapezoidProfile.State m_lastProfiledReference = new TrapezoidProfile.State();
 
   /*
   The plant holds a state-space model of our flywheel. In this system the states are as follows:
@@ -46,27 +54,30 @@ public class Robot extends TimedRobot {
   Inputs (what we can "put in"): [voltage], in volts.
   Outputs (what we can measure): [velocity], in RPM.
    */
-  private final LinearSystem<N1, N1, N1> m_flywheelPlant = LinearSystem.createFlywheelSystem(
+  private final LinearSystem<N2, N1, N1> m_armPlant = LinearSystem.createSingleJointedArmSystem(
         DCMotor.getNEO(2),
-        kFlywheelMomentOfInertia,
-        kFlywheelGearing,
+        kArmMOI,
+        kArmGearing,
         12.0);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
-  private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
-        Nat.N1(), Nat.N1(),
-        m_flywheelPlant,
-        VecBuilder.fill(3.0), // How accurate we think our model is
-        VecBuilder.fill(0.01), // How accurate we think our encoder
-        // data is
+  private final KalmanFilter<N2, N1, N1> m_observer = new KalmanFilter<>(
+        Nat.N2(), Nat.N1(),
+        m_armPlant,
+        VecBuilder.fill(0.015, 0.17), // How accurate we
+        // think our model is, in radians and radians/sec
+        VecBuilder.fill(0.01), // How accurate we think our encoder position
+        // data is. In this case we very highly trust our encoder position reading.
         0.020);
 
   // The LQR combines feedback and model-based feedforward to create voltage commands.
-  private final LinearQuadraticRegulator<N1, N1, N1> m_controller
-        = new LinearQuadraticRegulator<>(m_flywheelPlant,
-        VecBuilder.fill(8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
-        // this to more heavily penalize state excursion, or make the controller behave more
-        // aggressively.
+  private final LinearQuadraticRegulator<N2, N1, N1> m_controller
+        = new LinearQuadraticRegulator<>(m_armPlant,
+        VecBuilder.fill(Units.degreesToRadians(1.0), Units.degreesToRadians(10.0)), // qelms.
+        // Position and velocity error tolerances, in radians and radians per second. Decrease this
+        // to more heavily penalize state excursion, or make the controller behave more
+        // aggressively. In this example we weight position much more highly than velocity, but this
+        // can be tuned to balance the two.
         1.0, // rho balances Q and R, or velocity and voltage weights. Increasing this
         // will penalize state excursion more heavily, while decreasing this will penalize control
         // effort more heavily. Useful for balancing weights for systems with more states such
@@ -78,8 +89,8 @@ public class Robot extends TimedRobot {
   // lower if using notifiers.
 
   // The state-space loop combines a controller, observer and plant for easy control.
-  private final LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(Nat.N1(),
-        m_flywheelPlant,
+  private final LinearSystemLoop<N2, N1, N1> m_loop = new LinearSystemLoop<>(Nat.N2(),
+        m_armPlant,
         m_controller,
         m_observer);
 
@@ -93,28 +104,39 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    // we go 2 pi radians per 4096 clicks.
-    m_encoder.setDistancePerPulse(
-          2.0 * Math.PI / 4096.0);
+    // We go 2 pi radians in 1 rotation, or 4096 counts.
+    m_encoder.setDistancePerPulse(Math.PI * 2 / 4096.0);
 
     // reset our loop to make sure it's in a known state.
     m_loop.reset();
   }
 
   @Override
+  public void teleopInit() {
+    // Reset our last reference to the current state.
+    m_lastProfiledReference = new TrapezoidProfile.State(m_encoder.getDistance(),
+          m_encoder.getRate());
+  }
+
+  @Override
   public void teleopPeriodic() {
     // Sets the target speed of our flywheel. This is similar to setting the setpoint of a
     // PID controller.
-    if (m_joystick.getTriggerPressed()) {
-      // we just pressed the trigger, so let's set our next reference
-      m_loop.setNextR(VecBuilder.fill(kSpinupRadPerSec));
-    } else if (m_joystick.getTriggerReleased()) {
-      // we just released the trigger, so let's spin down
-      m_loop.setNextR(VecBuilder.fill(0.0));
+    TrapezoidProfile.State goal;
+    if (m_joystick.getTrigger()) {
+      // the trigger is pressed, so we go to the high goal.
+      goal = new TrapezoidProfile.State(kRaisedPosition, 0.0);
+    } else {
+      // Otherwise, we go to the low goal
+      goal = new TrapezoidProfile.State(kLoweredPosition, 0.0);
     }
+    // Step our TrapezoidalProfile forward 20ms and set it as our next reference
+    m_lastProfiledReference = (new TrapezoidProfile(m_constraints, goal, m_lastProfiledReference))
+          .calculate(0.020);
+    m_loop.setNextR(m_lastProfiledReference.position, m_lastProfiledReference.velocity);
 
     // Correct our Kalman filter's state vector estimate with encoder data.
-    m_loop.correct(VecBuilder.fill(m_encoder.getRate()));
+    m_loop.correct(VecBuilder.fill(m_encoder.getDistance()));
 
     // Update our LQR to generate new voltage commands and use the voltages to predict the next
     // state with out Kalman filter.

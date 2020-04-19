@@ -9,6 +9,7 @@ package edu.wpi.first.wpilibj.controller;
 
 import org.ejml.simple.SimpleMatrix;
 
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.Drake;
@@ -137,7 +138,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
     var Q = StateSpaceUtil.makeCostMatrix(qelms).times(rho);
     var R = StateSpaceUtil.makeCostMatrix(relms);
 
-    var discABPair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
+    var discABPair = Discretization.discretizeAB(m_A, m_B, dtSeconds);
     this.m_discA = discABPair.getFirst();
     this.m_discB = discABPair.getSecond();
 
@@ -169,7 +170,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
     this.m_A = A;
     this.m_B = B;
 
-    var discABpair = StateSpaceUtil.discretizeAB(A, B, dtSeconds);
+    var discABpair = Discretization.discretizeAB(A, B, dtSeconds);
     this.m_discA = discABpair.getFirst();
     this.m_discB = discABpair.getSecond();
 

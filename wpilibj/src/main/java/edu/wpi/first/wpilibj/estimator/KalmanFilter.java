@@ -9,6 +9,7 @@ package edu.wpi.first.wpilibj.estimator;
 
 import org.ejml.simple.SimpleMatrix;
 
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.Drake;
@@ -33,7 +34,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf chapter 9.
  */
 public class KalmanFilter<S extends Num, I extends Num,
-        O extends Num> implements KalmanTypeFilter<S, I, O> {
+      O extends Num> implements KalmanTypeFilter<S, I, O> {
 
   /**
    * The states of the system.
@@ -74,29 +75,29 @@ public class KalmanFilter<S extends Num, I extends Num,
    * @param dtSeconds          Nominal discretization timestep.
    */
   public KalmanFilter(
-          Nat<S> states, Nat<O> outputs,
-          LinearSystem<S, I, O> plant,
-          Matrix<S, N1> stateStdDevs,
-          Matrix<O, N1> measurementStdDevs,
-          double dtSeconds
+        Nat<S> states, Nat<O> outputs,
+        LinearSystem<S, I, O> plant,
+        Matrix<S, N1> stateStdDevs,
+        Matrix<O, N1> measurementStdDevs,
+        double dtSeconds
   ) {
     this.m_states = states;
 
     this.m_plant = plant;
 
-    this.m_contQ = StateSpaceUtil.makeCovMatrix(states, stateStdDevs);
-    this.m_contR = StateSpaceUtil.makeCovMatrix(outputs, measurementStdDevs);
+    this.m_contQ = StateSpaceUtil.makeCovarianceMatrix(states, stateStdDevs);
+    this.m_contR = StateSpaceUtil.makeCovarianceMatrix(outputs, measurementStdDevs);
 
-    var pair = StateSpaceUtil.discretizeAQTaylor(plant.getA(), m_contQ, dtSeconds);
+    var pair = Discretization.discretizeAQTaylor(plant.getA(), m_contQ, dtSeconds);
     var discA = pair.getFirst();
     var discQ = pair.getSecond();
 
-    m_discR = StateSpaceUtil.discretizeR(m_contR, dtSeconds);
+    m_discR = Discretization.discretizeR(m_contR, dtSeconds);
 
     if (StateSpaceUtil.isStabilizable(discA.transpose(),
-            plant.getC().transpose()) && outputs.getNum() <= states.getNum()) {
+          plant.getC().transpose()) && outputs.getNum() <= states.getNum()) {
       m_P = new Matrix<>(Drake.discreteAlgebraicRiccatiEquation(
-              discA.transpose(), plant.getC().transpose(), discQ, m_discR));
+            discA.transpose(), plant.getC().transpose(), discQ, m_discR));
     } else {
       m_P = new Matrix<>(new SimpleMatrix(states.getNum(), states.getNum()));
     }
@@ -196,12 +197,12 @@ public class KalmanFilter<S extends Num, I extends Num,
   public void predict(Matrix<I, N1> u, double dtSeconds) {
     m_plant.setX(m_plant.calculateX(m_plant.getX(), u, dtSeconds));
 
-    var pair = StateSpaceUtil.discretizeAQTaylor(m_plant.getA(), m_contQ, dtSeconds);
+    var pair = Discretization.discretizeAQTaylor(m_plant.getA(), m_contQ, dtSeconds);
     var discA = pair.getFirst();
     var discQ = pair.getSecond();
 
     m_P = discA.times(m_P).times(discA.transpose()).plus(discQ);
-    m_discR = StateSpaceUtil.discretizeR(m_contR, dtSeconds);
+    m_discR = Discretization.discretizeR(m_contR, dtSeconds);
   }
 
   /**
@@ -231,11 +232,11 @@ public class KalmanFilter<S extends Num, I extends Num,
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public <R extends Num> void correct(
-          Matrix<I, N1> u,
-          Matrix<R, N1> y,
-          Matrix<R, S> C,
-          Matrix<R, I> D,
-          Matrix<R, R> r) {
+        Matrix<I, N1> u,
+        Matrix<R, N1> y,
+        Matrix<R, S> C,
+        Matrix<R, I> D,
+        Matrix<R, R> r) {
     var x = m_plant.getX();
     var S = C.times(m_P).times(C.transpose()).plus(r);
 
@@ -252,7 +253,7 @@ public class KalmanFilter<S extends Num, I extends Num,
     // K^T = S^T.solve(CP^T)
     // K = (S^T.solve(CP^T))^T
     Matrix<S, R> K = new Matrix<>(S.transpose().getStorage()
-            .solve((C.times(m_P.transpose())).getStorage()).transpose());
+          .solve((C.times(m_P.transpose())).getStorage()).transpose());
 
     m_plant.setX(x.plus(K.times(y.minus(C.times(x).plus(D.times(u))))));
     m_P = MatrixUtils.eye(m_states).minus(K.times(C)).times(m_P);

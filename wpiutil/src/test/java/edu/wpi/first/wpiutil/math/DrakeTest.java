@@ -12,22 +12,20 @@ import org.junit.jupiter.api.Test;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({"ParameterName", "LocalVariableName"})
 public class DrakeTest {
   public static void assertMatrixEqual(SimpleMatrix A, SimpleMatrix B) {
     for (int i = 0; i < A.numRows(); i++) {
       for (int j = 0; j < A.numCols(); j++) {
-        try {
-          assertEquals(A.get(i, j), B.get(i, j), 1e-4);
-        } catch (Exception ex) {
-          ex.printStackTrace();
-        }
+        assertEquals(A.get(i, j), B.get(i, j), 1e-4);
       }
     }
   }
 
-  private void solveDAREandVerify(SimpleMatrix A, SimpleMatrix B, SimpleMatrix Q, SimpleMatrix R) {
+  private boolean solveDAREandVerify(SimpleMatrix A, SimpleMatrix B, SimpleMatrix Q,
+                                     SimpleMatrix R) {
     var X = Drake.discreteAlgebraicRiccatiEquation(A, B, Q, R);
 
     // expect that x is the same as it's transpose
@@ -42,6 +40,8 @@ public class DrakeTest {
                             .invert()).mult(B.transpose()).mult(X).mult(A))
             .plus(Q);
     assertMatrixEqual(Y, new SimpleMatrix(Y.numRows(), Y.numCols()));
+
+    return true;
   }
 
   @Test
@@ -57,13 +57,13 @@ public class DrakeTest {
                                                                   0, 0, 0, 0, 0, 0, 0, 0,
                                                                   0, 0, 0, 0, 0, 0});
     SimpleMatrix R1 = new SimpleMatrix(m1, m1, true, new double[]{0.25});
-    solveDAREandVerify(A1, B1, Q1, R1);
+    assertTrue(solveDAREandVerify(A1, B1, Q1, R1));
 
     SimpleMatrix A2 = new SimpleMatrix(2, 2, true, new double[]{1, 1, 0, 1});
     SimpleMatrix B2 = new SimpleMatrix(2, 1, true, new double[]{0, 1});
     SimpleMatrix Q2 = new SimpleMatrix(2, 2, true, new double[]{1, 0, 0, 0});
     SimpleMatrix R2 = new SimpleMatrix(1, 1, true, new double[]{0.3});
-    solveDAREandVerify(A2, B2, Q2, R2);
+    assertTrue(solveDAREandVerify(A2, B2, Q2, R2));
 
   }
 }

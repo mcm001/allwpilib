@@ -5,6 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+#include <iostream>
 #include <limits>
 #include <random>
 
@@ -87,8 +88,15 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
     t += dt;
   }
 
-  //EXPECT_LT(errorSum / (trajectory.TotalTime().to<double>() / dt.to<double>()),
-  //          0.2);
-  //EXPECT_LT(maxError, 0.4);
+  std::cout << "error sum "
+            << errorSum /
+                   (trajectory.TotalTime().to<double>() / dt.to<double>())
+            << std::endl;
+  std::cout << "max error " << maxError << std::endl;
+
+  //  EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() /
+  //  dt.to<double>()),
+  //            0.2);
+  //  EXPECT_NEAR(0.0, maxError, 0.4);
 }
 */

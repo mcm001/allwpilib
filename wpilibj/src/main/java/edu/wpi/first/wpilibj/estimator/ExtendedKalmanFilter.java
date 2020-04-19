@@ -9,6 +9,7 @@ package edu.wpi.first.wpilibj.estimator;
 
 import java.util.function.BiFunction;
 
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpilibj.system.RungeKutta;
@@ -79,19 +80,19 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
 
     reset();
 
-    m_contQ = StateSpaceUtil.makeCovMatrix(states, stateStdDevs);
-    this.m_contR = StateSpaceUtil.makeCovMatrix(outputs, measurementStdDevs);
+    m_contQ = StateSpaceUtil.makeCovarianceMatrix(states, stateStdDevs);
+    this.m_contR = StateSpaceUtil.makeCovarianceMatrix(outputs, measurementStdDevs);
 
     final var contA = NumericalJacobian
             .numericalJacobianX(states, states, f, m_xHat, MatrixUtils.zeros(inputs));
     final var C = NumericalJacobian
             .numericalJacobianX(outputs, states, h, m_xHat, MatrixUtils.zeros(inputs));
 
-    final var discPair = StateSpaceUtil.discretizeAQTaylor(contA, m_contQ, dtSeconds);
+    final var discPair = Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
     final var discQ = discPair.getSecond();
 
-    m_discR = StateSpaceUtil.discretizeR(m_contR, dtSeconds);
+    m_discR = Discretization.discretizeR(m_contR, dtSeconds);
 
     if (StateSpaceUtil.isStabilizable(
             discA.transpose(), C.transpose()) && outputs.getNum() <= states.getNum()) {
@@ -215,13 +216,13 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     final var contA = NumericalJacobian.numericalJacobianX(m_states, m_states, f, m_xHat, u);
 
     // Find discrete A and Q
-    final var discPair = StateSpaceUtil.discretizeAQTaylor(contA, m_contQ, dtSeconds);
+    final var discPair = Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
     final var discQ = discPair.getSecond();
 
     m_xHat = RungeKutta.rungeKutta(f, m_xHat, u, dtSeconds);
     m_P = discA.times(m_P).times(discA.transpose()).plus(discQ);
-    m_discR = StateSpaceUtil.discretizeR(m_contR, dtSeconds);
+    m_discR = Discretization.discretizeR(m_contR, dtSeconds);
   }
 
   /**

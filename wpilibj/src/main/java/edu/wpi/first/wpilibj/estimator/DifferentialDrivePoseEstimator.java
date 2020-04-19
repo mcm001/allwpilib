@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
@@ -117,8 +118,8 @@ public class DifferentialDrivePoseEstimator {
     );
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
-    var visionContR = StateSpaceUtil.makeCovMatrix(Nat.N3(), visionMeasurementStdDevs);
-    var visionDiscR = StateSpaceUtil.discretizeR(visionContR, m_nominalDt);
+    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(), visionMeasurementStdDevs);
+    var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
     m_visionCorrect = (u, y) -> m_observer.correct(
         Nat.N3(), u, y,
         (x, u_) -> new Matrix<>(x.getStorage().extractMatrix(0, 3, 0, 1)),

@@ -9,11 +9,13 @@ package edu.wpi.first.wpiutil.math;
 
 import java.util.Objects;
 
+import org.ejml.MatrixDimensionException;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils.Pair;
+import edu.wpi.first.wpiutil.WPIUtilJNI;
+
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -61,8 +63,8 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Sets the value at the given indices.
    *
-   * @param row     The row of the element.
-   * @param col     The column of the element.
+   * @param row   The row of the element.
+   * @param col   The column of the element.
    * @param value The value to insert at the given location.
    */
   public final void set(int row, int col, double value) {
@@ -254,6 +256,24 @@ public class Matrix<R extends Num, C extends Num> {
    */
   public final Matrix<R, C> inv() {
     return new Matrix<>(this.m_storage.invert());
+  }
+
+  /**
+   * Computes the matrix exponential using Eigen's solver.
+   * This method only works for square matrices, and will
+   * otherwise throw an {@link MatrixDimensionException}.
+   *
+   * @return the exponential of A.
+   */
+  public final Matrix<R, C> exp() {
+    if (this.getNumRows() != this.getNumCols()) {
+      throw new MatrixDimensionException("Non-square matrices cannot be exponentiated! "
+            + "This matrix is " + this.getNumRows() + " x " + this.getNumCols());
+    }
+    Matrix<R, C> toReturn = new Matrix<>(new SimpleMatrix(this.getNumRows(), this.getNumCols()));
+    WPIUtilJNI.exp(this.getStorage().getDDRM().getData(), this.getNumRows(),
+          toReturn.getStorage().getDDRM().getData());
+    return toReturn;
   }
 
   /**

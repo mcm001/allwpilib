@@ -73,8 +73,7 @@ dependencies {
     devImplementation project(':cscore')
     devImplementation project(':cameraserver')
     devImplementation sourceSets.main.output
-
-    implementation 'org.knowm.xchart:xchart:3.6.2'
+    testImplementation "org.knowm.xchart:xchart:3.2.2"
 }
 
 apply plugin: 'cpp'

@@ -32,10 +32,4 @@ public class RungeKuttaTest {
 
     assertEquals(Math.exp(0.1) - Math.exp(0.0), y1.get(0, 0), 1e-3);
   }
-
-  @Test
-  public void testRungeKuttaDouble() {
-    // TODO test both of the double version of RungeKutta
-  }
-
 }

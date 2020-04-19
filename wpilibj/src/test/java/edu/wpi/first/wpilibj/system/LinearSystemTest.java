@@ -7,6 +7,8 @@
 
 package edu.wpi.first.wpilibj.system;
 
+import org.ejml.simple.SimpleMatrix;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
@@ -32,6 +34,9 @@ class LinearSystemTest {
 
     assertEquals(model.getD().getStorage().getDDRM(), new MatBuilder<>(Nat.N2(),
             Nat.N2()).fill(0.0, 0.0, 0.0, 0.0).getStorage().getDDRM(), 0.001);
+
+    Assertions.assertEquals(12.0, model.getUMax(0), 0.001);
+    Assertions.assertEquals(-12.0, model.getUMin(0), 0.001);
   }
 
   @Test
@@ -49,11 +54,13 @@ class LinearSystemTest {
 
     assertEquals(model.getD().getStorage().getDDRM(), new MatBuilder<>(Nat.N1(),
             Nat.N1()).fill(0).getStorage().getDDRM(), 0.001);
+
+    Assertions.assertEquals(12.0, model.getUMax(0), 0.001);
+    Assertions.assertEquals(-12.0, model.getUMin(0), 0.001);
   }
 
   @Test
   public void testFlywheelSystem() {
-
     var model = LinearSystem.createFlywheelSystem(DCMotor.getNEO(2), 0.00032, 1.0,  12);
     assertEquals(model.getA().getStorage().getDDRM(), new MatBuilder<>(Nat.N1(),
             Nat.N1()).fill(-26.87032).getStorage().getDDRM(), 0.001);
@@ -66,20 +73,43 @@ class LinearSystemTest {
 
     assertEquals(model.getD().getStorage().getDDRM(), new MatBuilder<>(Nat.N1(),
             Nat.N1()).fill(0).getStorage().getDDRM(), 0.001);
-  }
 
-  @Test
-  public void testIdentifyDrivetrainSystem() {
-    // TODO
+    Assertions.assertEquals(12.0, model.getUMax(0), 0.001);
+    Assertions.assertEquals(-12.0, model.getUMin(0), 0.001);
   }
 
   @Test
   public void testIdentifyPositionSystem() {
-    // TODO
+    // By controls engineering in frc,
+    // x-dot = [0 1 | 0 -kv/ka] x = [0 | 1/ka] u
+    var kv = 1.0;
+    var ka = 0.5;
+    var model = LinearSystem.identifyPositionSystem(kv, ka, 12.0);
+
+    Assertions.assertEquals(12.0, model.getUMax(0), 0.001);
+    Assertions.assertEquals(-12.0, model.getUMin(0), 0.001);
+
+    assertEquals(model.getA().getStorage().getDDRM(), new SimpleMatrix(2, 2, true,
+          new double[] { 0, 1, 0, -kv / ka }).getDDRM());
+    assertEquals(model.getB().getStorage().getDDRM(), new SimpleMatrix(2, 1, true,
+          new double[] { 0, 1 / ka }).getDDRM());
   }
 
   @Test
   public void testIdentifyVelocitySystem() {
-    // TODO
+    // By controls engineering in frc,
+    // V = kv * velocity + ka * acceleration
+    // x-dot =  -kv/ka * v + 1/ka \cdot V
+    var kv = 1.0;
+    var ka = 0.5;
+    var model = LinearSystem.identifyVelocitySystem(kv, ka, 12.0);
+
+    Assertions.assertEquals(12.0, model.getUMax(0), 0.001);
+    Assertions.assertEquals(-12.0, model.getUMin(0), 0.001);
+
+    assertEquals(model.getA().getStorage().getDDRM(), new SimpleMatrix(1, 1, true,
+          new double[] { -kv / ka }).getDDRM());
+    assertEquals(model.getB().getStorage().getDDRM(), new SimpleMatrix(1, 1, true,
+          new double[] { 1 / ka }).getDDRM());
   }
 }

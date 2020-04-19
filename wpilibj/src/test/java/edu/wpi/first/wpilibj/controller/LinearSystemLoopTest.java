@@ -13,6 +13,9 @@ import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.style.Styler;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystem;
@@ -20,11 +23,14 @@ import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpiutil.math.MatBuilder;
+import edu.wpi.first.wpiutil.math.MathUtil;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,10 +43,10 @@ public class LinearSystemLoopTest {
   @SuppressWarnings("LocalVariableName")
   public LinearSystemLoopTest() {
     LinearSystem<N2, N1, N1> plant = LinearSystem.createElevatorSystem(DCMotor.getVex775Pro(2), 5,
-            0.0181864, 1.0, 12.0);
+          0.0181864, 1.0, 12.0);
     KalmanFilter<N2, N1, N1> observer = new KalmanFilter<>(Nat.N2(), Nat.N1(), plant,
-            new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0.05, 1.0),
-            new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.0001), kDt);
+          new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0.05, 1.0),
+          new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.0001), kDt);
 
     var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
     qElms.getStorage().setColumn(0, 0, 0.02, 0.4);
@@ -49,7 +55,7 @@ public class LinearSystemLoopTest {
     var dt = 0.00505;
 
     var controller = new LinearQuadraticRegulator<>(
-            plant, qElms, rElms, dt);
+          plant, qElms, rElms, dt);
 
     m_loop = new LinearSystemLoop<>(Nat.N2(), plant, controller, observer);
   }
@@ -57,7 +63,7 @@ public class LinearSystemLoopTest {
   @SuppressWarnings("LocalVariableName")
   private static void updateTwoState(LinearSystemLoop<N2, N1, N1> loop, double noise) {
     Matrix<N1, N1> y = loop.getPlant().calculateY(loop.getXHat(), loop.getU()).plus(
-            new MatBuilder<>(Nat.N1(), Nat.N1()).fill(noise)
+          new MatBuilder<>(Nat.N1(), Nat.N1()).fill(noise)
     );
 
     loop.correct(y);
@@ -67,7 +73,7 @@ public class LinearSystemLoopTest {
   @SuppressWarnings("LocalVariableName")
   private static void updateOneState(LinearSystemLoop<N1, N1, N1> loop, double noise) {
     Matrix<N1, N1> y = loop.getPlant().calculateY(loop.getXHat(), loop.getU()).plus(
-            new MatBuilder<>(Nat.N1(), Nat.N1()).fill(noise)
+          new MatBuilder<>(Nat.N1(), Nat.N1()).fill(noise)
     );
 
     loop.correct(y);
@@ -88,8 +94,8 @@ public class LinearSystemLoopTest {
     TrapezoidProfile.State state;
     for (int i = 0; i < 1000; i++) {
       profile = new TrapezoidProfile(
-              constraints, new TrapezoidProfile.State(m_loop.getXHat(0), m_loop.getXHat(1)),
-              new TrapezoidProfile.State(references.get(0, 0), references.get(1, 0))
+            constraints, new TrapezoidProfile.State(m_loop.getXHat(0), m_loop.getXHat(1)),
+            new TrapezoidProfile.State(references.get(0, 0), references.get(1, 0))
       );
       state = profile.calculate(kDt);
       m_loop.setNextR(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(state.position, state.velocity));
@@ -110,16 +116,16 @@ public class LinearSystemLoopTest {
   public void testFlywheelEnabled() {
 
     LinearSystem<N1, N1, N1> plant = LinearSystem.createFlywheelSystem(DCMotor.getNEO(2),
-            0.00289, 1.0, 12.0);
+          0.00289, 1.0, 12.0);
     KalmanFilter<N1, N1, N1> observer = new KalmanFilter<>(Nat.N1(), Nat.N1(), plant,
-            new MatBuilder<>(Nat.N1(), Nat.N1()).fill(1.0),
-            new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.01), kDt);
+          new MatBuilder<>(Nat.N1(), Nat.N1()).fill(1.0),
+          new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.01), kDt);
 
     var qElms = new MatBuilder<>(Nat.N1(), Nat.N1()).fill(9.0);
     var rElms = new MatBuilder<>(Nat.N1(), Nat.N1()).fill(12.0);
 
     var controller = new LinearQuadraticRegulator<>(
-            plant, qElms, rElms, kDt);
+          plant, qElms, rElms, kDt);
 
     var loop = new LinearSystemLoop<>(Nat.N1(), plant, controller, observer);
 

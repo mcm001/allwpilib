@@ -138,6 +138,22 @@ class LinearSystem {
   double Umax(int i) const { return m_uMax(i); }
 
   /**
+   * Set the minimum control effort uMin.
+   * @param uMin the new minimum control effort.
+   */
+  void setUmin(const Eigen::Matrix<double, States, 1>& uMin) {
+    m_uMin = uMin;
+  }
+
+  /**
+   * Set the maximum control effort uMin.
+   * @param uMax the new maximum control effort.
+   */
+  void setUMax(const Eigen::Matrix<double, States, 1>& uMax) {
+    m_uMax = uMax;
+  }
+
+  /**
    * Returns the current state x.
    */
   const Eigen::Matrix<double, States, 1>& X() const { return m_x; }

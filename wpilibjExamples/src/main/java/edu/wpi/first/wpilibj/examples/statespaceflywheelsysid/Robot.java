@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package edu.wpi.first.wpilibj.examples.statespaceflywheelsysid.statespaceflywheel;
+package edu.wpi.first.wpilibj.examples.statespaceflywheelsysid;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
@@ -13,11 +13,11 @@ import edu.wpi.first.wpilibj.PWMVictorSPX;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
+import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -31,7 +31,7 @@ public class Robot extends TimedRobot {
   private static final int kEncoderAChannel = 0;
   private static final int kEncoderBChannel = 1;
   private static final int kJoystickPort = 0;
-  private static final double kSpinupRadPerSec = 500.0 / 60.0 * 2.0 * Math.PI; // Convert 500RPM to
+  private static final double kSpinupRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(500.0);
 
   private static final double flywheelKv = 0.023; // kv, volts per radian per second
   private static final double flywheelKa = 0.001; // ka, volts per radian per second squared
@@ -76,9 +76,6 @@ public class Robot extends TimedRobot {
   private final Joystick m_joystick = new Joystick(kJoystickPort); // A joystick to read the
   // trigger from.
 
-  // The last time that teleopPeriodic() was called. Used to calculate time since last update.
-  private double m_lastUpdateTime = 0.0;
-
   @Override
   public void robotInit() {
     // we go 2 pi radians per 4096 clicks.
@@ -91,17 +88,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    // set the update time to the current timestamp. This will allow our dt to be correctly
-    // calculated in teleopPeriodic.
-    m_lastUpdateTime = Timer.getFPGATimestamp();
   }
 
   @Override
   public void teleopPeriodic() {
-    // calculate the time since last update.
-    double currentTime = Timer.getFPGATimestamp();
-    final double dt = m_lastUpdateTime - currentTime;
-    m_lastUpdateTime = currentTime;
 
     // Sets the target speed of our flywheel. This is similar to setting the setpoint of a
     // PID controller.
@@ -118,7 +108,7 @@ public class Robot extends TimedRobot {
 
     // Update our LQR to generate new voltage commands and use the voltages to predict the next
     // state with out Kalman filter.
-    m_loop.predict(dt);
+    m_loop.predict(0.020);
 
     // send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so

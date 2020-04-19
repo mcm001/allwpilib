@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package edu.wpi.first.wpilibj.examples.statespaceflywheelsysid.statespaceflywheel;
+package edu.wpi.first.wpilibj.examples.statespaceelevator;
 
 import edu.wpi.first.wpilibj.RobotBase;
 

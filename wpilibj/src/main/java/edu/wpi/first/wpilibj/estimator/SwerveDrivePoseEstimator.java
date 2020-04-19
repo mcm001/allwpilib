@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.MatBuilder;
@@ -122,8 +123,8 @@ public class SwerveDrivePoseEstimator {
     m_kinematics = kinematics;
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
-    var visionContR = StateSpaceUtil.makeCovMatrix(Nat.N3(), visionMeasurementStdDevs);
-    var visionDiscR = StateSpaceUtil.discretizeR(visionContR, m_nominalDt);
+    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(), visionMeasurementStdDevs);
+    var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
     m_visionCorrect = (u, y) -> m_observer.correct(u, y,
             MatrixUtils.eye(Nat.N3()), MatrixUtils.zeros(Nat.N3(), Nat.N3()), visionDiscR);
 

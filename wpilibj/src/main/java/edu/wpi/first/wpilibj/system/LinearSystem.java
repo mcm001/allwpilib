@@ -9,7 +9,7 @@ package edu.wpi.first.wpilibj.system;
 
 import org.ejml.simple.SimpleMatrix;
 
-import edu.wpi.first.wpilibj.math.StateSpaceUtil;
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.MathUtil;
@@ -53,13 +53,13 @@ public class LinearSystem<S extends Num, I extends Num,
    * Minimum allowable input vector.
    */
   @SuppressWarnings("MemberName")
-  private final Matrix<I, N1> m_uMin;
+  private Matrix<I, N1> m_uMin;
 
   /**
    * Maximum allowable input vector.
    */
   @SuppressWarnings("MemberName")
-  private final Matrix<I, N1> m_uMax;
+  private Matrix<I, N1> m_uMax;
 
   /**
    * The states of the system represented as a Nat.
@@ -237,7 +237,7 @@ public class LinearSystem<S extends Num, I extends Num,
    * @return The row-th element of the minimum control input vector u.
    */
   public double getUMin(int row) {
-    return m_uMin.get(row, 1);
+    return m_uMin.get(row, 0);
   }
 
   /**
@@ -256,7 +256,25 @@ public class LinearSystem<S extends Num, I extends Num,
    * @return The i=th element of the maximum control input vector u.
    */
   public double getUMax(int row) {
-    return m_uMax.get(row, 1);
+    return m_uMax.get(row, 0);
+  }
+
+  /**
+   * Set the minimum control effort uMin.
+   * @param uMin the new minimum control effort.
+   */
+  @SuppressWarnings("ParameterName")
+  public void setUMin(Matrix<I, N1> uMin) {
+    this.m_uMin = uMin;
+  }
+
+  /**
+   * Set the maximum control effort uMin.
+   * @param uMax the new maximum control effort.
+   */
+  @SuppressWarnings("ParameterName")
+  public void setUMax(Matrix<I, N1> uMax) {
+    this.m_uMax = uMax;
   }
 
   /**
@@ -383,7 +401,7 @@ public class LinearSystem<S extends Num, I extends Num,
    */
   @SuppressWarnings("ParameterName")
   public Matrix<S, N1> calculateX(Matrix<S, N1> x, Matrix<I, N1> u, double dtSeconds) {
-    var discABpair = StateSpaceUtil.discretizeAB(m_A, m_B, dtSeconds);
+    var discABpair = Discretization.discretizeAB(m_A, m_B, dtSeconds);
 
     return (discABpair.getFirst().times(x)).plus(discABpair.getSecond().times(clampInput(u)));
   }

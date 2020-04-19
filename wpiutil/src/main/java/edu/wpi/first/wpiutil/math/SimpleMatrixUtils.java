@@ -11,13 +11,15 @@ import java.util.function.BiFunction;
 
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
-import org.ejml.dense.row.decomposition.qr.QRDecompositionHouseholder_DDRM;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition_F64;
 import org.ejml.simple.SimpleBase;
 import org.ejml.simple.SimpleMatrix;
 
-public class SimpleMatrixUtils {
+import edu.wpi.first.wpiutil.WPIUtilJNI;
+
+@SuppressWarnings("PMD.TooManyMethods")
+public final class SimpleMatrixUtils {
   private SimpleMatrixUtils() {
   }
 
@@ -186,6 +188,7 @@ public class SimpleMatrixUtils {
    * @throws RuntimeException if the matrix could not be decomposed (ie. is not positive
    *                          semidefinite).
    */
+  @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
   public static SimpleMatrix lltDecompose(SimpleMatrix src, boolean lowerTriangular) {
     SimpleMatrix temp = src.copy();
 
@@ -210,43 +213,17 @@ public class SimpleMatrixUtils {
   }
 
   /**
-   * Compute the Hoseholder QR decomposition of a matrix.
-   * @param src the source matrix.
-   * @return the decomposed matrix.
-   * @throws RuntimeException if the decomposition fails.
+   * Computes the matrix exponential using Eigen's solver.
+   *
+   * @param A the matrix to exponentiate.
+   * @return the exponential of A.
    */
-  public static SimpleMatrix householderQrDecompose(SimpleMatrix src) {
-    var temp = src.copy();
-
-    var decomposer = new QRDecompositionHouseholder_DDRM();
-    if (!(decomposer.decompose(temp.getDDRM()))) {
-      throw new RuntimeException("householder decomposition failed!");
-    }
-
-    return temp;
-  }
-
-  public static class Pair<A, B> {
-    private final A m_first;
-    private final B m_second;
-
-    public Pair(A first, B second) {
-      m_first = first;
-      m_second = second;
-    }
-
-    public A getFirst() {
-      return m_first;
-    }
-
-    public B getSecond() {
-      return m_second;
-    }
-
-    @SuppressWarnings("ParameterName")
-    public static <A, B> Pair<A, B> of(A a, B b) {
-      return new Pair<>(a, b);
-    }
+  @SuppressWarnings("ParameterName")
+  public static SimpleMatrix exp(
+          SimpleMatrix A) {
+    SimpleMatrix toReturn = new SimpleMatrix(A.numRows(), A.numRows());
+    WPIUtilJNI.exp(A.getDDRM().getData(), A.numRows(), toReturn.getDDRM().getData());
+    return toReturn;
   }
 
 }

@@ -20,6 +20,7 @@ import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
@@ -31,30 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings("PMD.TooManyMethods")
 public class StateSpaceUtilTest {
   @Test
-  public void testDiscretizeAQTaylor() {
-    // TODO
-  }
-
-  @Test
-  public void testDiscretizeR() {
-    // TODO
-  }
-
-  @Test
-  public void testDiscretizeProcessNoiseCov() {
-    // TODO
-  }
-
-
-  @Test
-  public void testDiscretizeMeasurementNoiseCov() {
-    // TODO
-  }
-
-  @Test
   public void testCostArray() {
     var mat = StateSpaceUtil.makeCostMatrix(
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+          new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -69,8 +49,8 @@ public class StateSpaceUtilTest {
 
   @Test
   public void testCovArray() {
-    var mat = StateSpaceUtil.makeCovMatrix(Nat.N3(),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+    var mat = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(),
+          new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -145,14 +125,14 @@ public class StateSpaceUtilTest {
   public void testDiscretizeA() {
     var contA = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(0, 1, 0, 0);
     var x0 = VecBuilder.fill(1, 1);
-    var discA = StateSpaceUtil.discretizeA(contA, 1.0);
+    var discA = Discretization.discretizeA(contA, 1.0);
     var x1Discrete = discA.times(x0);
 
     // We now have pos = vel = 1 and accel = 0, which should give us:
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + 1.0 * x0.get(1, 0),
-            x0.get(1, 0));
+          x0.get(1, 0));
     assertTrue(MatrixFeatures_DDRM.isIdentical(x1Truth.getStorage().getDDRM(),
-            x1Discrete.getStorage().getDDRM(), 1e-4));
+          x1Discrete.getStorage().getDDRM(), 1e-4));
   }
 
   @SuppressWarnings("LocalVariableName")
@@ -163,40 +143,40 @@ public class StateSpaceUtilTest {
     var x0 = VecBuilder.fill(1, 1);
     var u = VecBuilder.fill(1);
 
-    var abPair = StateSpaceUtil.discretizeAB(contA, contB, 1.0);
+    var abPair = Discretization.discretizeAB(contA, contB, 1.0);
 
     var x1Discrete = abPair.getFirst().times(x0).plus(abPair.getSecond().times(u));
 
     // We now have pos = vel = accel = 1, which should give us:
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + x0.get(1, 0) + 0.5 * u.get(0, 0), x0.get(0, 0)
-            + u.get(0, 0));
+          + u.get(0, 0));
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(
-            x1Truth.getStorage().getDDRM(),
-            x1Discrete.getStorage().getDDRM(),
-            1e-4
+          x1Truth.getStorage().getDDRM(),
+          x1Discrete.getStorage().getDDRM(),
+          1e-4
     ));
   }
 
   @Test
   public void testMatrixExp() {
     Matrix<N2, N2> wrappedMatrix = MatrixUtils.eye(Nat.N2());
-    var wrappedResult = StateSpaceUtil.exp(wrappedMatrix);
+    var wrappedResult = wrappedMatrix.exp();
     SimpleMatrix result = wrappedResult.getStorage();
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(
-            result.getDDRM(),
-            new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
-            1E-9
+          result.getDDRM(),
+          new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
+          1E-9
     ));
 
     var matrix = new Matrix<N2, N2>(new SimpleMatrix(2, 2, true, new double[]{1, 2, 3, 4}));
-    wrappedResult = StateSpaceUtil.exp(matrix.times(0.01));
+    wrappedResult = matrix.times(0.01).exp();
     result = wrappedResult.getStorage();
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(
-            result.getDDRM(),
-            new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
+          result.getDDRM(),
+          new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
               0.03076368, 1.04111993}).getDDRM(), 1E-8
     ));
   }
@@ -204,22 +184,22 @@ public class StateSpaceUtilTest {
   @Test
   public void testSimpleMatrixExp() {
     SimpleMatrix matrix = MatrixUtils.eye(Nat.N2()).getStorage();
-    var result = StateSpaceUtil.exp(matrix);
+    var result = SimpleMatrixUtils.exp(matrix);
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(
-            result.getDDRM(),
-            new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
-            1E-9
+          result.getDDRM(),
+          new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
+          1E-9
     ));
 
     matrix = new SimpleMatrix(2, 2, true, new double[]{1, 2, 3, 4});
-    result = StateSpaceUtil.exp(matrix.scale(0.01));
+    result = SimpleMatrixUtils.exp(matrix.scale(0.01));
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(
-            result.getDDRM(),
-            new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
+          result.getDDRM(),
+          new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
               0.03076368, 1.04111993}).getDDRM(),
-            1E-8
+          1E-8
     ));
   }
 
