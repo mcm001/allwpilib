@@ -46,7 +46,7 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  template<int Rows>
+  template <int Rows>
   void ApplyPastMeasurement(
       KalmanFilterType* observer, units::second_t nominalDt,
       Eigen::Matrix<double, Rows, 1> y,
