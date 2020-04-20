@@ -31,8 +31,8 @@ class Robot : public frc::TimedRobot {
   const int kEncoderBChannel = 1;
   const int kJoystickPort = 0;
 
-  const units::meter_t kRaisedPosition = 9_deg;
-  const units::meter_t kLoweredPosition = 0_deg;
+  const units::meter_t kRaisedPosition = 2_ft;
+  const units::meter_t kLoweredPosition = 0_ft;
 
   const units::meter_t kDrumRadius = 0.75_in;
 
@@ -41,7 +41,7 @@ class Robot : public frc::TimedRobot {
   are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
   [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
    */
-  frc::LinearSystem<2, 1, 1> m_elevatorPlant = [] {
+  frc::LinearSystem<2, 1, 1> m_elevatorPlant = [this] {
     auto motors = frc::DCMotor::NEO(2);
 
     // carriage mass
@@ -52,7 +52,7 @@ class Robot : public frc::TimedRobot {
     // number should be greater than one.
     auto G = 6.0;
 
-    return frc::ElevatorSystem(motors, m, kDrumRadius, G);
+    return frc::ElevatorSystem(motors, m, kDrumRadius, G, 12_V);
   }();
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
@@ -98,10 +98,10 @@ class Robot : public frc::TimedRobot {
   frc::PWMVictorSPX m_motor{kMotorPort};
   frc::XboxController m_joystick{kJoystickPort};
 
-  frc::TrapezoidProfile<units::meter_t>::Constraints m_constraints{3_fps,
-                                                                   6_fps_sq};
+  frc::TrapezoidProfile<units::meters>::Constraints m_constraints{3_fps,
+                                                                  6_fps_sq};
 
-  frc::TrapezoidProfile<units::meter_t>::State m_lastProfiledReference;
+  frc::TrapezoidProfile<units::meters>::State m_lastProfiledReference;
 
  public:
   void RobotInit() {
@@ -114,14 +114,14 @@ class Robot : public frc::TimedRobot {
   }
 
   void TeleopInit() {
-    m_lastProfiledReference = {units::meter_t(m_encoder.GetDistance),
-                               units::meters_per_second_t(m_encoder.GetRate)};
+    m_lastProfiledReference = {units::meter_t(m_encoder.GetDistance()),
+                               units::meters_per_second_t(m_encoder.GetRate())};
   }
 
   void TeleopPeriodic() {
     // Sets the target speed of our flywheel. This is similar to setting the
     // setpoint of a PID controller.
-    frc::TrapezoidProfile<units::meter_t>::State goal;
+    frc::TrapezoidProfile<units::meters>::State goal;
     if (m_joystick.GetBumper(frc::GenericHID::kRightHand)) {
       // we pressed the bumper, so let's set our next reference
       goal = {kRaisedPosition, 0_fps};
@@ -130,8 +130,8 @@ class Robot : public frc::TimedRobot {
       goal = {kLoweredPosition, 0_fps};
     }
     m_lastProfiledReference =
-        (frc::TrapezoidProfile<units::meter_t>(m_constraints, goal,
-                                               m_lastProfiledReference))
+        (frc::TrapezoidProfile<units::meters>(m_constraints, goal,
+                                              m_lastProfiledReference))
             .Calculate(20_ms);
 
     m_loop.SetNextR(
@@ -148,7 +148,6 @@ class Robot : public frc::TimedRobot {
     // send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
-    double nextVoltage = m_loop.U(0);
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));
   }
 };

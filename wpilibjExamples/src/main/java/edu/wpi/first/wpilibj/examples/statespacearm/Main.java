@@ -8,7 +8,6 @@
 package edu.wpi.first.wpilibj.examples.statespacearm;
 
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.examples.statespacearm.Robot;
 
 /**
  * Do NOT add any static variables to this class, or any initialization at all.

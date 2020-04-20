@@ -13,9 +13,6 @@ import java.util.Random;
 
 import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
-import org.knowm.xchart.XYChartBuilder;
-import org.knowm.xchart.style.Styler;
-import org.knowm.xchart.style.markers.SeriesMarkers;
 
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystem;
@@ -23,14 +20,11 @@ import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpiutil.math.MatBuilder;
-import edu.wpi.first.wpiutil.math.MathUtil;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
-import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -142,7 +136,7 @@ public class LinearSystemLoopTest {
     List<Double> error = new ArrayList<>();
 
     var time = 0.0;
-    while (time < 10 || Math.abs(loop.getError(0)) < 3) {
+    while (time < 10) {
 
       if (time > 10) {
         break;
@@ -177,7 +171,7 @@ public class LinearSystemLoopTest {
     //            Thread.sleep(10000000);
     //        } catch (InterruptedException e) { e.printStackTrace(); }
 
-    assertEquals(loop.getError(0), 0.0, 0.1);
+    assertEquals(0.0, loop.getError(0), 0.1);
   }
 
   @Test

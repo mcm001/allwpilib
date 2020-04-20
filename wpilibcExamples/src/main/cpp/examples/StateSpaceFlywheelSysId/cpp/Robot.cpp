@@ -32,16 +32,14 @@ class Robot : public frc::TimedRobot {
   const int kJoystickPort = 0;
   const units::radians_per_second_t kSpinupRadPerSec = 500_rpm;
 
-  const double flywheelKv = 0.023;  // kv, volts per radian per second
-  const double flywheelKa = 0.001;  // ka, volts per radian per second squared
-
   /*
   The plant holds a state-space model of our flywheel. In this system the states
   are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
   [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
    */
   frc::LinearSystem<1, 1, 1> m_armPlant =
-      frc::IdentifyVelocitySystem(flywheelKv, flywheelKa);
+      frc::IdentifyVelocitySystem(
+          0.023, 0.001, 12_V);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
   frc::KalmanFilter<1, 1, 1> m_observer{
@@ -61,7 +59,6 @@ class Robot : public frc::TimedRobot {
       1.0,  // rho balances Q and R, or velocity and voltage weights. Increasing
             // this
       // will penalize state excursion more heavily, while decreasing this will
-      // penalize control effort more heavily. Useful for balancing weights for
       // systems with more states such as drivetrains.
       {12.0},  // relms. Control effort (voltage) tolerance. Decrease this to
                // more
@@ -111,7 +108,6 @@ class Robot : public frc::TimedRobot {
     // send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
-    double nextVoltage = m_loop.U(0);
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));
   }
 };

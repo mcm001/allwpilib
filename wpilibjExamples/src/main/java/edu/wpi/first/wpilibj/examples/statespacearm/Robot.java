@@ -44,7 +44,7 @@ public class Robot extends TimedRobot {
   // as output over input. If the flywheel spins slower than the motors, this number should be
   // greater than one.
 
-  private TrapezoidProfile.Constraints m_constraints = new TrapezoidProfile.Constraints(
+  private final TrapezoidProfile.Constraints m_constraints = new TrapezoidProfile.Constraints(
         Units.degreesToRadians(45), Units.degreesToRadians(90)); // Max arm speed and acceleration.
   private TrapezoidProfile.State m_lastProfiledReference = new TrapezoidProfile.State();
 

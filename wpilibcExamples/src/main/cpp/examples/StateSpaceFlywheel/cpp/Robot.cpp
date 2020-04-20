@@ -45,7 +45,7 @@ class Robot : public frc::TimedRobot {
   [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
    */
   frc::LinearSystem<1, 1, 1> m_armPlant = frc::FlywheelSystem(
-      frc::DCMotor::NEO(2), kFlywheelMomentOfInertia, kFlywheelGearing);
+      frc::DCMotor::NEO(2), kFlywheelMomentOfInertia, kFlywheelGearing, 12_V);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
   frc::KalmanFilter<1, 1, 1> m_observer{
@@ -115,7 +115,6 @@ class Robot : public frc::TimedRobot {
     // send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
-    double nextVoltage = m_loop.U(0);
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));
   }
 };
