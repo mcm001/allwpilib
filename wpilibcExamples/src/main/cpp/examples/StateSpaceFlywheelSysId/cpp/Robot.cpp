@@ -38,8 +38,7 @@ class Robot : public frc::TimedRobot {
   [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
    */
   frc::LinearSystem<1, 1, 1> m_armPlant =
-      frc::IdentifyVelocitySystem(
-          0.023, 0.001, 12_V);
+      frc::IdentifyVelocitySystem(0.023, 0.001, 12_V);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
   frc::KalmanFilter<1, 1, 1> m_observer{

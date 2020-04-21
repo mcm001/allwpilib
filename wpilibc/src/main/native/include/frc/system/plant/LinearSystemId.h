@@ -30,18 +30,8 @@ namespace frc {
  * @param maxVoltage The max voltage that can be applied. Inputs with
  *                   greater magnitude than this will be clamped to it.
  */
-LinearSystem<1, 1, 1> IdentifyVelocitySystem(
-    double kV, double kA,
-    units::volt_t maxVoltage) {
-  auto A = frc::MakeMatrix<1, 1>(-kV / kV);
-  auto B = frc::MakeMatrix<1, 1>(1.0 / kV);
-  auto C = frc::MakeMatrix<1, 1>(1.0);
-  auto D = frc::MakeMatrix<1, 1>(0.0);
-  auto uMin = frc::MakeMatrix<1, 1>(-maxVoltage.to<double>());
-  auto uMax = frc::MakeMatrix<1, 1>(maxVoltage.to<double>());
-
-  return LinearSystem<1, 1, 1>(A, B, C, D, uMin, uMax);
-}
+LinearSystem<1, 1, 1> IdentifyVelocitySystem(double kV, double kA,
+                                             units::volt_t maxVoltage);
 
 /**
  * Constructs the state-space model for a 1 DOF position system from system
@@ -60,19 +50,8 @@ LinearSystem<1, 1, 1> IdentifyVelocitySystem(
  * @param maxVoltage The max voltage that can be applied. Inputs with
  *                   greater magnitude than this will be clamped to it.
  */
-LinearSystem<2, 1, 1> IdentifyPositionSystem(
-    double kV, double kA,
-    units::volt_t maxVoltage) {
-  auto A =
-      frc::MakeMatrix<2, 2>(0.0, 1.0, 0.0, -kV / kV);
-  auto B = frc::MakeMatrix<2, 1>(0.0, 1.0 / kV);
-  auto C = frc::MakeMatrix<1, 2>(1.0, 0.0);
-  auto D = frc::MakeMatrix<1, 1>(0.0);
-  auto uMin = frc::MakeMatrix<1, 1>(-maxVoltage.to<double>());
-  auto uMax = frc::MakeMatrix<1, 1>(maxVoltage.to<double>());
-
-  return LinearSystem<2, 1, 1>(A, B, C, D, uMin, uMax);
-}
+LinearSystem<2, 1, 1> IdentifyPositionSystem(double kV, double kA,
+                                             units::volt_t maxVoltage);
 
 /**
  * Constructs the state-space model for a 2 DOF drivetrain velocity system from
@@ -88,30 +67,9 @@ LinearSystem<2, 1, 1> IdentifyPositionSystem(
  * @param kAangular The angular acceleration gain, in volt seconds^2 per angle.
  * @param maxVoltage the maximum voltage that can be applied.
  */
-LinearSystem<2, 2, 2> IdentifyDrivetrainSystem(
-    double kVlinear,
-    double kAlinear,
-    double kVangular,
-    double kAangular,
-    units::volt_t maxVoltage) {
-  double c = 0.5 / (kAlinear * kAangular);
-  double A1 = c * (-kAlinear * kVangular -
-                   kVlinear * kAangular);
-  double A2 = c * (kAlinear * kVangular -
-                   kVlinear * kAangular);
-  double B1 = c * (kAlinear + kAangular);
-  double B2 = c * (kAangular - kAlinear);
-
-  auto A = frc::MakeMatrix<2, 2>(A1, A2, A2, A1);
-  auto B = frc::MakeMatrix<2, 2>(B1, B2, B2, B1);
-  auto C = frc::MakeMatrix<2, 2>(1.0, 0.0, 0.0, 1.0);
-  auto D = frc::MakeMatrix<2, 2>(0.0, 0.0, 0.0, 0.0);
-  auto uMin =
-      frc::MakeMatrix<2, 1>(-maxVoltage.to<double>(), -maxVoltage.to<double>());
-  auto uMax =
-      frc::MakeMatrix<2, 1>(maxVoltage.to<double>(), maxVoltage.to<double>());
-
-  return LinearSystem<2, 2, 2>(A, B, C, D, uMin, uMax);
-}
+LinearSystem<2, 2, 2> IdentifyDrivetrainSystem(double kVlinear, double kAlinear,
+                                               double kVangular,
+                                               double kAangular,
+                                               units::volt_t maxVoltage);
 
 }  // namespace frc
