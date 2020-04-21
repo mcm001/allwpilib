@@ -27,51 +27,85 @@ namespace frc {
 template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
+/**
+ * This class wraps a Kalman Filter to fuse latency-compensated vision
+ * measurements with swerve drive encoder velocity and angle measurements. It
+ * will correct for noisy measurements and encoder drift. It is intended to be
+ * an easy drop-in replacement for SwerveDriveOdometry.
+ *
+ * Update() should be called every robot loop. If your loop times are faster or
+ * slower than the default TimedRobot loop time, you should change it by passing
+ * in an argument for nominalDt in the constructor for this class.
+ *
+ * AddVisionMeasurement() can be called as infrequently as you want. If you
+ * never call it, this class will behave mostly like regular encoder odometry.
+ *
+ * Our state-space system is as follows:
+ *
+ * x = [[x, y, theta]]^T in the field coordinate system.
+ *
+ * u = [[vx, vy, omega]]^T in the field coordinate system.
+ *
+ * y = [[x, y, theta]]^T in the field coords from vision or y = [[theta]]^T from
+ * a gyro.
+ */
 template <unsigned int NumModules>
 class SwerveDrivePoseEstimator {
  public:
   SwerveDrivePoseEstimator(const Rotation2d& gyroAngle,
                            const Pose2d& initialPose,
-                           const SwerveDriveKinematics<NumModules>& kinematics,
+                           SwerveDriveKinematics<NumModules>& kinematics,
                            const Vector<3>& stateStdDevs,
-                           const Vector<3>& measurementStdDevs,
+                           const Vector<1>& localMeasurementStdDevs,
+                           const Vector<3>& visionMeasurementStdDevs,
                            units::second_t nominalDt = 0.02_s)
-      : m_observer(GetObserverSystem(), StdDevMatrixToArray(stateStdDevs),
-                   StdDevMatrixToArray(measurementStdDevs), nominalDt),
+      : m_observer(GetObserverSystem(), StdDevMatrixToArray<3>(stateStdDevs),
+                   StdDevMatrixToArray<1>(localMeasurementStdDevs), nominalDt),
         m_kinematics(kinematics),
         m_nominalDt(nominalDt) {
+    // Construct R (covariances) matrix for vision measurements.
+    Eigen::Matrix3d visionContR =
+        frc::MakeCovMatrix<3>(StdDevMatrixToArray<3>(visionMeasurementStdDevs));
+    m_visionDiscR = frc::DiscretizeR<3>(visionContR, m_nominalDt);
+
+    m_visionCorrect = [&](const Vector<3>& u, const Vector<3>& y) {
+      m_observer.Correct<3>(u, y, Eigen::Matrix3d::Identity(),
+                            Eigen::Matrix3d::Zero(), m_visionDiscR);
+    };
+
+    m_observer.SetXhat(PoseToVector(initialPose));
     m_gyroOffset = initialPose.Rotation() - gyroAngle;
     m_previousAngle = initialPose.Rotation();
-    m_observer.SetXhat(PoseToVector(initialPose));
   }
 
   void ResetPosition(const Pose2d& pose, const Rotation2d& gyroAngle) {
     m_previousAngle = pose.Rotation();
+    m_observer.SetXhat(PoseToVector(pose));
     m_gyroOffset = GetEstimatedPosition().Rotation() - gyroAngle;
   }
 
   Pose2d GetEstimatedPosition() const {
-    return Pose2d(units::meter_t(m_observer.Xhat(0)),
-                  units::meter_t(m_observer.Xhat(1)),
-                  Rotation2d(units::radian_t(m_observer.Xhat(2))));
+    return Pose2d(m_observer.Xhat(0) * 1_m, m_observer.Xhat(1) * 1_m,
+                  Rotation2d(m_observer.Xhat(2) * 1_rad));
   }
 
   void AddVisionMeasurement(const Pose2d& visionRobotPose,
                             units::second_t timestamp) {
-    m_latencyCompensator.ApplyPastMeasurement(
-        m_observer, m_nominalDt, PoseToVector(visionRobotPose), timestamp);
+    m_latencyCompensator.ApplyPastMeasurement<3>(&m_observer, m_nominalDt,
+                                                 PoseToVector(visionRobotPose),
+                                                 m_visionCorrect, timestamp);
   }
 
-  template <typename... ModuleStates>
-  Pose2d Update(const Rotation2d& gyroAngle, ModuleStates&&... moduleStates) {
+  template <typename... ModuleState>
+  Pose2d Update(const Rotation2d& gyroAngle, ModuleState&&... moduleStates) {
     return UpdateWithTime(frc2::Timer::GetFPGATimestamp(), gyroAngle,
                           moduleStates...);
   }
 
-  template <typename... ModuleStates>
+  template <typename... ModuleState>
   Pose2d UpdateWithTime(units::second_t currentTime,
                         const Rotation2d& gyroAngle,
-                        ModuleStates&&... moduleStates) {
+                        ModuleState&&... moduleStates) {
     auto dt = m_prevTime >= 0_s ? currentTime - m_prevTime : m_nominalDt;
     m_prevTime = currentTime;
 
@@ -79,26 +113,32 @@ class SwerveDrivePoseEstimator {
     auto omega = (angle - m_previousAngle).Radians() / dt;
 
     auto chassisSpeeds = m_kinematics.ToChassisSpeeds(moduleStates...);
-    Translation2d fieldRelativeVelocities =
+    auto fieldRelativeSpeeds =
         Translation2d(chassisSpeeds.vx * 1_s, chassisSpeeds.vy * 1_s)
             .RotateBy(angle);
 
-    auto u = frc::MakeMatrix<3, 1>(fieldRelativeVelocities.X().to<double>(),
-                                   fieldRelativeVelocities.Y().to<double>(),
+    auto u = frc::MakeMatrix<3, 1>(fieldRelativeSpeeds.X().to<double>(),
+                                   fieldRelativeSpeeds.Y().to<double>(),
                                    omega.to<double>());
     m_previousAngle = angle;
 
-    m_latencyCompensator.AddObserverState(m_observer, u, currentTime);
+    auto localY = frc::MakeMatrix<1, 1>(angle.Radians().to<double>());
+    m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
+
     m_observer.Predict(u, dt);
+    m_observer.Correct(u, localY);
 
     return GetEstimatedPosition();
   }
 
  private:
-  KalmanFilter<3, 3, 3> m_observer;
-  KalmanFilterLatencyCompensator<3, 3, 3, KalmanFilter<3, 3, 3>>
+  KalmanFilter<3, 3, 1> m_observer;
+  SwerveDriveKinematics<NumModules>& m_kinematics;
+  KalmanFilterLatencyCompensator<3, 3, 1, KalmanFilter<3, 3, 1>>
       m_latencyCompensator;
-  SwerveDriveKinematics<NumModules> m_kinematics;
+  std::function<void(const Vector<3>& u, const Vector<3>& y)> m_visionCorrect;
+
+  Eigen::Matrix3d m_visionDiscR;
 
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
@@ -106,23 +146,27 @@ class SwerveDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static LinearSystem<3, 3, 3>& GetObserverSystem() {
-    static LinearSystem<3, 3, 3> observerSystem{
-        Eigen::MatrixXd::Zero(3, 3),
-        Eigen::MatrixXd::Identity(3, 3),
-        Eigen::MatrixXd::Identity(3, 3),
-        Eigen::MatrixXd::Zero(3, 3),
-        frc::MakeMatrix<3, 1>(-std::numeric_limits<double>::max(),
-                              -std::numeric_limits<double>::max(),
-                              -std::numeric_limits<double>::max()),
-        frc::MakeMatrix<3, 1>(std::numeric_limits<double>::max(),
-                              std::numeric_limits<double>::max(),
-                              std::numeric_limits<double>::max())};
-    return observerSystem;
+  static LinearSystem<3, 3, 1>& GetObserverSystem() {
+    static auto uMax = std::numeric_limits<double>::max();
+    static auto uMin = -uMax;
+    static LinearSystem<3, 3, 1> system{
+        Eigen::Matrix3d::Zero(),
+        Eigen::Matrix3d::Identity(),
+        frc::MakeMatrix<1, 3>(0.0, 0.0, 1.0),
+        frc::MakeMatrix<1, 3>(0.0, 0.0, 0.0),
+        frc::MakeMatrix<3, 1>(uMin, uMin, uMin),
+        frc::MakeMatrix<3, 1>(uMax, uMax, uMax)};
+    return system;
   }
 
-  static std::array<double, 3> StdDevMatrixToArray(const Vector<3>& stdDevs) {
-    return std::array<double, 3>{stdDevs(0, 0), stdDevs(1, 0), stdDevs(2, 0)};
+  template <int Dim>
+  static std::array<double, Dim> StdDevMatrixToArray(
+      const Vector<Dim>& vector) {
+    std::array<double, Dim> array;
+    for (unsigned int i = 0; i < Dim; ++i) {
+      array[i] = vector(i);
+    }
+    return array;
   }
 };
 

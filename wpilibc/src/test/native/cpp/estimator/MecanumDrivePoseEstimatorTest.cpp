@@ -5,22 +5,22 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-//#include <limits>
-//#include <random>
+#include <limits>
+#include <random>
 
-//#include "frc/estimator/SwerveDrivePoseEstimator.h"
-//#include "frc/geometry/Pose2d.h"
-//#include "frc/kinematics/SwerveDriveKinematics.h"
-//#include "frc/kinematics/SwerveDriveOdometry.h"
-//#include "frc/trajectory/TrajectoryGenerator.h"
-//#include "gtest/gtest.h"
-/*
-TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
-  frc::SwerveDriveKinematics<4> kinematics{
+#include "frc/estimator/MecanumDrivePoseEstimator.h"
+#include "frc/geometry/Pose2d.h"
+#include "frc/kinematics/MecanumDriveKinematics.h"
+#include "frc/kinematics/MecanumDriveOdometry.h"
+#include "frc/trajectory/TrajectoryGenerator.h"
+#include "gtest/gtest.h"
+
+TEST(MecanumDrivePoseEstimatorTest, TestAccuracy) {
+  frc::MecanumDriveKinematics kinematics{
       frc::Translation2d{1_m, 1_m}, frc::Translation2d{1_m, -1_m},
       frc::Translation2d{-1_m, -1_m}, frc::Translation2d{-1_m, 1_m}};
 
-  frc::SwerveDrivePoseEstimator<4> estimator{
+  frc::MecanumDrivePoseEstimator estimator{
       frc::Rotation2d(),
       frc::Pose2d(),
       kinematics,
@@ -28,7 +28,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       frc::MakeMatrix<1, 1>(0.01),
       frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
 
-  frc::SwerveDriveOdometry<4> odometry{kinematics, frc::Rotation2d()};
+  frc::MecanumDriveOdometry odometry{kinematics, frc::Rotation2d()};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
@@ -67,7 +67,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionUpdateTime = t;
     }
 
-    auto moduleStates = kinematics.ToSwerveModuleStates(
+    auto wheelSpeeds = kinematics.ToWheelSpeeds(
         {groundTruthState.velocity, 0_mps,
          groundTruthState.velocity * groundTruthState.curvature});
 
@@ -75,7 +75,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
         t,
         groundTruthState.pose.Rotation() +
             frc::Rotation2d(distribution(generator) * 0.001_rad),
-        moduleStates[0], moduleStates[1], moduleStates[2], moduleStates[3]);
+        wheelSpeeds);
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())
                        .to<double>();
@@ -92,4 +92,3 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
             0.2);
   EXPECT_LT(maxError, 0.4);
 }
-*/
