@@ -66,12 +66,12 @@ public class LTVDiffDriveController {
     var u0 = MatrixUtils.zeros(Nat.N2());
 
     var a0 = NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x0, u0)
-            .block(Nat.N5(), Nat.N5(), new SimpleMatrixUtils.Pair<>(0, 0));
+            .block(Nat.N5(), Nat.N5(), new Pair<>(0, 0));
     var a1 = NumericalJacobian.numericalJacobianX(Nat.N10(), Nat.N10(), this::getDynamics, x1, u0)
-            .block(Nat.N5(), Nat.N5(), new SimpleMatrixUtils.Pair<>(0, 0));
+            .block(Nat.N5(), Nat.N5(), new Pair<>(0, 0));
 
     m_B = NumericalJacobian.numericalJacobianU(Nat.N10(), Nat.N2(),
-            this::getDynamics, x0, u0).block(Nat.N5(), Nat.N2(), new SimpleMatrixUtils.Pair<>(0, 0));
+            this::getDynamics, x0, u0).block(Nat.N5(), Nat.N2(), new Pair<>(0, 0));
 
     m_K0 = new LinearQuadraticRegulator<N5, N2, N3>(a0, m_B,
             controllerQ, controllerR, dtSeconds).getK();
@@ -276,16 +276,6 @@ public class LTVDiffDriveController {
     private final int value;
 
     State(int i) {
-      this.value = i;
-    }
-  }
-
-  private enum Input {
-    kLeftVoltage(0), kRightVoltage(1);
-
-    private final int value;
-
-    Input(int i) {
       this.value = i;
     }
   }

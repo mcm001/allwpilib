@@ -52,6 +52,7 @@ DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
 
 void DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement(
     const Pose2d& visionRobotPose, units::second_t timestamp) {
+  
   m_latencyCompensator.ApplyPastMeasurement<3>(&m_observer, m_nominalDt,
                                                PoseToVector(visionRobotPose),
                                                m_globalCorrect, timestamp);
@@ -143,7 +144,7 @@ Vector<3> DifferentialDriveStateEstimator::GlobalMeasurementModel(
     static_cast<void>(u);
 
     Eigen::Matrix<double, 3, 1> y;
-    y << x(State::kX, 0), x(State::kRightPosition, 0), x(State::kHeading, 0);
+    y << x(State::kX, 0), x(State::kY, 0), x(State::kHeading, 0);
     return y;
 }
 

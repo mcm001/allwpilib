@@ -44,7 +44,7 @@ public class DifferentialDriveStateEstimatorTest {
             MatrixUtils.zeros(Nat.N10()),
             new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.1, 0.1,
                     0.02, 0.02, 0.1, 0.1, 0.01),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.02, 0.02, 0.01),
+            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.01, 0.01, 0.01),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
             kinematics);
 
@@ -130,11 +130,11 @@ public class DifferentialDriveStateEstimatorTest {
         visionYs.add(lastVisionPose.getTranslation().getY());
       }
 
-      input.set(0, 0, input.get(0, 0) + rand.nextGaussian() * 0.02); 
-      input.set(1, 0, input.get(1, 0) + rand.nextGaussian() * 0.02); 
-
       distanceLeft += wheelSpeeds.leftMetersPerSecond * dt;
       distanceRight += wheelSpeeds.rightMetersPerSecond * dt;
+      
+      distanceLeft += rand.nextGaussian() * 0.01;
+      distanceRight += rand.nextGaussian() * 0.01;
 
       var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
 

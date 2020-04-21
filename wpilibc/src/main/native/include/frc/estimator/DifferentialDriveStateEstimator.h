@@ -31,7 +31,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController} as it provides a
  * 10-state estimate. This can then be trimmed into 5-state using{@link Matrix#block}
  * with the operation
- * ```10-stateEstimate.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair(0, 0))```
+ * ```10-stateEstimate.block<5, 1>(0, 0)```
  * then passed into the controller as the current state estimate.
  *
  * <p>{@link DifferentialDriveStateEstimator#update} should be called every robot
@@ -208,7 +208,7 @@ class DifferentialDriveStateEstimator {
     public:
         static constexpr int kX = 0;
         static constexpr int kY = 1;
-        static constexpr int kYHeading = 1;
+        static constexpr int kYHeading = 2;
     };
 };
 

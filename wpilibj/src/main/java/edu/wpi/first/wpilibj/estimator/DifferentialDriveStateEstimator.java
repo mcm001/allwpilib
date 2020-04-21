@@ -14,6 +14,7 @@ import org.ejml.simple.SimpleMatrix;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.MatBuilder;
@@ -36,7 +37,7 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
  * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController} as it provides a
  * 10-state estimate. This can then be trimmed into 5-state using{@link Matrix#block}
  * with the operation
- * ```10-stateEstimate.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair(0, 0))```
+ * ```10-stateEstimate.block(Nat.N5(), Nat.N1(), new Pair(0, 0))```
  * then passed into the controller as the current state estimate.
  *
  * <p>{@link DifferentialDriveStateEstimator#update} should be called every robot
@@ -132,8 +133,8 @@ public class DifferentialDriveStateEstimator {
     m_globalY = MatrixUtils.zeros(Nat.N3());
 
     // Create R (covariances) for global measurements.
-    var globalContR = StateSpaceUtil.makeCovMatrix(Nat.N3(), globalMeasurementStdDevs);
-    var globalDiscR = StateSpaceUtil.discretizeR(globalContR, m_nominalDt);
+    var globalContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(), globalMeasurementStdDevs);
+    var globalDiscR = Discretization.discretizeR(globalContR, m_nominalDt);
 
     m_observer = new UnscentedKalmanFilter<>(
       Nat.N10(), Nat.N3(),

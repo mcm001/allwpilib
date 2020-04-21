@@ -11,7 +11,7 @@ import java.util.function.BiFunction;
 
 import org.ejml.simple.SimpleMatrix;
 
-import edu.wpi.first.wpilibj.math.StateSpaceUtil;
+import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpiutil.math.Matrix;
@@ -84,7 +84,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
                                   double dtSeconds) {
     this.m_dt = dtSeconds;
 
-    var discABPair = StateSpaceUtil.discretizeAB(A, B, dtSeconds);
+    var discABPair = Discretization.discretizeAB(A, B, dtSeconds);
     this.m_A = discABPair.getFirst();
     this.m_B = discABPair.getSecond();
     

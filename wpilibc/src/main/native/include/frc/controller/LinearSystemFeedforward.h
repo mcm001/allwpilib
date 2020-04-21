@@ -79,7 +79,6 @@ class LinearSystemFeedforward {
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  template <typename F>
   LinearSystemFeedforward(std::function<Vector<States>(const Vector<States>&, const Vector<Inputs>&)> f,
                           units::second_t dt)
     : m_dt(dt), m_f(f) {
@@ -152,11 +151,11 @@ class LinearSystemFeedforward {
   Eigen::Matrix<double, Inputs, 1> Calculate(const Eigen::Matrix<double, States, 1>& r,
               const Eigen::Matrix<double, States, 1>& nextR) {
     if( m_f ){
-      Vector<States> rDot = (nextR - r) / m_dt;
+      Vector<States> rDot = (nextR - r) / m_dt.to<double>();
 
       m_uff = m_B.householderQr().solve(rDot - m_f(m_r, Vector<Inputs>::Zero()));
     } else {
-      m_uff = m_B.householderQr().solve(nextR - m_A * r);
+      m_uff = m_B.householderQr().solve(nextR - (m_A * r));
     }
     m_r = nextR;
     return m_uff;

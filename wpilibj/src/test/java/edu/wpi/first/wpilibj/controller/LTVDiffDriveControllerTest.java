@@ -13,7 +13,6 @@ import java.util.List;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpiutil.math.numbers.*;
 import org.ejml.dense.row.CommonOps_DDRM;
-import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +20,7 @@ import edu.wpi.first.wpilibj.estimator.DifferentialDriveStateEstimator;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.RungeKutta;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
@@ -31,11 +31,11 @@ import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
+import edu.wpi.first.wpiutil.math.Pair;
 
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
+//import org.knowm.xchart.SwingWrapper;
+//import org.knowm.xchart.XYChart;
+//import org.knowm.xchart.XYChartBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -171,7 +171,7 @@ class LTVDiffDriveControllerTest {
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
 
-      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
+      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
 
@@ -180,9 +180,10 @@ class LTVDiffDriveControllerTest {
       t += kDt;
 
       trueXhat = RungeKutta.rungeKutta(controller::getDynamics, trueXhat, u, kDt);
-      //assertTrue(controller.atReference());
+      assertTrue(controller.atReference());
     }
 
+    /*
     List<XYChart> charts = new ArrayList<XYChart>();
 
     var chartBuilder = new XYChartBuilder();
@@ -223,12 +224,14 @@ class LTVDiffDriveControllerTest {
      Thread.sleep(1000000000);
     } catch (InterruptedException e) {
     }
+    */
   }
 
-
   @Test
-  void trackingTestLQR() {
+  void trackingTestNoise() {
+    controller.reset();
     estimator.reset();
+    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.1)), 0.5);
 
     List<Double> time = new ArrayList<>();
 
@@ -244,7 +247,7 @@ class LTVDiffDriveControllerTest {
     List<Double> observerLeftVel = new ArrayList<>();
     List<Double> observerRightVel = new ArrayList<>();
 
-    final double kDt = 0.02;
+    double kDt = 0.02;
 
     trueXhat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
     u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
@@ -255,17 +258,24 @@ class LTVDiffDriveControllerTest {
 
     double t = 0.0;
 
-    while (t < totalTime) {
+    while (t <= totalTime) {
+      kDt += StateSpaceUtil.makeWhiteNoiseVector(Nat.N1(),
+              new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.0005)).get(0, 0);
+
       var y = estimator.getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+
+      y.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(),
+      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005)));
+
       var currentState = estimator.updateWithTime(y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
 
       var desiredState = trajectory.sample(t);
 
       var wheelVelocities = kinematics.toWheelSpeeds(
-              new ChassisSpeeds(desiredState.velocityMetersPerSecond,
-                      0,
-                      desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
-
+        new ChassisSpeeds(desiredState.velocityMetersPerSecond,
+              0,
+              desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
+    
       Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
               desiredState.poseMeters.getTranslation().getX(),
               desiredState.poseMeters.getTranslation().getY(),
@@ -289,51 +299,22 @@ class LTVDiffDriveControllerTest {
 
       prevRef = stateRef;
 
-      var v = (currentState.get(3, 0) + currentState.get(4, 0)) / 2;
-
-      if ( v < 1e-9 ) {
-        v = 1e-9;
-      }
-
-      Matrix<N5, N2> B = new Matrix<>(new SimpleMatrix(5, 2));
-      B.getStorage().insertIntoThis(3, 0, plant.getB().getStorage());
-
-      Matrix<N5, N5> A = new Matrix<>(new SimpleMatrix(5, 5));
-      A.getStorage().insertIntoThis(3, 3, plant.getA().getStorage());
-      A.getStorage().setRow(0, 0, 0, 0, 0, 0.5, 0.5);
-      A.getStorage().setRow(1, 0, 0, 0, v, 0, 0);
-      A.getStorage().setRow(2, 0, 0, 0, 0, -(1 / (2 * (kinematics.trackWidthMeters / 2))), 1 / (2 * (kinematics.trackWidthMeters / 2)));
-
-
-      lqr = new LinearQuadraticRegulator<>(A, B,
-          new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.0625, 0.125, 5.0, 0.95, 0.95),
-          new MatBuilder<>(Nat.N2(), Nat.N1()).fill(12.0, 12.0),
-          0.02);
-
-      var error = stateRef.minus(currentState.block(Nat.N5(), Nat.N1(), new SimpleMatrixUtils.Pair<>(0, 0)));
-
-      var inRobotFrame = new Matrix<N5, N5>(SimpleMatrix.identity(5));
-
-      error.set(2, 0, LTVDiffDriveController.normalizeAngle(error.get(2, 0)));
-
-      lqr.enable();
-
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
 
-      u = (lqr.getK().times(inRobotFrame).times(error)).plus(feedforward.calculate(augmentedRef));
-
-      System.out.println(u);
+      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
 
       prevInput = u;
 
-      trueXhat = RungeKutta.rungeKutta(controller::getDynamics, trueXhat, u, kDt);
-
       t += kDt;
+
+      trueXhat = RungeKutta.rungeKutta(controller::getDynamics, trueXhat, u, kDt);
+      assertTrue(controller.atReference());
     }
 
+    /*
     List<XYChart> charts = new ArrayList<XYChart>();
 
     var chartBuilder = new XYChartBuilder();
@@ -374,73 +355,7 @@ class LTVDiffDriveControllerTest {
      Thread.sleep(1000000000);
     } catch (InterruptedException e) {
     }
+    */
   }
-
-  /*
-  @Test
-  void trackingTestGlobal() {
-    controller.reset(new Pose2d());
-    controller.setMeasuredLocalOutputs(0.0, 0.0, 0.0);
-    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.06)), 0.3);
-
-    final double kDt = 0.02;
-
-    x = MatrixUtils.zeros(Nat.N10(), Nat.N1());
-    u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
-
-    for (double i = 0; i < totalTime; i = i + kDt) {
-      var y = controller.getGlobalMeasurementModel(x, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
-
-      y.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N6(),
-              new MatBuilder<>(Nat.N6(), Nat.N1()).fill(0.005, 0.005, 0.005, 0.0001, 1.5, 1.5)));
-
-      controller.setMeasuredGlobalOutputs(y.get(0, 0), y.get(1, 0),
-              y.get(2, 0), y.get(3, 0), y.get(4, 0), y.get(5, 0));
-
-      //controller.setMeasuredInputs(u.get(0, 0), u.get(1, 0));
-
-      var inputs = controller.calculate(trajectory.sample(i));
-
-      u = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(inputs.leftVolts, inputs.rightVolts);
-
-      x = RungeKutta.rungeKutta(controller::getDynamics, x, u, kDt);
-
-      assertTrue(controller.atReference());
-    }
-  }
-
-  @Test
-  void trackingTestNoise() {
-    controller.reset(new Pose2d());
-    controller.setMeasuredLocalOutputs(0.0, 0.0, 0.0);
-    controller.setTolerance(new Pose2d(1, 1, new Rotation2d(0.5)), 3.0);
-
-    double kDt = 0.02;
-
-    x = MatrixUtils.zeros(Nat.N10(), Nat.N1());
-    u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
-
-
-    for (double i = 0; i < totalTime; i = i + kDt) {
-      kDt += StateSpaceUtil.makeWhiteNoiseVector(Nat.N1(),
-              new MatBuilder<>(Nat.N1(), Nat.N1()).fill(0.0005)).get(0, 0);
-
-      var y = controller.getLocalMeasurementModel(x, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
-
-      y.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(),
-              new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005)));
-
-      controller.setMeasuredLocalOutputs(y.get(0, 0), y.get(1, 0), y.get(2, 0));
-      //controller.setMeasuredInputs(u.get(0, 0), u.get(1, 0));
-
-      var inputs = controller.calculate(trajectory.sample(i));
-
-      u = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(inputs.leftVolts, inputs.rightVolts);
-
-      x = RungeKutta.rungeKutta(controller::getDynamics, x, u, kDt);
-
-      assertTrue(controller.atReference());
-    }
-  }
-  */
 }
+

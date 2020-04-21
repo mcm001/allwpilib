@@ -78,7 +78,7 @@ const Vector<2>& LTVDiffDriveController::Calculate(
                           const Vector<5>& currentState,
                           const Vector<5>& stateRef) {
     m_nextR = stateRef;
-    m_stateError = m_nextR = currentState;
+    m_stateError = m_nextR - currentState;
 
     m_uncappedU = Controller(currentState, m_nextR);
 
@@ -139,9 +139,6 @@ Vector<2> LTVDiffDriveController::Controller(
     K(1, 2) = -K(0, 2);
     K(1, 3) = K(0, 4);
     K(1, 4) = K(0, 3);
-
-    Eigen::Matrix<double, 2, 1> uError;
-    uError << x(State::kLeftVoltageError, 0), x(State::kRightVoltageError, 0);
 
     Eigen::Matrix<double, 5, 5> inRobotFrame =
         Eigen::Matrix<double, 5, 5>::Identity();
