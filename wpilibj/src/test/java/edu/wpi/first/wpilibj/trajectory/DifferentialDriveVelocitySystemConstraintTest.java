@@ -7,17 +7,12 @@
 
 package edu.wpi.first.wpilibj.trajectory;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import edu.wpi.first.wpilibj.geometry.Pose2d;
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.system.LinearSystem;
@@ -66,40 +61,12 @@ class DifferentialDriveVelocitySystemConstraintTest {
       double right = u.get(1, 0);
 
       t += dt;
-      
-      //Any (value < maxVoltage + 1) leads to the output being offset by 
+
+      //Any (value < maxVoltage + 1) leads to the output being offset by
       //(value - maxVoltage). The value is left at 11. This seems to be a JUnit issue.
       assertTrue((-11 <= left) && (left <= 11));
       assertTrue((-11 <= right) && (right <= 11));
 
       }
     }
-
-  @Test
-  void testEndpointHighCurvature() {
-    double maxVoltage = 10;
-
-    // Pick an unreasonably large kA to ensure the constraint has to do some work
-    var system = LinearSystem.identifyDrivetrainSystem(1, 3, 1, 3, maxVoltage);
-    var kinematics = new DifferentialDriveKinematics(3);
-    var constraint = new DifferentialDriveVelocitySystemConstraint(system,
-                                                            kinematics,
-                                                            maxVoltage);
-
-    var config = new TrajectoryConfig(12, 12).addConstraint(constraint);
-
-    // Radius of curvature should be ~1 meter.
-    assertDoesNotThrow(() -> TrajectoryGenerator.generateTrajectory(
-        new Pose2d(1, 0, Rotation2d.fromDegrees(90)),
-        new ArrayList<Translation2d>(),
-        new Pose2d(0, 1, Rotation2d.fromDegrees(180)),
-        config));
-
-    assertDoesNotThrow(() -> TrajectoryGenerator.generateTrajectory(
-        new Pose2d(0, 1, Rotation2d.fromDegrees(180)),
-        new ArrayList<Translation2d>(),
-        new Pose2d(1, 0, Rotation2d.fromDegrees(90)),
-        config.setReversed(true)));
-
-  }
 }

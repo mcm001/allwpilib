@@ -25,10 +25,10 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  *
  * <p>The feedforward is calculated as u_ff = B<sup>+</sup> (r_k+1 - A r_k), were B<sup>+</sup>
  * is the pseudoinverse of B.
- * 
+ *
  * <p>The feedforward has an overload for model dynamics and calculates B
  * through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * With the dynamics, the feedforward is calculated as 
+ * With the dynamics, the feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse of B.
  *
  * <p>For more on the underlying math, read
@@ -87,7 +87,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
     var discABPair = Discretization.discretizeAB(A, B, dtSeconds);
     this.m_A = discABPair.getFirst();
     this.m_B = discABPair.getSecond();
-    
+
     m_r = new Matrix<S, N1>(new SimpleMatrix(B.getNumRows(), 1));
     m_uff = new Matrix<I, N1>(new SimpleMatrix(B.getNumCols(), 1));
 
@@ -99,7 +99,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    *
    * @param states    A {@link Nat} representing the number of states.
    * @param inputs    A {@link Nat} representing the number of inputs.
-   * @param f         A vector-valued function of x(states) and 
+   * @param f         A vector-valued function of x(states) and
    *                  u(inputs) that returns the derivative of
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
@@ -184,7 +184,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
 
   /**
    * Calculate the feedforward with current anf future reference vectors.
-   * 
+   *
    * @param r The current reference state of time k.
    * @param nextR The future reference state of time k + dt.
    */

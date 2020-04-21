@@ -28,6 +28,9 @@ import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,9 +45,9 @@ public class DifferentialDriveStateEstimatorTest {
     var estimator = new DifferentialDriveStateEstimator(
             plant,
             MatrixUtils.zeros(Nat.N10()),
-            new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.1, 0.1,
-                    0.02, 0.02, 0.1, 0.1, 0.01),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.01, 0.01, 0.01),
+            //0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0
+            new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.01, 0.00001, 0.00001, 0.1, 0.1, 1.0, 1.0, 0.5),
+            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.001, 0.001, 0.01),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
             kinematics);
 
@@ -119,7 +122,7 @@ public class DifferentialDriveStateEstimatorTest {
         var groundPose = groundtruthState.poseMeters;
         lastVisionPose = new Pose2d(
                 new Translation2d(
-                        groundPose.getTranslation().getX() + rand.nextGaussian() * 0.0,
+                        groundPose.getTranslation().getX() + rand.nextGaussian() * 0.1,
                         groundPose.getTranslation().getY() + rand.nextGaussian() * 0.1
                 ),
                 new Rotation2d(rand.nextGaussian() * 0.01).plus(groundPose.getRotation())
@@ -132,9 +135,9 @@ public class DifferentialDriveStateEstimatorTest {
 
       distanceLeft += wheelSpeeds.leftMetersPerSecond * dt;
       distanceRight += wheelSpeeds.rightMetersPerSecond * dt;
-      
-      distanceLeft += rand.nextGaussian() * 0.01;
-      distanceRight += rand.nextGaussian() * 0.01;
+
+      distanceLeft += rand.nextGaussian() * 0.001;
+      distanceRight += rand.nextGaussian() * 0.001;
 
       var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
 
@@ -184,11 +187,12 @@ public class DifferentialDriveStateEstimatorTest {
             "Incorrect max error"
     );
 
+
     System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
     System.out.println("Max error (meters):  " + maxError);
 
-
-    /*List<XYChart> charts = new ArrayList<XYChart>();
+    /*
+    List<XYChart> charts = new ArrayList<XYChart>();
 
     var chartBuilder = new XYChartBuilder();
     chartBuilder.title = "The Magic of Sensor Fusion";
@@ -212,16 +216,16 @@ public class DifferentialDriveStateEstimatorTest {
     chartBuilderLeftVelocity.title = "Left Velocity versus Time";
     var chartLeftVelocity = chartBuilderLeftVelocity.build();
 
-    chartLeftVelocity.addSeries("Trajectory", time, trajLeftVel);
     chartLeftVelocity.addSeries("xHat", time, observerLeftVelocity);
+    chartLeftVelocity.addSeries("Trajectory", time, trajLeftVel);
     charts.add(chartLeftVelocity);
 
     var chartBuilderRightVelocity = new XYChartBuilder();
     chartBuilderRightVelocity.title = "Right Velocity versus Time";
     var chartRightVelocity = chartBuilderRightVelocity.build();
 
-    chartRightVelocity.addSeries("Trajectory", time, trajRightVel);
     chartRightVelocity.addSeries("xHat", time, observerRightVelocity);
+    chartRightVelocity.addSeries("Trajectory", time, trajRightVel);
 
     charts.add(chartRightVelocity);
 
@@ -229,6 +233,7 @@ public class DifferentialDriveStateEstimatorTest {
     try {
       Thread.sleep(1000000000);
     } catch (InterruptedException e) {
-    }*/
+    }
+    */
   }
 }

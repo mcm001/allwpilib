@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.controller;
 
 import edu.wpi.first.wpiutil.math.*;
@@ -52,7 +59,7 @@ public class LTVDiffDriveController {
     this.m_plant = plant;
     this.m_kinematics = kinematics;
     this.m_rb = kinematics.trackWidthMeters / 2.0;
-    
+
     reset();
 
     var x0 = MatrixUtils.zeros(Nat.N10());
@@ -232,14 +239,14 @@ public class LTVDiffDriveController {
         new ChassisSpeeds(desiredState.velocityMetersPerSecond,
               0,
               desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
-    
+
     Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
             desiredState.poseMeters.getTranslation().getX(),
             desiredState.poseMeters.getTranslation().getY(),
             desiredState.poseMeters.getRotation().getRadians(),
             wheelVelocities.leftMetersPerSecond,
             wheelVelocities.rightMetersPerSecond);
-    
+
     return calculate(currentState, stateRef);
   }
 

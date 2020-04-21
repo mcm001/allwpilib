@@ -58,7 +58,7 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
     var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0,
                                                     velocityMetersPerSecond
                                                     * curvatureRadPerMeter));
-    
+
     var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
 
     // Normalize wheel velocities to be in achievable range while maintaining curvature
@@ -76,9 +76,9 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
     var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0,
                                                                    velocityMetersPerSecond
                                                                        * curvatureRadPerMeter));
-    
+
     var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
-    
+
     Matrix<N2, N1> xDot;
     Matrix<N2, N1> u;
 

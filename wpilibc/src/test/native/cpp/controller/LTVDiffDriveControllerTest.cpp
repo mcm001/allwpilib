@@ -5,68 +5,68 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+#include <iostream>
 #include <limits>
 #include <random>
-#include <iostream>
-
-#include <units/units.h>
-
-#include <wpi/MathExtras.h>
 
 #include <Eigen/Core>
+#include <units/units.h>
+#include <wpi/MathExtras.h>
 
 #include "frc/StateSpaceUtil.h"
-#include "frc/estimator/DifferentialDriveStateEstimator.h"
 #include "frc/controller/LTVDiffDriveController.h"
+#include "frc/controller/LinearSystemFeedforward.h"
+#include "frc/estimator/DifferentialDriveStateEstimator.h"
 #include "frc/geometry/Pose2d.h"
-#include "frc/trajectory/constraint/DifferentialDriveVelocitySystemConstraint.h"
 #include "frc/geometry/Rotation2d.h"
+#include "frc/kinematics/DifferentialDriveKinematics.h"
+#include "frc/kinematics/DifferentialDriveOdometry.h"
 #include "frc/system/LinearSystem.h"
 #include "frc/system/RungeKutta.h"
 #include "frc/system/plant/LinearSystemId.h"
-#include "frc/controller/LinearSystemFeedforward.h"
-#include "frc/kinematics/DifferentialDriveKinematics.h"
-#include "frc/kinematics/DifferentialDriveOdometry.h"
 #include "frc/trajectory/TrajectoryGenerator.h"
+#include "frc/trajectory/constraint/DifferentialDriveVelocitySystemConstraint.h"
 #include "frc2/Timer.h"
 #include "gtest/gtest.h"
 
 using namespace frc;
 
 void ScaleCapU(Eigen::Matrix<double, 2, 1>* u) {
-    bool outputCapped =
-        std::abs((*u)(0, 0)) > 12.0 || std::abs((*u)(1, 0)) > 12.0;
+  bool outputCapped =
+      std::abs((*u)(0, 0)) > 12.0 || std::abs((*u)(1, 0)) > 12.0;
 
-    if (outputCapped) {
-        *u *= 12.0 / u->lpNorm<Eigen::Infinity>();
-    }
+  if (outputCapped) {
+    *u *= 12.0 / u->lpNorm<Eigen::Infinity>();
+  }
 }
 
 TEST(LTVDiffDriveControllerTest, TrackingTest) {
-  LinearSystem<2, 2, 2> plant = frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 10_V);
+  LinearSystem<2, 2, 2> plant =
+      frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 10_V);
 
   const DifferentialDriveKinematics kinematics{1_m};
 
-   LTVDiffDriveController controller{
+  LTVDiffDriveController controller{plant,
+                                    {0.0625, 0.125, 2.5, 0.95, 0.95},
+                                    {12.0, 12.0},
+                                    kinematics,
+                                    0.02_s};
+
+  std::function<Eigen::Matrix<double, 10, 1>(
+      const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)>
+      controllerDynamics =
+          [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
+
+  LinearSystemFeedforward<10, 2> feedforward{controllerDynamics, 0.02_s};
+
+  frc::DifferentialDriveStateEstimator estimator{
       plant,
-      {0.0625, 0.125, 2.5, 0.95, 0.95},
-      {12.0, 12.0},
-      kinematics,
-      0.02_s
-  };
-
-  std::function<Eigen::Matrix<double, 10, 1>(const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)> controllerDynamics =
-    [&] (auto& x, auto& u) { return controller.Dynamics(x, u); };
-
-  LinearSystemFeedforward<10, 2> feedforward{
-      controllerDynamics,
-      0.02_s};
-
-  frc::DifferentialDriveStateEstimator estimator{plant, Eigen::Matrix<double, 10, 1>::Zero(),
-    frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
-    frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
-    frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
-    kinematics};
+      Eigen::Matrix<double, 10, 1>::Zero(),
+      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
+                             10.0, 2.0),
+      frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
+      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
+      kinematics};
 
   auto waypoints = std::vector{frc::Pose2d{0_m, 0_m, 0_rad},
                                frc::Pose2d{4.8768_m, 2.7432_m, 0_rad}};
@@ -75,9 +75,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
   config.AddConstraint(
       DifferentialDriveVelocitySystemConstraint(plant, kinematics, 10_V));
 
-
-  auto trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      waypoints, config);
+  auto trajectory =
+      frc::TrajectoryGenerator::GenerateTrajectory(waypoints, config);
 
   controller.Reset();
   estimator.Reset();
@@ -101,35 +100,34 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
   prevInput.setZero();
 
   while (t <= totalTime) {
-    Eigen::Matrix<double, 3, 1> y = estimator.LocalMeasurementModel(trueXhat, Eigen::Matrix<double, 2, 1>::Zero());
+    Eigen::Matrix<double, 3, 1> y = estimator.LocalMeasurementModel(
+        trueXhat, Eigen::Matrix<double, 2, 1>::Zero());
 
-    Eigen::Matrix<double, 10, 1> currentState = estimator.UpdateWithTime(units::radian_t(y(0, 0)),
-        units::meter_t(y(1, 0)),
-        units::meter_t(y(2, 0)),
-        prevInput,
-        t
-    );
+    Eigen::Matrix<double, 10, 1> currentState = estimator.UpdateWithTime(
+        units::radian_t(y(0, 0)), units::meter_t(y(1, 0)),
+        units::meter_t(y(2, 0)), prevInput, t);
 
     auto desiredState = trajectory.Sample(t);
 
-    const ChassisSpeeds chassisSpeeds{desiredState.velocity, 0_mps,
-                                    desiredState.velocity * desiredState.curvature};
+    const ChassisSpeeds chassisSpeeds{
+        desiredState.velocity, 0_mps,
+        desiredState.velocity * desiredState.curvature};
 
     auto [left, right] = kinematics.ToWheelSpeeds(chassisSpeeds);
 
     Eigen::Matrix<double, 5, 1> stateRef;
     stateRef << desiredState.pose.Translation().X().to<double>(),
-                desiredState.pose.Translation().Y().to<double>(),
-                desiredState.pose.Rotation().Radians().to<double>(),
-                left.to<double>(),
-                right.to<double>();
-    
+        desiredState.pose.Translation().Y().to<double>(),
+        desiredState.pose.Rotation().Radians().to<double>(), left.to<double>(),
+        right.to<double>();
+
     prevStateRef = stateRef;
 
     Eigen::Matrix<double, 10, 1> augmentedRef;
     augmentedRef.block<5, 1>(0, 0) = stateRef;
 
-    u = controller.Calculate(currentState.block<5, 1>(0, 0), desiredState) + feedforward.Calculate(augmentedRef);
+    u = controller.Calculate(currentState.block<5, 1>(0, 0), desiredState) +
+        feedforward.Calculate(augmentedRef);
 
     ScaleCapU(&u);
 
@@ -137,39 +135,41 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
 
     t += kDt;
 
-    //std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," << currentState(0) << "," << currentState(1) << '\n';
+    // std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
+    // currentState(0) << "," << currentState(1) << '\n';
 
-    trueXhat = frc::RungeKutta(controllerDynamics,
-                                   trueXhat, u, kDt);
+    trueXhat = frc::RungeKutta(controllerDynamics, trueXhat, u, kDt);
     EXPECT_TRUE(controller.AtReference());
   }
 }
 
 TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
-  LinearSystem<2, 2, 2> plant = frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 10_V);
+  LinearSystem<2, 2, 2> plant =
+      frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 10_V);
 
   const DifferentialDriveKinematics kinematics{1_m};
 
-   LTVDiffDriveController controller{
+  LTVDiffDriveController controller{plant,
+                                    {0.0625, 0.125, 2.5, 0.95, 0.95},
+                                    {12.0, 12.0},
+                                    kinematics,
+                                    0.02_s};
+
+  std::function<Eigen::Matrix<double, 10, 1>(
+      const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)>
+      controllerDynamics =
+          [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
+
+  LinearSystemFeedforward<10, 2> feedforward{controllerDynamics, 0.02_s};
+
+  frc::DifferentialDriveStateEstimator estimator{
       plant,
-      {0.0625, 0.125, 2.5, 0.95, 0.95},
-      {12.0, 12.0},
-      kinematics,
-      0.02_s
-  };
-
-  std::function<Eigen::Matrix<double, 10, 1>(const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)> controllerDynamics =
-    [&] (auto& x, auto& u) { return controller.Dynamics(x, u); };
-
-  LinearSystemFeedforward<10, 2> feedforward{
-      controllerDynamics,
-      0.02_s};
-
-  frc::DifferentialDriveStateEstimator estimator{plant, Eigen::Matrix<double, 10, 1>::Zero(),
-    frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
-    frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
-    frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
-    kinematics};
+      Eigen::Matrix<double, 10, 1>::Zero(),
+      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
+                             10.0, 2.0),
+      frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
+      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
+      kinematics};
 
   auto waypoints = std::vector{frc::Pose2d{0_m, 0_m, 0_rad},
                                frc::Pose2d{4.8768_m, 2.7432_m, 0_rad}};
@@ -178,9 +178,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
   config.AddConstraint(
       DifferentialDriveVelocitySystemConstraint(plant, kinematics, 10_V));
 
-
-  auto trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      waypoints, config);
+  auto trajectory =
+      frc::TrajectoryGenerator::GenerateTrajectory(waypoints, config);
 
   controller.Reset();
   estimator.Reset();
@@ -206,37 +205,36 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
   while (t <= totalTime) {
     kDt += units::second_t{frc::MakeWhiteNoiseVector(0.0005)(0, 0)};
 
-    Eigen::Matrix<double, 3, 1> y = estimator.LocalMeasurementModel(trueXhat, Eigen::Matrix<double, 2, 1>::Zero());
+    Eigen::Matrix<double, 3, 1> y = estimator.LocalMeasurementModel(
+        trueXhat, Eigen::Matrix<double, 2, 1>::Zero());
 
     y += frc::MakeWhiteNoiseVector(0.0001, 0.005, 0.005);
 
-    Eigen::Matrix<double, 10, 1> currentState = estimator.UpdateWithTime(units::radian_t(y(0, 0)),
-        units::meter_t(y(1, 0)),
-        units::meter_t(y(2, 0)),
-        prevInput,
-        t
-    );
+    Eigen::Matrix<double, 10, 1> currentState = estimator.UpdateWithTime(
+        units::radian_t(y(0, 0)), units::meter_t(y(1, 0)),
+        units::meter_t(y(2, 0)), prevInput, t);
 
     auto desiredState = trajectory.Sample(t);
 
-    const ChassisSpeeds chassisSpeeds{desiredState.velocity, 0_mps,
-                                    desiredState.velocity * desiredState.curvature};
+    const ChassisSpeeds chassisSpeeds{
+        desiredState.velocity, 0_mps,
+        desiredState.velocity * desiredState.curvature};
 
     auto [left, right] = kinematics.ToWheelSpeeds(chassisSpeeds);
 
     Eigen::Matrix<double, 5, 1> stateRef;
     stateRef << desiredState.pose.Translation().X().to<double>(),
-                desiredState.pose.Translation().Y().to<double>(),
-                desiredState.pose.Rotation().Radians().to<double>(),
-                left.to<double>(),
-                right.to<double>();
-    
+        desiredState.pose.Translation().Y().to<double>(),
+        desiredState.pose.Rotation().Radians().to<double>(), left.to<double>(),
+        right.to<double>();
+
     prevStateRef = stateRef;
 
     Eigen::Matrix<double, 10, 1> augmentedRef;
     augmentedRef.block<5, 1>(0, 0) = stateRef;
 
-    u = controller.Calculate(currentState.block<5, 1>(0, 0), desiredState) + feedforward.Calculate(augmentedRef);
+    u = controller.Calculate(currentState.block<5, 1>(0, 0), desiredState) +
+        feedforward.Calculate(augmentedRef);
 
     ScaleCapU(&u);
 
@@ -244,12 +242,10 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
 
     t += kDt;
 
-    //std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," << currentState(0) << "," << currentState(1) << '\n';
+    // std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
+    // currentState(0) << "," << currentState(1) << '\n';
 
-    trueXhat = frc::RungeKutta(controllerDynamics,
-                                   trueXhat, u, kDt);
+    trueXhat = frc::RungeKutta(controllerDynamics, trueXhat, u, kDt);
     EXPECT_TRUE(controller.AtReference());
   }
-
-
 }

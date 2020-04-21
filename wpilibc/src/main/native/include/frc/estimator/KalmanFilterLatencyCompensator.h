@@ -11,9 +11,14 @@
 #include <utility>
 #include <vector>
 
+#include <Eigen/Core>
 #include <units/units.h>
 
 namespace frc {
+
+template <int N>
+using Vector = Eigen::Matrix<double, N, 1>;
+
 template <int States, int Inputs, int Outputs, typename KalmanFilterType>
 class KalmanFilterLatencyCompensator {
  public:
@@ -46,11 +51,12 @@ class KalmanFilterLatencyCompensator {
     }
   }
 
-  template<int Rows>
+  template <int Rows>
   void ApplyPastMeasurement(
       KalmanFilterType* observer, units::second_t nominalDt,
       Eigen::Matrix<double, Rows, 1> y,
-      std::function<void(const Vector<Inputs>&, const Vector<Rows>&)> globalMeasurementCorrect,
+      std::function<void(const Vector<Inputs>& u, const Vector<Rows>& y)>
+          globalMeasurementCorrect,
       units::second_t timestamp) {
     if (m_pastObserverSnapshots.size() == 0) {
       // State map was empty, which means that we got a measurement right at

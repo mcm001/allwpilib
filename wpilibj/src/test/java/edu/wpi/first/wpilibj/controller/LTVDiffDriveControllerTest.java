@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -102,12 +102,12 @@ class LTVDiffDriveControllerTest {
       u.times(12.0 / CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM()));
     }
   }
-  
+
   @Test
   void trackingTest() {
     controller.reset();
     estimator.reset();
-    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.06)), 0.3);
+    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.1)), 0.5);
 
     List<Double> time = new ArrayList<>();
 
@@ -144,7 +144,7 @@ class LTVDiffDriveControllerTest {
         new ChassisSpeeds(desiredState.velocityMetersPerSecond,
               0,
               desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
-    
+
       Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
               desiredState.poseMeters.getTranslation().getX(),
               desiredState.poseMeters.getTranslation().getY(),
@@ -275,7 +275,7 @@ class LTVDiffDriveControllerTest {
         new ChassisSpeeds(desiredState.velocityMetersPerSecond,
               0,
               desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
-    
+
       Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
               desiredState.poseMeters.getTranslation().getX(),
               desiredState.poseMeters.getTranslation().getY(),
@@ -358,4 +358,3 @@ class LTVDiffDriveControllerTest {
     */
   }
 }
-

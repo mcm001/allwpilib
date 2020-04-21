@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -9,16 +9,17 @@
 
 #include <units/units.h>
 
-#include "frc/system/LinearSystem.h"
 #include "frc/kinematics/DifferentialDriveKinematics.h"
+#include "frc/system/LinearSystem.h"
 #include "frc/trajectory/constraint/TrajectoryConstraint.h"
 
 namespace frc {
 /**
  * A class that enforces constraints on differential drive velocity based on
- * a differential drive {@link LinearSystem} and the drive kinematics. Ensures that the acceleration of
- * any wheel of the robot while following the trajectory is never higher than what can be achieved with
- * the given maximum voltage.
+ * a differential drive {@link LinearSystem} and the drive kinematics. Ensures
+ * that the acceleration of any wheel of the robot while following the
+ * trajectory is never higher than what can be achieved with the given maximum
+ * voltage.
  */
 class DifferentialDriveVelocitySystemConstraint : public TrajectoryConstraint {
  public:
@@ -27,13 +28,13 @@ class DifferentialDriveVelocitySystemConstraint : public TrajectoryConstraint {
    *
    * @param system      A {@link LinearSystem} representing the drivetrain..
    * @param kinematics  A kinematics component describing the drive geometry.
-   * @param maxVoltage  The maximum voltage available to the motors while following the path.
-   *                    Should be somewhat less than the nominal battery voltage (12V) to account
-   *                    for "voltage sag" due to current draw.
+   * @param maxVoltage  The maximum voltage available to the motors while
+   * following the path. Should be somewhat less than the nominal battery
+   * voltage (12V) to account for "voltage sag" due to current draw.
    */
   DifferentialDriveVelocitySystemConstraint(
-      LinearSystem<2, 2, 2> system,
-      DifferentialDriveKinematics kinematics, units::volt_t maxVoltage);
+      LinearSystem<2, 2, 2> system, DifferentialDriveKinematics kinematics,
+      units::volt_t maxVoltage);
 
   units::meters_per_second_t MaxVelocity(
       const Pose2d& pose, curvature_t curvature,

@@ -14,25 +14,26 @@
 
 using namespace frc;
 
-DifferentialDriveVelocitySystemConstraint::DifferentialDriveVelocitySystemConstraint(
-    LinearSystem<2, 2, 2> system,
-    DifferentialDriveKinematics kinematics, units::volt_t maxVoltage)
-    : m_system(system),
-      m_kinematics(kinematics),
-      m_maxVoltage(maxVoltage) {}
+DifferentialDriveVelocitySystemConstraint::
+    DifferentialDriveVelocitySystemConstraint(
+        LinearSystem<2, 2, 2> system, DifferentialDriveKinematics kinematics,
+        units::volt_t maxVoltage)
+    : m_system(system), m_kinematics(kinematics), m_maxVoltage(maxVoltage) {}
 
-units::meters_per_second_t DifferentialDriveVelocitySystemConstraint::MaxVelocity(
+units::meters_per_second_t
+DifferentialDriveVelocitySystemConstraint::MaxVelocity(
     const Pose2d& pose, curvature_t curvature,
     units::meters_per_second_t velocity) {
-    auto wheelSpeeds = m_kinematics.ToWheelSpeeds({velocity, 0_mps, velocity * curvature});
+  auto wheelSpeeds =
+      m_kinematics.ToWheelSpeeds({velocity, 0_mps, velocity * curvature});
 
-    Eigen::Vector2d x;
-    x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
+  Eigen::Vector2d x;
+  x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
 
-    if(std::abs(x(0, 0)) > velocity.to<double>() || 
-       std::abs(x(1, 0)) > velocity.to<double>()) {
-        x *= velocity.to<double>() / x.lpNorm<Eigen::Infinity>();
-    }
+  if (std::abs(x(0, 0)) > velocity.to<double>() ||
+      std::abs(x(1, 0)) > velocity.to<double>()) {
+    x *= velocity.to<double>() / x.lpNorm<Eigen::Infinity>();
+  }
 
   return units::meters_per_second_t((x(0, 0) + x(1, 0)) / 2.0);
 }
@@ -44,23 +45,25 @@ DifferentialDriveVelocitySystemConstraint::MinMaxAcceleration(
   auto wheelSpeeds =
       m_kinematics.ToWheelSpeeds({speed, 0_mps, speed * curvature});
 
-    Eigen::Vector2d x;
-    x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
+  Eigen::Vector2d x;
+  x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
 
-    Eigen::Vector2d xDot;
-    Eigen::Vector2d u;
+  Eigen::Vector2d xDot;
+  Eigen::Vector2d u;
 
-    // dx/dt for minimum u
-    u << -m_maxVoltage.to<double>(), -m_maxVoltage.to<double>();
-    xDot = m_system.A() * x + m_system.B() * u;
-    units::meters_per_second_squared_t minChassisAcceleration;
-    minChassisAcceleration = units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
+  // dx/dt for minimum u
+  u << -m_maxVoltage.to<double>(), -m_maxVoltage.to<double>();
+  xDot = m_system.A() * x + m_system.B() * u;
+  units::meters_per_second_squared_t minChassisAcceleration;
+  minChassisAcceleration =
+      units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
 
-    // dx/dt for maximum u
-    u << m_maxVoltage.to<double>(), m_maxVoltage.to<double>();
-    xDot = m_system.A() * x + m_system.B() * u;
-    units::meters_per_second_squared_t maxChassisAcceleration;
-    maxChassisAcceleration = units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
+  // dx/dt for maximum u
+  u << m_maxVoltage.to<double>(), m_maxVoltage.to<double>();
+  xDot = m_system.A() * x + m_system.B() * u;
+  units::meters_per_second_squared_t maxChassisAcceleration;
+  maxChassisAcceleration =
+      units::meters_per_second_squared_t((xDot(0, 0) + xDot(1, 0)) / 2.0);
 
   // When turning about a point inside of the wheelbase (i.e. radius less than
   // half the trackwidth), the inner wheel's direction changes, but the
