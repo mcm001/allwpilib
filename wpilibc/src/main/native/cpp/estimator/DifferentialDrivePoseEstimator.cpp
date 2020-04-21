@@ -78,11 +78,7 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
   m_prevTime = currentTime;
 
   auto angle = gyroAngle + m_gyroOffset;
-  //auto omega = (gyroAngle - m_previousAngle).Radians() / dt;
-
-  auto u = frc::MakeMatrix<3, 1>(
-      (wheelSpeeds.left + wheelSpeeds.right).to<double>() / 2.0, 0.0,
-      (angle - m_previousAngle).Radians().to<double>() / dt.to<double>());
+  auto omega = (gyroAngle - m_previousAngle).Radians() / dt;
 
   auto u = frc::MakeMatrix<3, 1>(
       (wheelSpeeds.left + wheelSpeeds.right).to<double>() / 2.0, 0.0,
@@ -125,15 +121,6 @@ std::array<double, Dim> DifferentialDrivePoseEstimator::StdDevMatrixToArray(
     array[i] = stdDevs(i);
   }
   return array;
-}
-
-Vector<5> DifferentialDrivePoseEstimator::FillStateVector(
-    const Pose2d& pose, units::meter_t leftDistance,
-    units::meter_t rightDistance) {
-  return frc::MakeMatrix<5, 1>(
-      pose.Translation().X().to<double>(), pose.Translation().Y().to<double>(),
-      pose.Rotation().Radians().to<double>(), leftDistance.to<double>(),
-      rightDistance.to<double>());
 }
 
 Vector<5> DifferentialDrivePoseEstimator::FillStateVector(

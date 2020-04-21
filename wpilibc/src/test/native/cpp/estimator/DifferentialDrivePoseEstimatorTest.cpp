@@ -20,7 +20,7 @@
 #include "frc/trajectory/TrajectoryGenerator.h"
 #include "frc2/Timer.h"
 #include "gtest/gtest.h"
-/*
+
 TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   frc::DifferentialDrivePoseEstimator estimator{
       frc::Rotation2d(), frc::Pose2d(),
@@ -107,4 +107,3 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   //            0.2);
   //  EXPECT_NEAR(0.0, maxError, 0.4);
 }
-*/
