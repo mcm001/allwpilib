@@ -7,13 +7,19 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
 #include <utility>
 #include <vector>
 
+#include <Eigen/Core>
 #include <units/units.h>
 
 namespace frc {
+
+template <int N>
+using Vector = Eigen::Matrix<double, N, 1>;
+
 template <int States, int Inputs, int Outputs, typename KalmanFilterType>
 class KalmanFilterLatencyCompensator {
  public:

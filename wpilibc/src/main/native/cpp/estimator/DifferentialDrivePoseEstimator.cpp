@@ -82,7 +82,7 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
 
   auto u = frc::MakeMatrix<3, 1>(
       (wheelSpeeds.left + wheelSpeeds.right).to<double>() / 2.0, 0.0,
-      (angle - m_previousAngle).Radians().to<double>() / dt.to<double>());
+      omega.to<double>());
 
   m_previousAngle = angle;
 
