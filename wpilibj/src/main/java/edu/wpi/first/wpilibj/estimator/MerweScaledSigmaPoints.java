@@ -114,14 +114,11 @@ public class MerweScaledSigmaPoints<S extends Num> {
    */
   @SuppressWarnings("LocalVariableName")
   private void computeWeights(double beta) {
-    var wCBacking = new double[2 * m_states.getNum() + 1];
-    var wMBacking = new double[2 * m_states.getNum() + 1];
-
     double lambda = Math.pow(m_alpha, 2) * (m_states.getNum() + m_kappa) - m_states.getNum();
     double c = 0.5 / (m_states.getNum() + lambda);
 
-    var wM = new SimpleMatrix(1, 2 * m_states.getNum() + 1, true, wCBacking);
-    var wC = new SimpleMatrix(1, 2 * m_states.getNum() + 1, true, wMBacking);
+    var wM = new SimpleMatrix(1, 2 * m_states.getNum() + 1);
+    var wC = new SimpleMatrix(1, 2 * m_states.getNum() + 1);
     wM.fill(c);
     wC.fill(c);
 
