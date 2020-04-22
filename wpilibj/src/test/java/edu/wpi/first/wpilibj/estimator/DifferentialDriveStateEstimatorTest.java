@@ -28,14 +28,13 @@ import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DifferentialDriveStateEstimatorTest {
-  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops",
+      "PMD.ExcessiveMethodLength"})
   @Test
   public void testAccuracy() {
     final LinearSystem<N2, N2, N2> plant = LinearSystem.identifyDrivetrainSystem(
@@ -45,8 +44,8 @@ public class DifferentialDriveStateEstimatorTest {
     var estimator = new DifferentialDriveStateEstimator(
             plant,
             MatrixUtils.zeros(Nat.N10()),
-            //0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0
-            new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.01, 0.00001, 0.00001, 0.1, 0.1, 1.0, 1.0, 0.5),
+            new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
+                    0.002, 0.002, 0.01, 0.00001, 0.00001, 0.1, 0.1, 1.0, 1.0, 0.5),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.001, 0.001, 0.01),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
             kinematics);
@@ -89,17 +88,17 @@ public class DifferentialDriveStateEstimatorTest {
 
     double maxError = Double.NEGATIVE_INFINITY;
     double errorSum = 0;
-    Trajectory.State groundtruthState;
+    Trajectory.State groundTruthState;
     Matrix<N2, N1> input;
 
     Matrix<N2, N1> prevX = MatrixUtils.zeros(Nat.N2());
 
     while (t <= traj.getTotalTimeSeconds()) {
-      groundtruthState = traj.sample(t);
+      groundTruthState = traj.sample(t);
 
       var chassisSpeeds = new ChassisSpeeds(
-          groundtruthState.velocityMetersPerSecond, 0,
-          groundtruthState.velocityMetersPerSecond * groundtruthState.curvatureRadPerMeter
+          groundTruthState.velocityMetersPerSecond, 0,
+          groundTruthState.velocityMetersPerSecond * groundTruthState.curvatureRadPerMeter
       );
       var wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds);
 
@@ -119,7 +118,7 @@ public class DifferentialDriveStateEstimatorTest {
                   lastVisionPose,
                   lastVisionUpdateTime);
         }
-        var groundPose = groundtruthState.poseMeters;
+        var groundPose = groundTruthState.poseMeters;
         lastVisionPose = new Pose2d(
                 new Translation2d(
                         groundPose.getTranslation().getX() + rand.nextGaussian() * 0.1,
@@ -141,7 +140,7 @@ public class DifferentialDriveStateEstimatorTest {
 
       var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
 
-      var xHat = estimator.updateWithTime(groundtruthState.poseMeters.getRotation()
+      var xHat = estimator.updateWithTime(groundTruthState.poseMeters.getRotation()
                       .plus(rotNoise).getRadians(),
                       distanceLeft,
                       distanceRight,
@@ -149,7 +148,7 @@ public class DifferentialDriveStateEstimatorTest {
                       t);
 
       double error =
-              groundtruthState.poseMeters.getTranslation().getDistance(
+              groundTruthState.poseMeters.getTranslation().getDistance(
                       new Translation2d(xHat.get(0, 0),
                                         xHat.get(1, 0)));
       if (error > maxError) {
@@ -159,8 +158,8 @@ public class DifferentialDriveStateEstimatorTest {
 
       time.add(t);
 
-      trajXs.add(groundtruthState.poseMeters.getTranslation().getX());
-      trajYs.add(groundtruthState.poseMeters.getTranslation().getY());
+      trajXs.add(groundTruthState.poseMeters.getTranslation().getX());
+      trajYs.add(groundTruthState.poseMeters.getTranslation().getY());
       trajLeftVel.add(wheelSpeeds.leftMetersPerSecond);
       trajRightVel.add(wheelSpeeds.rightMetersPerSecond);
 

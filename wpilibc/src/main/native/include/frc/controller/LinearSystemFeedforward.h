@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2020 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -74,8 +74,8 @@ class LinearSystemFeedforward {
   /**
    * Constructs a feedforward with given model dynamics.
    *
-   * @param f         A vector-valued function of x(states) and
-   *                  u(inputs) that returns the derivative of
+   * @param f         A vector-valued function of x, the state, and
+   *                  u, the input, that returns the derivative of
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
@@ -149,7 +149,7 @@ class LinearSystemFeedforward {
   /**
    * Calculate the feedforward with current anf future reference vectors.
    *
-   * @param r The current reference state of time k.
+   * @param r     The current reference state of time k.
    * @param nextR The future reference state of time k + dt.
    */
   Eigen::Matrix<double, Inputs, 1> Calculate(
@@ -173,6 +173,9 @@ class LinearSystemFeedforward {
 
   units::second_t m_dt;
 
+  /**
+   * The model dynamics, if the overload is used.
+   */
   std::function<Vector<States>(const Vector<States>&, const Vector<Inputs>&)>
       m_f;
 

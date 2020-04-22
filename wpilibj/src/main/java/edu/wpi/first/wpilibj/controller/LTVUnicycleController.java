@@ -46,17 +46,41 @@ public class LTVUnicycleController {
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public LTVUnicycleController(Matrix<N3, N1> qElms, Matrix<N2, N1> rElms, double dtSeconds) {
+    this(qElms, 1.0, rElms, dtSeconds);
+  }
+
+  /**
+   * Construct a LTV Unicycle Controller.
+   *
+   * @param qElms     The maximum desired error tolerance for the robot's state, in
+   *                  the form [X, Y, Heading]^T. Units are meters and radians.
+   * @param rho       A weighting factor that balances control effort and state excursion.
+   *                  Greater values penalize state excursion more heavily.
+   *                  1 is a good starting value.
+   * @param rElms     The maximum desired control effort by the feedback controller,
+   *                  in the form [vMax, wMax]^T. Units are meters per second and
+   *                  radians per second. Note that this is not the maximum speed of
+   *                  the robot, but rather the maximum effort the feedback controller
+   *                  should apply on top of the trajectory feedforward.
+   * @param dtSeconds The nominal dt of this controller. With command based this is 0.020.
+   */
+  @SuppressWarnings({"ParameterName", "LocalVariableName"})
+  public LTVUnicycleController(
+        Matrix<N3, N1> qElms,
+        double rho,
+        Matrix<N2, N1> rElms,
+        double dtSeconds) {
 
     var a0 = new MatBuilder<>(Nat.N3(), Nat.N3()).fill(0, 0, 0, 0, 0, 1e-9, 0, 0, 0);
     var a1 = new MatBuilder<>(Nat.N3(), Nat.N3()).fill(0, 0, 0, 0, 0, 1, 0, 0, 0);
     var b = new MatBuilder<>(Nat.N3(), Nat.N2()).fill(1, 0, 0, 0, 0, 1);
 
     m_K0 = new LinearQuadraticRegulator<N3, N2, N2>(
-            a0, b, qElms, rElms, dtSeconds
+            a0, b, qElms.times(rho), rElms, dtSeconds
     ).getK();
 
     m_K1 = new LinearQuadraticRegulator<N3, N2, N2>(
-            a1, b, qElms, rElms, dtSeconds
+            a1, b, qElms.times(rho), rElms, dtSeconds
     ).getK();
   }
 

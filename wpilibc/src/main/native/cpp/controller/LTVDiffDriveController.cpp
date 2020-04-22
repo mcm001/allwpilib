@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -20,6 +20,14 @@ using namespace frc;
 LTVDiffDriveController::LTVDiffDriveController(
     const LinearSystem<2, 2, 2>& plant,
     const std::array<double, 5>& controllerQ,
+    const std::array<double, 2>& controllerR,
+    const DifferentialDriveKinematics& kinematics, units::second_t dt)
+    : LTVDiffDriveController(plant, controllerQ, 1.0, controllerR, kinematics, dt) {}
+
+LTVDiffDriveController::LTVDiffDriveController(
+    const LinearSystem<2, 2, 2>& plant,
+    const std::array<double, 5>& controllerQ,
+    const double rho,
     const std::array<double, 2>& controllerR,
     const DifferentialDriveKinematics& kinematics, units::second_t dt)
     : m_plant(plant),
@@ -53,11 +61,15 @@ LTVDiffDriveController::LTVDiffDriveController(
             [this](auto& x, auto& u) { return Dynamics(x, u); }, x0, u0)
             .block<5, 2>(0, 0);
 
+  std::array<double, 5> controllerQScaled = controllerQ;
+
+  std::transform(controllerQScaled.begin(), controllerQScaled.end(), controllerQScaled.begin(), [&rho](auto& c){return c*rho;});
+
   m_K0 =
-      frc::LinearQuadraticRegulator<5, 2>(A0, m_B, controllerQ, controllerR, dt)
+      frc::LinearQuadraticRegulator<5, 2>(A0, m_B, controllerQScaled, controllerR, dt)
           .K();
   m_K1 =
-      frc::LinearQuadraticRegulator<5, 2>(A1, m_B, controllerQ, controllerR, dt)
+      frc::LinearQuadraticRegulator<5, 2>(A1, m_B, controllerQScaled, controllerR, dt)
           .K();
 }
 

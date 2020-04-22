@@ -27,10 +27,9 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * global measurements(ex. vision) with differential drive encoder measurements.
  * It will correct for noisy global measurements and encoder drift.
  *
- * <p>This class is indented to be paired with
- * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController} as it
+ * <p>This class is indented to be paired with LTVDiffDriveController as it
  * provides a 10-state estimate. This can then be trimmed into 5-state
- * using{@link Matrix#block} with the operation
+ * using Eigen::Matrix.block<>() with the operation
  * ```10-stateEstimate.block<5, 1>(0, 0)```
  * then passed into the controller as the current state estimate.
  *
@@ -50,8 +49,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * distances.)
  *
  * <p>u = [[voltage_l, voltage_r]]^T This is typically the control input of the
- * last timestep from a {@link
- * edu.wpi.first.wpilibj.controller.LTVDiffDriveController}.
+ * last timestep from a LTVDiffDriveController.
  *
  * <p>y = [[x, y, theta]]^T from vision, or y = [[dist_l, dist_r, theta]] from
  * encoders and gyro.
@@ -65,7 +63,7 @@ class DifferentialDriveStateEstimator {
    * differential drivetrain.
    * @param initialState             The starting state estimate.
    * @param stateStdDevs             Standard deviations of model states.
-   * Increase these numbers to trust your wheel and gyro velocities less.
+   * Increase these numbers to trust your model less.
    * @param localMeasurementStdDevs  Standard deviations of the encoder and gyro
    * measurements. Increase these numbers to trust encoder distances and gyro
    *                                 angle less.

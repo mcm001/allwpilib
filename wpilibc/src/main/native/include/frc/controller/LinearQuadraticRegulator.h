@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2020 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -23,8 +23,7 @@ namespace frc {
 /**
  * Contains the controller coefficients and logic for a linear-quadratic
  * regulator (LQR).
- *
- * LQRs use the control law u = K(r - x)..
+ * LQRs use the control law u = K(r - x).
  *
  * For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -199,10 +198,8 @@ class LinearQuadraticRegulator {
    */
   void Update(const Eigen::Matrix<double, States, 1>& x,
               const Eigen::Matrix<double, States, 1>& nextR) {
-    if (m_enabled) {
-      m_u = m_K * (m_r - x);
-      m_r = nextR;
-    }
+    Update(x);
+    m_r = nextR;
   }
 
  private:

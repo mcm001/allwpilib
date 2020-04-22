@@ -7,7 +7,6 @@
 
 package edu.wpi.first.wpilibj.controller;
 
-import edu.wpi.first.wpiutil.math.*;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -17,6 +16,11 @@ import edu.wpi.first.wpilibj.kinematics.DifferentialDriveMotorVoltages;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpiutil.math.MatBuilder;
+import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.MatrixUtils;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.Pair;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N10;
 import edu.wpi.first.wpiutil.math.numbers.N2;
@@ -27,12 +31,28 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
 
 /**
  * A Linear Time-Varying Differential Drive Controller for differential drive
- * robots. Similar to RAMSETE, this controller combines feedback and feedforward
- * to output Differeint to guide a robot along a trajectory. However, this
- * controller utilizes tolerances grounded in reality to pick gains rather than
- * magical Beta and Zeta gains.
+ * robots. This class takes in a {@link LinearSystem} of a 
+ * differential drive, which can be created from known linear and angular
+ * Kv, and Ka terms with {@link LinearSystem#identifyDrivetrainSystem}.
+ * This is then used to calculate the model dynamics
+ * {@link LTVDiffDriveController#getDynamics}.
+ * 
+ * <p>This controller is advantageous over the {@link LTVUnicycleController}
+ * due to the fact that it is easier to specify the relative weighting of
+ * state vs. input (ex. being able to have the X, Y, Theta controller
+ * have more jurisdiction over the input than the left and right velocity
+ * controller.)
+ * 
+ * <p>The current state estimate for the controller can be determined by using
+ * a {@link edu.wpi.first.wpilibj.estimator.DifferentialDriveStateEstimator}.
+ *
+ * <p>Our state-space system is:
+ *
+ * <p>x = [[x, y, theta, vel_l, vel_r]]^T in the field coordinate system.
+ *
+ * <p>u = [[voltage_l, voltage_r]]^T the control input.
  */
-@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
+@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName", "PMD.SingularField"})
 public class LTVDiffDriveController {
   private final double m_rb;
   private final LinearSystem<N2, N2, N2> m_plant;
@@ -51,14 +71,58 @@ public class LTVDiffDriveController {
 
   private DifferentialDriveKinematics m_kinematics;
 
+  /**
+   * Construct a LTV Unicycle Controller.
+   *
+   * @param plant       A {@link LinearSystem} representing a differential drivetrain.
+   * @param controllerQ The maximum desired error tolerance for the robot's state, in
+   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T. 
+   *                    Units are meters and radians for the translation and heading.
+   *                    1 is a good starting value.
+   * @param controllerR The maximum desired control effort by the feedback controller,
+   *                    in the form [voltsLeft, voltsRight]^T.
+   *                    should apply on top of the trajectory feedforward.
+   * @param kinematics  A {@link DifferentialDriveKinematics} object representing the
+   *                    differential drivetrain's kinematics.
+   * @param dtSeconds   The nominal dt of this controller. With command based this is 0.020.
+   */
   public LTVDiffDriveController(LinearSystem<N2, N2, N2> plant,
           Matrix<N5, N1> controllerQ,
+          Matrix<N2, N1> controllerR,
+          DifferentialDriveKinematics kinematics,
+          double dtSeconds) {
+    this(plant, controllerQ, 1.0, controllerR, kinematics, dtSeconds);
+  }
+
+  /**
+   * Construct a LTV Unicycle Controller.
+   *
+   * @param plant       A {@link LinearSystem} representing a differential drivetrain.
+   * @param controllerQ The maximum desired error tolerance for the robot's state, in
+   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T. 
+   *                    Units are meters and radians for the translation and heading.
+   * @param rho         A weighting factor that balances control effort and state excursion.
+   *                    Greater values penalize state excursion more heavily.
+   *                    1 is a good starting value.
+   * @param controllerR The maximum desired control effort by the feedback controller,
+   *                    in the form [voltsLeft, voltsRight]^T.
+   *                    should apply on top of the trajectory feedforward.
+   * @param kinematics  A {@link DifferentialDriveKinematics} object representing the
+   *                    differential drivetrain's kinematics.
+   * @param dtSeconds   The nominal dt of this controller. With command based this is 0.020.
+   */
+  public LTVDiffDriveController(LinearSystem<N2, N2, N2> plant,
+          Matrix<N5, N1> controllerQ,
+          double rho,
           Matrix<N2, N1> controllerR,
           DifferentialDriveKinematics kinematics,
           double dtSeconds) {
     this.m_plant = plant;
     this.m_kinematics = kinematics;
     this.m_rb = kinematics.trackWidthMeters / 2.0;
+
+    m_poseTolerance = new Pose2d();
+    m_velocityTolerance = 0.0;
 
     reset();
 
@@ -81,9 +145,9 @@ public class LTVDiffDriveController {
             this::getDynamics, x0, u0).block(Nat.N5(), Nat.N2(), new Pair<>(0, 0));
 
     m_K0 = new LinearQuadraticRegulator<N5, N2, N3>(a0, m_B,
-            controllerQ, controllerR, dtSeconds).getK();
+            controllerQ.times(rho), controllerR, dtSeconds).getK();
     m_K1 = new LinearQuadraticRegulator<N5, N2, N3>(a1, m_B,
-            controllerQ, controllerR, dtSeconds).getK();
+            controllerQ.times(rho), controllerR, dtSeconds).getK();
   }
 
   @SuppressWarnings("JavadocMethod")
@@ -258,6 +322,7 @@ public class LTVDiffDriveController {
     m_uncappedU = MatrixUtils.zeros(Nat.N2(), Nat.N1());
   }
 
+  @SuppressWarnings("JavadocMethod")
   public static double normalizeAngle(double angle) {
     final int n_pi_pos = (int) ((angle + Math.PI) / 2.0 / Math.PI);
     angle -= n_pi_pos * 2.0 * Math.PI;

@@ -1,11 +1,13 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
 package edu.wpi.first.wpilibj.trajectory.constraint;
+
+import org.ejml.dense.row.CommonOps_DDRM;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
@@ -19,21 +21,22 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 
 import static edu.wpi.first.wpilibj.util.ErrorMessages.requireNonNullParam;
 
-import org.ejml.dense.row.CommonOps_DDRM;
-
 /**
  * A class that enforces constraints on differential drive velocity based on
- * a differential drive {@link LinearSystem} and the drive kinematics. Ensures that the acceleration of
- * any wheel of the robot while following the trajectory is never higher than what can be achieved with
+ * a differential drive {@link LinearSystem} and the drive kinematics.
+ * 
+ * <p>Ensures that the acceleration of any wheel of the robot while
+ * following the trajectory is never higher than what can be achieved with
  * the given maximum voltage.
  */
+@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
 public class DifferentialDriveVelocitySystemConstraint implements TrajectoryConstraint {
   private final LinearSystem<N2, N2, N2> m_system;
   private final DifferentialDriveKinematics m_kinematics;
   private final double m_maxVoltage;
 
   /**
-   * Creates a new DifferentialDriveVoltageConstraint.
+   * Creates a new DifferentialDriveVelocitySystemConstraint.
    *
    * @param system      A {@link LinearSystem} representing the drivetrain..
    * @param kinematics  A kinematics component describing the drive geometry.
@@ -59,10 +62,12 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
                                                     velocityMetersPerSecond
                                                     * curvatureRadPerMeter));
 
-    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
+    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond,
+        wheelSpeeds.rightMetersPerSecond);
 
     // Normalize wheel velocities to be in achievable range while maintaining curvature
-    if((Math.abs(x.get(0, 0)) > velocityMetersPerSecond) || (Math.abs(x.get(1, 0)) > velocityMetersPerSecond)) {
+    if ((Math.abs(x.get(0, 0)) > velocityMetersPerSecond) 
+        || (Math.abs(x.get(1, 0)) > velocityMetersPerSecond)) {
       x.times(velocityMetersPerSecond / CommonOps_DDRM.elementMaxAbs(x.getStorage().getDDRM()));
     }
 
@@ -77,7 +82,8 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
                                                                    velocityMetersPerSecond
                                                                        * curvatureRadPerMeter));
 
-    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
+    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond,
+        wheelSpeeds.rightMetersPerSecond);
 
     Matrix<N2, N1> xDot;
     Matrix<N2, N1> u;

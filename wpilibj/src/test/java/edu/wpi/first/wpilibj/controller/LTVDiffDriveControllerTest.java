@@ -10,8 +10,6 @@ package edu.wpi.first.wpilibj.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpiutil.math.numbers.*;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import edu.wpi.first.wpilibj.estimator.DifferentialDriveStateEstimator;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
@@ -32,14 +31,16 @@ import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Pair;
-
-//import org.knowm.xchart.SwingWrapper;
-//import org.knowm.xchart.XYChart;
-//import org.knowm.xchart.XYChartBuilder;
+import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.N10;
+import edu.wpi.first.wpiutil.math.numbers.N2;
+import edu.wpi.first.wpiutil.math.numbers.N3;
+import edu.wpi.first.wpiutil.math.numbers.N5;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops", "MemberName"})
+@SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops",
+    "MemberName", "PMD.SingularField", "PMD.ExcessiveMethodLength"})
 class LTVDiffDriveControllerTest {
   private Matrix<N10, N1> trueXhat;
   private Matrix<N2, N1> u;
@@ -49,8 +50,6 @@ class LTVDiffDriveControllerTest {
   private LTVDiffDriveController controller;
   private DifferentialDriveStateEstimator estimator;
   private LinearSystemFeedForward<N10, N2, N3> feedforward;
-
-  private LinearQuadraticRegulator<N5, N2, N3> lqr;
 
   private DifferentialDriveKinematics kinematics;
 
@@ -75,7 +74,8 @@ class LTVDiffDriveControllerTest {
     estimator = new DifferentialDriveStateEstimator(
       plant,
       MatrixUtils.zeros(Nat.N10()),
-      new MatBuilder<>(Nat.N10(), Nat.N1()).fill(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+      new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
+        0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
       new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
       new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
       kinematics);
@@ -95,6 +95,7 @@ class LTVDiffDriveControllerTest {
     totalTime = trajectory.getTotalTimeSeconds();
   }
 
+  @SuppressWarnings("ParameterName")
   private void scaleCappedU(Matrix<N2, N1> u) {
     boolean isOutputCapped = Math.abs(u.get(0, 0)) > 12.0 || Math.abs(u.get(1, 0)) > 12.0;
 
@@ -135,16 +136,19 @@ class LTVDiffDriveControllerTest {
     double t = 0.0;
 
     while (t <= totalTime) {
-      var y = estimator.getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
-      var currentState = estimator.updateWithTime(y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
+      var y = estimator.getLocalMeasurementModel(
+          trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+      var currentState = estimator.updateWithTime(
+          y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
 
       var desiredState = trajectory.sample(t);
 
       var wheelVelocities = kinematics.toWheelSpeeds(
-        new ChassisSpeeds(desiredState.velocityMetersPerSecond,
-              0,
-              desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
+          new ChassisSpeeds(desiredState.velocityMetersPerSecond,
+                0,
+                desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
 
+      @SuppressWarnings("VariableDeclarationUsageDistance")
       Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
               desiredState.poseMeters.getTranslation().getX(),
               desiredState.poseMeters.getTranslation().getY(),
@@ -152,6 +156,7 @@ class LTVDiffDriveControllerTest {
               wheelVelocities.leftMetersPerSecond,
               wheelVelocities.rightMetersPerSecond);
 
+      /* Logging for Graphing */
       time.add(t);
 
       observerXs.add(currentState.get(0, 0));
@@ -171,7 +176,9 @@ class LTVDiffDriveControllerTest {
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
 
-      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
+      u = controller.calculate(
+          currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState)
+          .plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
 
@@ -265,17 +272,19 @@ class LTVDiffDriveControllerTest {
       var y = estimator.getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
 
       y.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(),
-      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005)));
+          new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005)));
 
-      var currentState = estimator.updateWithTime(y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
+      var currentState = estimator.updateWithTime(
+          y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
 
       var desiredState = trajectory.sample(t);
 
       var wheelVelocities = kinematics.toWheelSpeeds(
-        new ChassisSpeeds(desiredState.velocityMetersPerSecond,
-              0,
-              desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
+          new ChassisSpeeds(desiredState.velocityMetersPerSecond,
+                0,
+                desiredState.velocityMetersPerSecond * desiredState.curvatureRadPerMeter));
 
+      @SuppressWarnings("VariableDeclarationUsageDistance")
       Matrix<N5, N1> stateRef = new MatBuilder<>(Nat.N5(), Nat.N1()).fill(
               desiredState.poseMeters.getTranslation().getX(),
               desiredState.poseMeters.getTranslation().getY(),
@@ -302,7 +311,9 @@ class LTVDiffDriveControllerTest {
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
 
-      u = controller.calculate(currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState).plus(feedforward.calculate(augmentedRef));
+      u = controller.calculate(
+          currentState.block(Nat.N5(), Nat.N1(), new Pair<>(0, 0)), desiredState)
+          .plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
 

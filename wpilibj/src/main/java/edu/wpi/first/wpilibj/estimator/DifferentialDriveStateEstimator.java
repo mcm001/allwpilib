@@ -55,9 +55,10 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
  * <p>u = [[voltage_l, voltage_r]]^T This is typically the control input of the last timestep
  * from a {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController}.
  *
- * <p>y = [[x, y, theta]]^T from vision, or y = [[dist_l, dist_r, theta]] from encoders and gyro.
+ * <p>y = [[x, y, theta]]^T from a global measurement source(ex. vision),
+ * or y = [[dist_l, dist_r, theta]] from encoders and gyro.
  */
-@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
+@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName", "PMD.SingularField"})
 public class DifferentialDriveStateEstimator {
   private final UnscentedKalmanFilter<N10, N2, N3> m_observer;
   private final KalmanFilterLatencyCompensator<N10, N2, N3> m_latencyCompensator;
@@ -80,7 +81,7 @@ public class DifferentialDriveStateEstimator {
    * @param plant                    A {@link LinearSystem} representing a differential drivetrain.
    * @param initialState             The starting state estimate.
    * @param stateStdDevs             Standard deviations of model states. Increase these numbers to
-   *                                 trust your wheel and gyro velocities less.
+   *                                 trust your model less.
    * @param localMeasurementStdDevs  Standard deviations of the encoder and gyro measurements.
    *                                 Increase these numbers to trust encoder distances and gyro
    *                                 angle less.

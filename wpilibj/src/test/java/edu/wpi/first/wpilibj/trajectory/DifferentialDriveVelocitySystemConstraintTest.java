@@ -7,8 +7,6 @@
 
 package edu.wpi.first.wpilibj.trajectory;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +17,8 @@ import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVelocitySystemConstraint;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Nat;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DifferentialDriveVelocitySystemConstraintTest {
   @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
@@ -49,11 +49,13 @@ class DifferentialDriveVelocitySystemConstraintTest {
 
       var wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds);
 
-      var x = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
+      var x = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond,
+          wheelSpeeds.rightMetersPerSecond);
 
       //Not really a strictly-correct test as we're using the chassis accel instead of the
       //wheel accel, but much easier than doing it "properly" and a reasonable check anyway
-      var xDot = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(point.accelerationMetersPerSecondSq, point.accelerationMetersPerSecondSq);
+      var xDot = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(point.accelerationMetersPerSecondSq,
+          point.accelerationMetersPerSecondSq);
 
       var u = (system.getB().inv()).times(xDot.minus(system.getA().times(x)));
 
@@ -67,6 +69,6 @@ class DifferentialDriveVelocitySystemConstraintTest {
       assertTrue((-11 <= left) && (left <= 11));
       assertTrue((-11 <= right) && (right <= 11));
 
-      }
     }
+  }
 }

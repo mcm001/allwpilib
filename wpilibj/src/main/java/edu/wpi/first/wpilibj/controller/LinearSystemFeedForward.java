@@ -34,6 +34,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
+@SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
 public class LinearSystemFeedForward<S extends Num, I extends Num,
         O extends Num> {
   /**
@@ -56,7 +57,10 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
   private Nat<I> m_inputs;
 
   private double m_dt;
-
+   
+  /**
+   * The model dynamics, if the overload is used.
+   */
   private BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> m_f;
 
   /**
@@ -99,8 +103,8 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    *
    * @param states    A {@link Nat} representing the number of states.
    * @param inputs    A {@link Nat} representing the number of inputs.
-   * @param f         A vector-valued function of x(states) and
-   *                  u(inputs) that returns the derivative of
+   * @param f         A vector-valued function of x, the state, and
+   *                  u, the input, that returns the derivative of
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
