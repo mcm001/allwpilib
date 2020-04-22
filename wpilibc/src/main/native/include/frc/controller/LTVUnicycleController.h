@@ -30,14 +30,15 @@ class LTVUnicycleController {
   /**
    * Construct a LTV Unicycle Controller.
    *
-   * @param qElms     The maximum desired error tolerance for the robot's state, in
-   *                  the form [X, Y, Heading]^T. Units are meters and radians.
-   * @param rElms     The maximum desired control effort by the feedback controller,
-   *                  in the form [vMax, wMax]^T. Units are meters per second and
-   *                  radians per second. Note that this is not the maximum speed of
-   *                  the robot, but rather the maximum effort the feedback controller
+   * @param qElms     The maximum desired error tolerance for the robot's state,
+   * in the form [X, Y, Heading]^T. Units are meters and radians.
+   * @param rElms     The maximum desired control effort by the feedback
+   * controller, in the form [vMax, wMax]^T. Units are meters per second and
+   *                  radians per second. Note that this is not the maximum
+   * speed of the robot, but rather the maximum effort the feedback controller
    *                  should apply on top of the trajectory feedforward.
-   * @param dtSeconds The nominal dt of this controller. With command based this is 0.020.
+   * @param dtSeconds The nominal dt of this controller. With command based this
+   * is 0.020.
    */
   LTVUnicycleController(const std::array<double, 3>& Qelems,
                         const std::array<double, 2>& Relems,
@@ -46,20 +47,20 @@ class LTVUnicycleController {
   /**
    * Construct a LTV Unicycle Controller.
    *
-   * @param qElms     The maximum desired error tolerance for the robot's state, in
-   *                  the form [X, Y, Heading]^T. Units are meters and radians.
-   * @param rho       A weighting factor that balances control effort and state excursion.
-   *                  Greater values penalize state excursion more heavily.
-   *                  1 is a good starting value.
-   * @param rElms     The maximum desired control effort by the feedback controller,
-   *                  in the form [vMax, wMax]^T. Units are meters per second and
-   *                  radians per second. Note that this is not the maximum speed of
-   *                  the robot, but rather the maximum effort the feedback controller
+   * @param qElms     The maximum desired error tolerance for the robot's state,
+   * in the form [X, Y, Heading]^T. Units are meters and radians.
+   * @param rho       A weighting factor that balances control effort and state
+   * excursion. Greater values penalize state excursion more heavily. 1 is a
+   * good starting value.
+   * @param rElms     The maximum desired control effort by the feedback
+   * controller, in the form [vMax, wMax]^T. Units are meters per second and
+   *                  radians per second. Note that this is not the maximum
+   * speed of the robot, but rather the maximum effort the feedback controller
    *                  should apply on top of the trajectory feedforward.
-   * @param dtSeconds The nominal dt of this controller. With command based this is 0.020.
+   * @param dtSeconds The nominal dt of this controller. With command based this
+   * is 0.020.
    */
-  LTVUnicycleController(const std::array<double, 3>& Qelems,
-                        const double rho,
+  LTVUnicycleController(const std::array<double, 3>& Qelems, const double rho,
                         const std::array<double, 2>& Relems,
                         units::second_t dt);
 

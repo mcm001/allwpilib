@@ -24,7 +24,7 @@ import static edu.wpi.first.wpilibj.util.ErrorMessages.requireNonNullParam;
 /**
  * A class that enforces constraints on differential drive velocity based on
  * a differential drive {@link LinearSystem} and the drive kinematics.
- * 
+ *
  * <p>Ensures that the acceleration of any wheel of the robot while
  * following the trajectory is never higher than what can be achieved with
  * the given maximum voltage.
@@ -66,7 +66,7 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
         wheelSpeeds.rightMetersPerSecond);
 
     // Normalize wheel velocities to be in achievable range while maintaining curvature
-    if ((Math.abs(x.get(0, 0)) > velocityMetersPerSecond) 
+    if ((Math.abs(x.get(0, 0)) > velocityMetersPerSecond)
         || (Math.abs(x.get(1, 0)) > velocityMetersPerSecond)) {
       x.times(velocityMetersPerSecond / CommonOps_DDRM.elementMaxAbs(x.getStorage().getDDRM()));
     }

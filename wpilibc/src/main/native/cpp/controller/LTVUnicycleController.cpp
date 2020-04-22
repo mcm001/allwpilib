@@ -16,16 +16,13 @@
 using namespace frc;
 
 LTVUnicycleController::LTVUnicycleController(
-    const std::array<double, 3>& Qelems,
-    const std::array<double, 2>& Relems,
+    const std::array<double, 3>& Qelems, const std::array<double, 2>& Relems,
     units::second_t dt)
     : LTVUnicycleController(Qelems, 1.0, Relems, dt) {}
 
 LTVUnicycleController::LTVUnicycleController(
-    const std::array<double, 3>& Qelems,
-    const double rho,
-    const std::array<double, 2>& Relems,
-    units::second_t dt) {
+    const std::array<double, 3>& Qelems, const double rho,
+    const std::array<double, 2>& Relems, units::second_t dt) {
   Eigen::Matrix<double, 3, 3> A0;
   A0 << 0, 0, 0, 0, 0, 1e-9, 0, 0, 0;
   Eigen::Matrix<double, 3, 3> A1;
@@ -35,7 +32,8 @@ LTVUnicycleController::LTVUnicycleController(
 
   std::array<double, 3> QelemsScaled = Qelems;
 
-  std::transform(QelemsScaled.begin(), QelemsScaled.end(), QelemsScaled.begin(), [&rho](auto& c){return c*rho;});
+  std::transform(QelemsScaled.begin(), QelemsScaled.end(), QelemsScaled.begin(),
+                 [&rho](auto& c) { return c * rho; });
 
   m_K0 = LinearQuadraticRegulator<3, 2>(A0, B, QelemsScaled, Relems, dt).K();
   m_K1 = LinearQuadraticRegulator<3, 2>(A1, B, QelemsScaled, Relems, dt).K();

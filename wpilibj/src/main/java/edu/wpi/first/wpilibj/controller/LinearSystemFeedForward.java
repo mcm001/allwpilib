@@ -57,7 +57,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
   private Nat<I> m_inputs;
 
   private double m_dt;
-   
+
   /**
    * The model dynamics, if the overload is used.
    */

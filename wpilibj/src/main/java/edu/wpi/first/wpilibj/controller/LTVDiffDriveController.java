@@ -30,18 +30,18 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
 
 /**
  * A Linear Time-Varying Differential Drive Controller for differential drive
- * robots. This class takes in a {@link LinearSystem} of a 
+ * robots. This class takes in a {@link LinearSystem} of a
  * differential drive, which can be created from known linear and angular
  * Kv, and Ka terms with {@link LinearSystem#identifyDrivetrainSystem}.
  * This is then used to calculate the model dynamics
  * {@link LTVDiffDriveController#getDynamics}.
- * 
+ *
  * <p>This controller is advantageous over the {@link LTVUnicycleController}
  * due to the fact that it is easier to specify the relative weighting of
  * state vs. input (ex. being able to have the X, Y, Theta controller
  * have more jurisdiction over the input than the left and right velocity
  * controller.)
- * 
+ *
  * <p>The current state estimate for the controller can be determined by using
  * a {@link edu.wpi.first.wpilibj.estimator.DifferentialDriveStateEstimator}.
  *
@@ -75,7 +75,7 @@ public class LTVDiffDriveController {
    *
    * @param plant       A {@link LinearSystem} representing a differential drivetrain.
    * @param controllerQ The maximum desired error tolerance for the robot's state, in
-   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T. 
+   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T.
    *                    Units are meters and radians for the translation and heading.
    *                    1 is a good starting value.
    * @param controllerR The maximum desired control effort by the feedback controller,
@@ -98,7 +98,7 @@ public class LTVDiffDriveController {
    *
    * @param plant       A {@link LinearSystem} representing a differential drivetrain.
    * @param controllerQ The maximum desired error tolerance for the robot's state, in
-   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T. 
+   *                    the form [X, Y, Heading, leftVelocity, right Velocity]^T.
    *                    Units are meters and radians for the translation and heading.
    * @param rho         A weighting factor that balances control effort and state excursion.
    *                    Greater values penalize state excursion more heavily.

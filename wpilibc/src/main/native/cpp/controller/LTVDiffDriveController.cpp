@@ -22,12 +22,12 @@ LTVDiffDriveController::LTVDiffDriveController(
     const std::array<double, 5>& controllerQ,
     const std::array<double, 2>& controllerR,
     const DifferentialDriveKinematics& kinematics, units::second_t dt)
-    : LTVDiffDriveController(plant, controllerQ, 1.0, controllerR, kinematics, dt) {}
+    : LTVDiffDriveController(plant, controllerQ, 1.0, controllerR, kinematics,
+                             dt) {}
 
 LTVDiffDriveController::LTVDiffDriveController(
     const LinearSystem<2, 2, 2>& plant,
-    const std::array<double, 5>& controllerQ,
-    const double rho,
+    const std::array<double, 5>& controllerQ, const double rho,
     const std::array<double, 2>& controllerR,
     const DifferentialDriveKinematics& kinematics, units::second_t dt)
     : m_plant(plant),
@@ -63,14 +63,16 @@ LTVDiffDriveController::LTVDiffDriveController(
 
   std::array<double, 5> controllerQScaled = controllerQ;
 
-  std::transform(controllerQScaled.begin(), controllerQScaled.end(), controllerQScaled.begin(), [&rho](auto& c){return c*rho;});
+  std::transform(controllerQScaled.begin(), controllerQScaled.end(),
+                 controllerQScaled.begin(),
+                 [&rho](auto& c) { return c * rho; });
 
-  m_K0 =
-      frc::LinearQuadraticRegulator<5, 2>(A0, m_B, controllerQScaled, controllerR, dt)
-          .K();
-  m_K1 =
-      frc::LinearQuadraticRegulator<5, 2>(A1, m_B, controllerQScaled, controllerR, dt)
-          .K();
+  m_K0 = frc::LinearQuadraticRegulator<5, 2>(A0, m_B, controllerQScaled,
+                                             controllerR, dt)
+             .K();
+  m_K1 = frc::LinearQuadraticRegulator<5, 2>(A1, m_B, controllerQScaled,
+                                             controllerR, dt)
+             .K();
 }
 
 bool LTVDiffDriveController::AtReference() const {
