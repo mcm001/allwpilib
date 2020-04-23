@@ -88,7 +88,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
   }
 
   @SuppressWarnings({"ParameterName", "LocalVariableName", "PMD.CyclomaticComplexity"})
-  private static <S extends Num, C extends Num>
+  static <S extends Num, C extends Num>
        Pair<Matrix<C, N1>, Matrix<C, C>> unscentedTransform(
         Nat<S> s, Nat<C> dim, Matrix<?, C> sigmas, Matrix<N1, ?> Wm, Matrix<N1, ?> Wc
   ) {

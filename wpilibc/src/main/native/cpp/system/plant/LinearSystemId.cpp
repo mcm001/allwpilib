@@ -14,7 +14,7 @@ namespace frc {
 LinearSystem<1, 1, 1> IdentifyVelocitySystem(double kV, double kA,
                                              units::volt_t maxVoltage) {
   auto A = frc::MakeMatrix<1, 1>(-kV / kV);
-  auto B = frc::MakeMatrix<1, 1>(1.0 / kV);
+  auto B = frc::MakeMatrix<1, 1>(1.0 / kA);
   auto C = frc::MakeMatrix<1, 1>(1.0);
   auto D = frc::MakeMatrix<1, 1>(0.0);
   auto uMin = frc::MakeMatrix<1, 1>(-maxVoltage.to<double>());
@@ -25,8 +25,8 @@ LinearSystem<1, 1, 1> IdentifyVelocitySystem(double kV, double kA,
 
 LinearSystem<2, 1, 1> IdentifyPositionSystem(double kV, double kA,
                                              units::volt_t maxVoltage) {
-  auto A = frc::MakeMatrix<2, 2>(0.0, 1.0, 0.0, -kV / kV);
-  auto B = frc::MakeMatrix<2, 1>(0.0, 1.0 / kV);
+  auto A = frc::MakeMatrix<2, 2>(0.0, 1.0, 0.0, -kV / kA);
+  auto B = frc::MakeMatrix<2, 1>(0.0, 1.0 / kA);
   auto C = frc::MakeMatrix<1, 2>(1.0, 0.0);
   auto D = frc::MakeMatrix<1, 1>(0.0);
   auto uMin = frc::MakeMatrix<1, 1>(-maxVoltage.to<double>());

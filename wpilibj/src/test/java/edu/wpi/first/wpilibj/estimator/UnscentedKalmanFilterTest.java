@@ -176,4 +176,46 @@ public class UnscentedKalmanFilterTest {
     assertEquals(0.0, observer.getXhat(3), 1.0);
     assertEquals(0.0, observer.getXhat(4), 1.0);
   }
+
+  @Test
+  public void testUnscentedTransform() {
+    // From filterpy
+
+    var ret = UnscentedKalmanFilter.unscentedTransform(Nat.N4(), Nat.N4(),
+          new MatBuilder<>(Nat.N9(), Nat.N4()).fill(
+                -0.9, 1.0, -0.9, 1.0, -0.822540333075852, 1.0, -0.9, 1.0, -0.8922540333075852,
+                1.077459666924148, -0.9, 1.0, -0.9, 1.0, -0.822540333075852, 1.0, -0.9, 1.0,
+                -0.8922540333075852, 1.077459666924148, -0.9774596669241481, 1.0, -0.9, 1.0,
+                -0.9077459666924148, 0.9225403330758519, -0.9, 1.0, -0.9, 1.0, -0.9774596669241481,
+                1.0, -0.9, 1.0, -0.9077459666924148, 0.9225403330758519
+          ),
+          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-132.33333333, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667),
+          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-129.34333333, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667)
+    );
+    System.out.println(ret.getFirst());
+    System.out.println(ret.getSecond());
+
+    assertMatEqual(
+          new MatBuilder<>(Nat.N4(), Nat.N1()).fill(-0.9, 1, -0.9, 1),
+          ret.getFirst());
+
+    assertMatEqual(
+          new MatBuilder<>(Nat.N4(), Nat.N4()).fill(
+                2.02000002e-01, 2.00000500e-02, -2.69044710e-29,
+                -4.59511477e-29,
+                2.00000500e-02, 2.00001000e-01, -2.98781068e-29,
+                -5.12759588e-29,
+                -2.73372625e-29, -3.09882635e-29, 2.02000002e-01,
+                2.00000500e-02,
+                -4.67065917e-29, -5.10705197e-29, 2.00000500e-02,
+                2.00001000e-01
+          ),
+          ret.getSecond()
+    );
+  }
+
+  void assertMatEqual(Matrix first, Matrix second) {
+    EjmlUnitTests.assertEquals(first.getStorage().getDDRM(), second.getStorage().getDDRM(), 1e-5);
+  }
+
 }
