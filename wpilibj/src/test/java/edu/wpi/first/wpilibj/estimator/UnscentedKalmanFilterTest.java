@@ -7,6 +7,17 @@
 
 package edu.wpi.first.wpilibj.estimator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.ejml.EjmlUnitTests;
+import org.junit.jupiter.api.Test;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.math.Discretization;
@@ -25,16 +36,6 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 import edu.wpi.first.wpiutil.math.numbers.N4;
 import edu.wpi.first.wpiutil.math.numbers.N6;
-import org.ejml.EjmlUnitTests;
-import org.junit.jupiter.api.Test;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -105,7 +106,7 @@ public class UnscentedKalmanFilterTest {
       observer.predict(u, 0.00505);
 
       var localY = getLocalMeasurementModel(observer.getXhat(), u);
-//      observer.correct(u, localY);
+      //      observer.correct(u, localY);
     });
   }
 
@@ -140,15 +141,15 @@ public class UnscentedKalmanFilterTest {
           VecBuilder.fill(0.001, 0.001, 0.5, 0.5),
           dtSeconds);
 
-//    ExtendedKalmanFilter<N6, N2, N4> observer = new ExtendedKalmanFilter<>(
-//          Nat.N6(), Nat.N2(), Nat.N4(),
-//          UnscentedKalmanFilterTest::getDynamics,
-//          UnscentedKalmanFilterTest::getLocalMeasurementModel,
-//          VecBuilder.fill(0.5, 0.5, 0.7, 0.7, 1.0, 1.0),
-//          VecBuilder.fill(0.001, 0.001, 0.5, 0.5),
-//          dtSeconds);
+    //    ExtendedKalmanFilter<N6, N2, N4> observer = new ExtendedKalmanFilter<>(
+    //          Nat.N6(), Nat.N2(), Nat.N4(),
+    //          UnscentedKalmanFilterTest::getDynamics,
+    //          UnscentedKalmanFilterTest::getLocalMeasurementModel,
+    //          VecBuilder.fill(0.5, 0.5, 0.7, 0.7, 1.0, 1.0),
+    //          VecBuilder.fill(0.001, 0.001, 0.5, 0.5),
+    //          dtSeconds);
 
-    List<Pose2d> waypoints =Arrays.asList(new Pose2d(2.75, 22.521, new Rotation2d()),
+    List<Pose2d> waypoints = Arrays.asList(new Pose2d(2.75, 22.521, new Rotation2d()),
           new Pose2d(24.73, 19.68, Rotation2d.fromDegrees(5.846)));
     var trajectory = TrajectoryGenerator.generateTrajectory(
           waypoints,
@@ -178,7 +179,7 @@ public class UnscentedKalmanFilterTest {
     double totalTime = trajectory.getTotalTimeSeconds();
     try {
       for (int i = 0; i < (totalTime / dtSeconds); i++) {
-//        System.out.println("U: " + u);
+        //        System.out.println("U: " + u);
         observer.predict(u, dtSeconds);
 
         ref = trajectory.sample(dtSeconds * i);
@@ -196,14 +197,17 @@ public class UnscentedKalmanFilterTest {
               getLocalMeasurementModel(observer.getXhat(), MatrixUtils.zeros(Nat.N2(), Nat.N1()));
         var whiteNoiseStdDevs = VecBuilder.fill(0.0001, 0.5, 0.5);
 
-//      observer.correct(u,
-//            localY);//.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(), whiteNoiseStdDevs)));
+        //      observer.correct(u,
+        //            localY);//.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(),
+        //            whiteNoiseStdDevs)));
 
         var rdot = nextR.minus(r).div(dtSeconds);
         u = new Matrix<>(B.getStorage()
-              .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1()))).getStorage()));
+              .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))
+                    .getStorage()));
 
-        if (Math.abs(observer.getXhat().get(0, 0)) > 100 || Math.abs(observer.getXhat().get(1, 0)) > 100) {
+        if (Math.abs(observer.getXhat().get(0, 0)) > 100
+              || Math.abs(observer.getXhat().get(1, 0)) > 100) {
           throw new RuntimeException("boof");
         }
 
@@ -226,29 +230,31 @@ public class UnscentedKalmanFilterTest {
 
         timeData.add(i * dtSeconds);
 
-//      System.out.println(String.format("Ground Truth: x(%s) y(%s), xhat x(%s) y(%s)",
-//            ref.poseMeters.getTranslation().getX(), ref.poseMeters.getTranslation().getY(),
-//            observer.getXhat(0), observer.getXhat(1)));
+        //      System.out.println(String.format("Ground Truth: x(%s) y(%s), xhat x(%s) y(%s)",
+        //            ref.poseMeters.getTranslation().getX(),
+        //            ref.poseMeters.getTranslation().getY(),
+        //            observer.getXhat(0), observer.getXhat(1)));
 
         r = nextR;
       }
-    } catch (RuntimeException e) {
-      e.printStackTrace();
+    } catch (RuntimeException ex) {
+      ex.printStackTrace();
     }
 
     var localY = getLocalMeasurementModel(observer.getXhat(), u);
-//    observer.correct(u, localY);
+    //    observer.correct(u, localY);
 
     var globalY = getGlobalMeasurementModel(observer.getXhat(), u);
     var R = StateSpaceUtil.makeCostMatrix(
           VecBuilder.fill(0.01, 0.01, 0.0001, 0.5, 0.5));
-//    observer.correct(Nat.N5(), u, globalY, UnscentedKalmanFilterTest::getGlobalMeasurementModel, R);
+    //    observer.correct(Nat.N5(), u, globalY,
+    //    UnscentedKalmanFilterTest::getGlobalMeasurementModel, R);
 
-    var finalPosition = trajectory.sample(trajectory.getTotalTimeSeconds());
+    final var finalPosition = trajectory.sample(trajectory.getTotalTimeSeconds());
 
-    List<XYChart> charts = new ArrayList<>();
     var chartBuilder = new XYChartBuilder();
-    chartBuilder.title = "The Magic of Sensor Fusion, now with a " + observer.getClass().getSimpleName();
+    chartBuilder.title = "The Magic of Sensor Fusion, now with a "
+          + observer.getClass().getSimpleName();
     var xyPosChart = chartBuilder.build();
 
     xyPosChart.setXAxisTitle("X pos, meters");
@@ -268,13 +274,20 @@ public class UnscentedKalmanFilterTest {
     inputChart.addSeries("Right voltage", timeData, inputVr);
 
     var rdotChart = new XYChartBuilder().title("Rdot").build();
-    rdotChart.addSeries("xdot, or vx", timeData, rdots.stream().map(it -> it.get(0, 0)).collect(Collectors.toList()));
-    rdotChart.addSeries("ydot, or vy", timeData, rdots.stream().map(it -> it.get(1, 0)).collect(Collectors.toList()));
-    rdotChart.addSeries("cos dot", timeData.subList(1, timeData.size()), rdots.stream().map(it -> it.get(2, 0)).collect(Collectors.toList()).subList(1, timeData.size()));
-    rdotChart.addSeries("sin dot", timeData, rdots.stream().map(it -> it.get(3, 0)).collect(Collectors.toList()));
-    rdotChart.addSeries("vl dot, or al", timeData, rdots.stream().map(it -> it.get(4, 0)).collect(Collectors.toList()));
-    rdotChart.addSeries("vr dot, or ar", timeData, rdots.stream().map(it -> it.get(5, 0)).collect(Collectors.toList()));
+    rdotChart.addSeries("xdot, or vx", timeData, rdots.stream().map(it -> it.get(0, 0))
+          .collect(Collectors.toList()));
+    rdotChart.addSeries("ydot, or vy", timeData, rdots.stream().map(it -> it.get(1, 0))
+          .collect(Collectors.toList()));
+    rdotChart.addSeries("cos dot", timeData, rdots.stream().map(it -> it.get(2, 0))
+          .collect(Collectors.toList()));
+    rdotChart.addSeries("sin dot", timeData, rdots.stream().map(it -> it.get(3, 0))
+          .collect(Collectors.toList()));
+    rdotChart.addSeries("vl dot, or al", timeData, rdots.stream().map(it -> it.get(4, 0))
+          .collect(Collectors.toList()));
+    rdotChart.addSeries("vr dot, or ar", timeData, rdots.stream().map(it -> it.get(5, 0))
+          .collect(Collectors.toList()));
 
+    List<XYChart> charts = new ArrayList<>();
     charts.add(xyPosChart);
     charts.add(stateChart);
     charts.add(inputChart);
@@ -282,7 +295,8 @@ public class UnscentedKalmanFilterTest {
     new SwingWrapper<>(charts).displayChartMatrix();
     try {
       Thread.sleep(1000000000);
-    } catch (InterruptedException e) {
+    } catch (InterruptedException ex) {
+      ex.printStackTrace();
     }
 
     assertEquals(finalPosition.poseMeters.getTranslation().getX(), observer.getXhat(0), 1.0);
@@ -293,12 +307,12 @@ public class UnscentedKalmanFilterTest {
   }
 
   @Test
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LocalVariableName", "ParameterName"})
   public void testLinearUKF() {
     var dt = 0.020;
     var plant = LinearSystem.identifyVelocitySystem(0.02, 0.006, 12);
     var observer = new UnscentedKalmanFilter<>(Nat.N1(), Nat.N1(),
-          (x, u) -> plant.getA().times(x).plus(plant.getB().times(u)),
+        (x, u) -> plant.getA().times(x).plus(plant.getB().times(u)),
           plant::calculateY,
           VecBuilder.fill(0.05),
           VecBuilder.fill(1.0),
@@ -317,13 +331,14 @@ public class UnscentedKalmanFilterTest {
     var ref = VecBuilder.fill(100);
     var u = VecBuilder.fill(0);
 
+    Matrix<N1, N1> xdot;
     for (int i = 0; i < (2.0 / dt); i++) {
       observer.predict(u, dt);
 
       u = new Matrix<>(discB.getStorage()
             .solve((ref.minus(discA.times(ref))).getStorage()));
 
-      var xdot = plant.getA().times(observer.getXhat()).plus(plant.getB().times(u));
+      xdot = plant.getA().times(observer.getXhat()).plus(plant.getB().times(u));
 
       time.add(i * dt);
       refData.add(ref.get(0, 0));
@@ -332,20 +347,20 @@ public class UnscentedKalmanFilterTest {
       xdotData.add(xdot.get(0, 0));
     }
 
-//    var chartBuilder = new XYChartBuilder();
-//    chartBuilder.title = "The Magic of Sensor Fusion";
-//    var chart = chartBuilder.build();
-//
-//    chart.addSeries("Ref", time, refData);
-//    chart.addSeries("xHat", time, xhat);
-//    chart.addSeries("input", time, udata);
-////    chart.addSeries("xdot", time, xdotData);
-//
-//    new SwingWrapper<>(chart).displayChart();
-//    try {
-//      Thread.sleep(1000000000);
-//    } catch (InterruptedException e) {
-//    }
+    //    var chartBuilder = new XYChartBuilder();
+    //    chartBuilder.title = "The Magic of Sensor Fusion";
+    //    var chart = chartBuilder.build();
+
+    //    chart.addSeries("Ref", time, refData);
+    //    chart.addSeries("xHat", time, xhat);
+    //    chart.addSeries("input", time, udata);
+    ////    chart.addSeries("xdot", time, xdotData);
+
+    //    new SwingWrapper<>(chart).displayChart();
+    //    try {
+    //      Thread.sleep(1000000000);
+    //    } catch (InterruptedException e) {
+    //    }
 
     assertEquals(ref.get(0, 0), observer.getXhat(0), 5);
   }
@@ -362,8 +377,10 @@ public class UnscentedKalmanFilterTest {
                 -0.9077459666924148, 0.9225403330758519, -0.9, 1.0, -0.9, 1.0, -0.9774596669241481,
                 1.0, -0.9, 1.0, -0.9077459666924148, 0.9225403330758519
           ),
-          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-132.33333333, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667),
-          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-129.34333333, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667)
+          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-132.33333333, 16.66666667, 16.66666667,
+                16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667),
+          new MatBuilder<>(Nat.N1(), Nat.N9()).fill(-129.34333333, 16.66666667, 16.66666667,
+                16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667, 16.66666667)
     );
     System.out.println(ret.getFirst());
     System.out.println(ret.getSecond());
