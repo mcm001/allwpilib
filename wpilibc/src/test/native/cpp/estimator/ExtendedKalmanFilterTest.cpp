@@ -121,7 +121,10 @@ TEST(ExtendedKalmanFilterTest, Convergence) {
       Dynamics, Eigen::Matrix<double, 5, 1>::Zero(),
       Eigen::Matrix<double, 2, 1>::Zero());
 
-  observer.SetXhat(frc::MakeMatrix<5, 1>(trajectory.InitialPose().Translation().X().to<double>(), trajectory.InitialPose().Translation().Y().to<double>(), trajectory.InitialPose().Rotation().Radians().to<double>(), 0.0, 0.0));
+  observer.SetXhat(frc::MakeMatrix<5, 1>(
+      trajectory.InitialPose().Translation().X().to<double>(),
+      trajectory.InitialPose().Translation().Y().to<double>(),
+      trajectory.InitialPose().Rotation().Radians().to<double>(), 0.0, 0.0));
 
   auto totalTime = trajectory.TotalTime();
   for (size_t i = 0; i < (totalTime / dt).to<double>(); ++i) {
