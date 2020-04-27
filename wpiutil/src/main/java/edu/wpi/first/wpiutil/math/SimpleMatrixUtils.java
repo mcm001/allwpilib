@@ -200,7 +200,7 @@ public final class SimpleMatrixUtils {
       var matData = temp.getDDRM().data;
       var isZeros = true;
       for (double matDatum : matData) {
-        isZeros = isZeros && Math.abs(matDatum) < 1e-6;
+        isZeros &= matDatum == 0.0;
       }
       if (isZeros) {
         return new SimpleMatrix(temp.numRows(), temp.numCols());
