@@ -247,16 +247,16 @@ public class DifferentialDriveStateEstimator {
    * @param headingRadians The current heading of the robot in radians.
    * @param leftPosition   The distance traveled by the left side of the robot in meters.
    * @param rightPosition  The distance traveled by the right side of the robot in meters.
-   * @param prevInput      The control input from the last timestep.
+   * @param controlInput   The control input from the last timestep.
    * @return The robot state estimate.
    */
   public Matrix<N10, N1> update(double headingRadians, double leftPosition,
                                 double rightPosition,
-                                Matrix<N2, N1> prevInput) {
+                                Matrix<N2, N1> controlInput) {
     return updateWithTime(headingRadians,
             leftPosition,
             rightPosition,
-            prevInput,
+            controlInput,
             Timer.getFPGATimestamp());
   }
 
@@ -269,14 +269,14 @@ public class DifferentialDriveStateEstimator {
    * @param headingRadians     The current heading of the robot in radians.
    * @param leftPosition       The distance traveled by the left side of the robot in meters.
    * @param rightPosition      The distance traveled by the right side of the robot in meters.
-   * @param prevInput          The control input from the last timestep.
+   * @param controlInput       The control input.
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @return The robot state estimate.
    */
   @SuppressWarnings("VariableDeclarationUsageDistance")
   public Matrix<N10, N1> updateWithTime(double headingRadians, double leftPosition,
                                         double rightPosition,
-                                        Matrix<N2, N1> prevInput,
+                                        Matrix<N2, N1> controlInput,
                                         double currentTimeSeconds) {
     double dt = m_prevTimeSeconds >= 0 ? currentTimeSeconds - m_prevTimeSeconds : m_nominalDt;
     m_prevTimeSeconds = currentTimeSeconds;
@@ -285,10 +285,10 @@ public class DifferentialDriveStateEstimator {
     m_localY.set(LocalOutput.kLeftPosition.value, 0, leftPosition);
     m_localY.set(LocalOutput.kRightPosition.value, 0, rightPosition);
 
-    m_latencyCompensator.addObserverState(m_observer, prevInput, m_localY, currentTimeSeconds);
+    m_latencyCompensator.addObserverState(m_observer, controlInput, m_localY, currentTimeSeconds);
 
-    m_observer.predict(prevInput, dt);
-    m_observer.correct(prevInput, m_localY);
+    m_observer.predict(controlInput, dt);
+    m_observer.correct(controlInput, m_localY);
 
     return getEstimatedState();
   }

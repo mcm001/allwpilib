@@ -59,8 +59,10 @@ class LTVDiffDriveControllerTest {
 
   @BeforeEach
   void setUp() {
+    final double kDt = 0.02;
+
     plant = LinearSystem.identifyDrivetrainSystem(
-            3.02, 0.642, 1.382, 0.08495, 10);
+            3.02, 0.642, 1.382, 0.08495, 12);
 
     kinematics = new DifferentialDriveKinematics(1);
 
@@ -69,7 +71,9 @@ class LTVDiffDriveControllerTest {
             new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.0625, 0.125, 2.5, 0.95, 0.95),
             new MatBuilder<>(Nat.N2(), Nat.N1()).fill(12.0, 12.0),
             kinematics,
-            0.02);
+            kDt);
+
+    feedforward = new LinearSystemFeedForward<>(Nat.N10(), Nat.N2(), controller::getDynamics, kDt);
 
     estimator = new DifferentialDriveStateEstimator(
       plant,
@@ -77,16 +81,15 @@ class LTVDiffDriveControllerTest {
       new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
         0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
       new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
-      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
-      kinematics);
-
-    feedforward = new LinearSystemFeedForward<>(Nat.N10(), Nat.N2(), controller::getDynamics, 0.02);
+      new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.5),
+      kinematics,
+      kDt);
 
     final var waypoints = new ArrayList<Pose2d>();
     waypoints.add(new Pose2d());
-    waypoints.add(new Pose2d(4.8768, 2.7432, new Rotation2d(0)));
+    waypoints.add(new Pose2d(4.8768, 2.7432, new Rotation2d()));
 
-    var config = new TrajectoryConfig(12 / 3.02, 12 / 0.642);
+    var config = new TrajectoryConfig(12 / 3.02, (12 / 0.642) - 16.5);
 
     var constraint = new DifferentialDriveVelocitySystemConstraint(plant, kinematics, 10);
     config.addConstraint(constraint);
@@ -108,7 +111,9 @@ class LTVDiffDriveControllerTest {
   void trackingTest() {
     controller.reset();
     estimator.reset();
-    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.1)), 0.5);
+    controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.06)), 0.3);
+
+    final double kDt = 0.02;
 
     List<Double> time = new ArrayList<>();
 
@@ -124,22 +129,20 @@ class LTVDiffDriveControllerTest {
     List<Double> observerLeftVel = new ArrayList<>();
     List<Double> observerRightVel = new ArrayList<>();
 
-    final double kDt = 0.02;
-
     trueXhat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+
     u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
 
-    var prevInput = MatrixUtils.zeros(Nat.N2());
-
-    var prevRef = MatrixUtils.zeros(Nat.N5());
+    var prevStateRef = MatrixUtils.zeros(Nat.N5());
 
     double t = 0.0;
 
     while (t <= totalTime) {
       var y = estimator.getLocalMeasurementModel(
           trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+
       var currentState = estimator.updateWithTime(
-          y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
+          y.get(0, 0), y.get(1, 0), y.get(2, 0), u, t);
 
       var desiredState = trajectory.sample(t);
 
@@ -165,13 +168,13 @@ class LTVDiffDriveControllerTest {
       observerLeftVel.add(currentState.get(3, 0));
       observerRightVel.add(currentState.get(4, 0));
 
-      trajXs.add(prevRef.get(0, 0));
-      trajYs.add(prevRef.get(1, 0));
-      trajHeading.add(prevRef.get(2, 0));
-      trajLeftVel.add(prevRef.get(3, 0));
-      trajRightVel.add(prevRef.get(4, 0));
+      trajXs.add(prevStateRef.get(0, 0));
+      trajYs.add(prevStateRef.get(1, 0));
+      trajHeading.add(prevStateRef.get(2, 0));
+      trajLeftVel.add(prevStateRef.get(3, 0));
+      trajRightVel.add(prevStateRef.get(4, 0));
 
-      prevRef = stateRef;
+      prevStateRef = stateRef;
 
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
@@ -181,8 +184,6 @@ class LTVDiffDriveControllerTest {
           .plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
-
-      prevInput = u;
 
       t += kDt;
 
@@ -240,6 +241,8 @@ class LTVDiffDriveControllerTest {
     estimator.reset();
     controller.setTolerance(new Pose2d(0.06, 0.06, new Rotation2d(0.1)), 0.5);
 
+    double kDt = 0.02;
+
     List<Double> time = new ArrayList<>();
 
     List<Double> trajXs = new ArrayList<>();
@@ -254,14 +257,11 @@ class LTVDiffDriveControllerTest {
     List<Double> observerLeftVel = new ArrayList<>();
     List<Double> observerRightVel = new ArrayList<>();
 
-    double kDt = 0.02;
-
     trueXhat = MatrixUtils.zeros(Nat.N10(), Nat.N1());
+
     u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
 
-    var prevInput = MatrixUtils.zeros(Nat.N2());
-
-    var prevRef = MatrixUtils.zeros(Nat.N5());
+    var prevStateRef = MatrixUtils.zeros(Nat.N5());
 
     double t = 0.0;
 
@@ -275,7 +275,7 @@ class LTVDiffDriveControllerTest {
           new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005)));
 
       var currentState = estimator.updateWithTime(
-          y.get(0, 0), y.get(1, 0), y.get(2, 0), prevInput, t);
+          y.get(0, 0), y.get(1, 0), y.get(2, 0), u, t);
 
       var desiredState = trajectory.sample(t);
 
@@ -300,13 +300,13 @@ class LTVDiffDriveControllerTest {
       observerLeftVel.add(currentState.get(3, 0));
       observerRightVel.add(currentState.get(4, 0));
 
-      trajXs.add(prevRef.get(0, 0));
-      trajYs.add(prevRef.get(1, 0));
-      trajHeading.add(prevRef.get(2, 0));
-      trajLeftVel.add(prevRef.get(3, 0));
-      trajRightVel.add(prevRef.get(4, 0));
+      trajXs.add(prevStateRef.get(0, 0));
+      trajYs.add(prevStateRef.get(1, 0));
+      trajHeading.add(prevStateRef.get(2, 0));
+      trajLeftVel.add(prevStateRef.get(3, 0));
+      trajRightVel.add(prevStateRef.get(4, 0));
 
-      prevRef = stateRef;
+      prevStateRef = stateRef;
 
       var augmentedRef = MatrixUtils.zeros(Nat.N10());
       augmentedRef.getStorage().insertIntoThis(0, 0, stateRef.getStorage());
@@ -316,8 +316,6 @@ class LTVDiffDriveControllerTest {
           .plus(feedforward.calculate(augmentedRef));
 
       scaleCappedU(u);
-
-      prevInput = u;
 
       t += kDt;
 

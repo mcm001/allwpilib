@@ -58,14 +58,14 @@ Vector<10> DifferentialDriveStateEstimator::GetEstimatedState() const {
 Vector<10> DifferentialDriveStateEstimator::Update(units::radian_t heading,
                                                    units::meter_t leftPosition,
                                                    units::meter_t rightPosition,
-                                                   const Vector<2>& prevInput) {
-  return UpdateWithTime(heading, leftPosition, rightPosition, prevInput,
+                                                   const Vector<2>& controlInput) {
+  return UpdateWithTime(heading, leftPosition, rightPosition, controlInput,
                         frc2::Timer::GetFPGATimestamp());
 }
 
 Vector<10> DifferentialDriveStateEstimator::UpdateWithTime(
     units::radian_t heading, units::meter_t leftPosition,
-    units::meter_t rightPosition, const Vector<2>& prevInput,
+    units::meter_t rightPosition, const Vector<2>& controlInput,
     units::second_t currentTime) {
   auto dt = m_prevTime >= 0_s ? currentTime - m_prevTime : m_nominalDt;
   m_prevTime = currentTime;
@@ -74,10 +74,11 @@ Vector<10> DifferentialDriveStateEstimator::UpdateWithTime(
   m_localY(LocalOutput::kLeftPosition) = leftPosition.to<double>();
   m_localY(LocalOutput::kRightPosition) = rightPosition.to<double>();
 
-  m_latencyCompensator.AddObserverState(m_observer, prevInput, m_localY,
+  m_latencyCompensator.AddObserverState(m_observer, controlInput, m_localY,
                                         currentTime);
-  m_observer.Predict(prevInput, dt);
-  m_observer.Correct(prevInput, m_localY);
+  
+  m_observer.Predict(controlInput, dt);
+  m_observer.Correct(controlInput, m_localY);
 
   return GetEstimatedState();
 }

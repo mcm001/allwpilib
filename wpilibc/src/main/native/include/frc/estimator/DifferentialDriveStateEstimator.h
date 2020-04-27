@@ -114,16 +114,16 @@ class DifferentialDriveStateEstimator {
    * {@link edu.wpi.first.wpilibc.controller.LTVDiffDriveController}.
    * Note that this should be called every loop.
    *
-   * @param heading      The current heading of the robot in radians.
-   * @param leftPosition The distance traveled by the left side of the robot in
+   * @param heading       The current heading of the robot in radians.
+   * @param leftPosition  The distance traveled by the left side of the robot in
    * meters.
    * @param rightPosition The distance traveled by the right side of the robot
    * in meters.
-   * @param prevInput The control input from the last timestep.
+   * @param controlInput  The control input.
    * @return The robot state estimate.
    */
   Vector<10> Update(units::radian_t heading, units::meter_t leftPosition,
-                    units::meter_t rightPosition, const Vector<2>& prevInput);
+                    units::meter_t rightPosition, const Vector<2>& controlInput);
 
   /**
    * Updates the the Unscented Kalman Filter using wheel encoder information,
@@ -137,14 +137,14 @@ class DifferentialDriveStateEstimator {
    * robot in meters.
    * @param rightPosition      The distance traveled by the right side of the
    * robot in meters.
-   * @param prevInput          The control input from the last timestep.
+   * @param controlInput       The control input.
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @return The robot state estimate.
    */
   Vector<10> UpdateWithTime(units::radian_t heading,
                             units::meter_t leftPosition,
                             units::meter_t rightPosition,
-                            const Vector<2>& prevInput,
+                            const Vector<2>& controlInput,
                             units::second_t currentTime);
 
   /**

@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.ejml.dense.row.CommonOps_DDRM;
 import org.junit.jupiter.api.Test;
 
+import edu.wpi.first.wpilibj.controller.LinearSystemFeedForward;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
@@ -22,6 +24,7 @@ import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVelocitySystemConstraint;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
@@ -32,32 +35,45 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DifferentialDriveStateEstimatorTest {
-  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops",
-      "PMD.ExcessiveMethodLength"})
+@SuppressWarnings({"PMD.AvoidInstantiatingObjectsInLoops",
+      "PMD.ExcessiveMethodLength", "ParameterName", "LocalVariableName"})
+public class DifferentialDriveStateEstimatorTest {    
+  private void scaleCappedU(Matrix<N2, N1> u) {
+    boolean isOutputCapped = Math.abs(u.get(0, 0)) > 12.0 || Math.abs(u.get(1, 0)) > 12.0;  
+    
+    if (isOutputCapped) {
+      u.times(12.0 / CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM()));
+    }
+  }
+
   @Test
   public void testAccuracy() {
+    final double dt = 0.00505;
+
     final LinearSystem<N2, N2, N2> plant = LinearSystem.identifyDrivetrainSystem(
-        3.02, 0.642, 1.382, 0.08495, 10);
-    var kinematics = new DifferentialDriveKinematics(1);
+        3.02, 0.642, 1.382, 0.08495, 12);
+    var kinematics = new DifferentialDriveKinematics(0.990405073902434);
 
     var estimator = new DifferentialDriveStateEstimator(
             plant,
             MatrixUtils.zeros(Nat.N10()),
             new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
-                    0.002, 0.002, 0.01, 0.00001, 0.00001, 0.1, 0.1, 1.0, 1.0, 0.5),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.001, 0.001, 0.01),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01),
+                0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
+            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.5),
             kinematics);
+    
+    var feedforward = new LinearSystemFeedForward<>(Nat.N10(), Nat.N2(),
+        estimator::getDynamics, dt);
+
+    var config = new TrajectoryConfig(12 / 3.02, (12 / 0.642) - 16.5);
+    config.addConstraint(new DifferentialDriveVelocitySystemConstraint(plant, kinematics, 8));
 
     var traj = TrajectoryGenerator.generateTrajectory(
-            List.of(
-                    new Pose2d(),
-                    new Pose2d(20, 20, Rotation2d.fromDegrees(0)),
-                    new Pose2d(23, 23, Rotation2d.fromDegrees(173)),
-                    new Pose2d(54, 54, new Rotation2d())
-            ),
-            new TrajectoryConfig(0.5, 2));
+            new Pose2d(),
+            List.of(),
+            new Pose2d(4.8768, 2.7432, new Rotation2d()),
+            config);
 
     var rand = new Random(604);
 
@@ -76,7 +92,6 @@ public class DifferentialDriveStateEstimatorTest {
     List<Double> visionXs = new ArrayList<>();
     List<Double> visionYs = new ArrayList<>();
 
-    final double dt = 0.02;
     double t = 0.0;
 
     final double visionUpdateRate = 0.1;
@@ -88,10 +103,10 @@ public class DifferentialDriveStateEstimatorTest {
 
     double maxError = Double.NEGATIVE_INFINITY;
     double errorSum = 0;
-    Trajectory.State groundTruthState;
-    Matrix<N2, N1> input;
 
-    Matrix<N2, N1> prevX = MatrixUtils.zeros(Nat.N2());
+    Trajectory.State groundTruthState;
+
+    Matrix<N2, N1> input;
 
     while (t <= traj.getTotalTimeSeconds()) {
       groundTruthState = traj.sample(t);
@@ -102,15 +117,17 @@ public class DifferentialDriveStateEstimatorTest {
       );
       var wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds);
 
-      var x = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(
+      var x = new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
+              groundTruthState.poseMeters.getTranslation().getX(),
+              groundTruthState.poseMeters.getTranslation().getY(),
+              groundTruthState.poseMeters.getRotation().getRadians(),
               wheelSpeeds.leftMetersPerSecond,
-              wheelSpeeds.rightMetersPerSecond);
+              wheelSpeeds.rightMetersPerSecond,
+              0.0, 0.0, 0.0, 0.0, 0.0);
 
-      var xDot = x.minus(prevX).div(dt);
+      input = feedforward.calculate(x);
 
-      prevX = x;
-
-      input = (plant.getB().inv()).times(xDot.minus(plant.getA().times(x)));
+      scaleCappedU(input);
 
       if (lastVisionUpdateTime + visionUpdateRate + rand.nextGaussian() * 0.4 < t) {
         if (lastVisionPose != null) {
@@ -121,10 +138,10 @@ public class DifferentialDriveStateEstimatorTest {
         var groundPose = groundTruthState.poseMeters;
         lastVisionPose = new Pose2d(
                 new Translation2d(
-                        groundPose.getTranslation().getX() + rand.nextGaussian() * 0.1,
-                        groundPose.getTranslation().getY() + rand.nextGaussian() * 0.1
+                        groundPose.getTranslation().getX() + rand.nextGaussian() * 0.5,
+                        groundPose.getTranslation().getY() + rand.nextGaussian() * 0.5
                 ),
-                new Rotation2d(rand.nextGaussian() * 0.01).plus(groundPose.getRotation())
+                new Rotation2d(rand.nextGaussian() * 0.5).plus(groundPose.getRotation())
         );
         lastVisionUpdateTime = t;
 
@@ -138,7 +155,7 @@ public class DifferentialDriveStateEstimatorTest {
       distanceLeft += rand.nextGaussian() * 0.001;
       distanceRight += rand.nextGaussian() * 0.001;
 
-      var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
+      var rotNoise = new Rotation2d(rand.nextGaussian() * 0.0001);
 
       var xHat = estimator.updateWithTime(groundTruthState.poseMeters.getRotation()
                       .plus(rotNoise).getRadians(),
@@ -178,12 +195,12 @@ public class DifferentialDriveStateEstimatorTest {
     System.out.println(maxError);
 
     assertEquals(
-            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.03,
-            "Incorrect mean error"
+           0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.2,
+           "Incorrect mean error"
     );
     assertEquals(
-            0.0, maxError, 0.05,
-            "Incorrect max error"
+           0.0, maxError, 0.4,
+           "Incorrect max error"
     );
 
 

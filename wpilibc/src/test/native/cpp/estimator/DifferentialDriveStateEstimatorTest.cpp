@@ -18,6 +18,8 @@
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/DifferentialDriveKinematics.h"
+#include "frc/controller/LinearSystemFeedforward.h"
+#include "frc/trajectory/constraint/DifferentialDriveVelocitySystemConstraint.h"
 #include "frc/kinematics/DifferentialDriveOdometry.h"
 #include "frc/system/LinearSystem.h"
 #include "frc/system/plant/LinearSystemId.h"
@@ -27,30 +29,53 @@
 
 using namespace frc;
 
-TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
-  const LinearSystem<2, 2, 2> plant =
-      frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 10_V);
 
-  const DifferentialDriveKinematics kinematics{1_m};
+void ScaleCappedU(Eigen::Matrix<double, 2, 1>* u) {
+  bool outputCapped =
+      std::abs((*u)(0, 0)) > 12.0 || std::abs((*u)(1, 0)) > 12.0;
+
+  if (outputCapped) {
+    *u *= 12.0 / u->lpNorm<Eigen::Infinity>();
+  }
+}
+
+TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
+  constexpr auto dt = 0.00505_s;
+  
+  const LinearSystem<2, 2, 2> plant =
+      frc::IdentifyDrivetrainSystem(3.02, 0.642, 1.382, 0.08495, 12_V);
+
+  const DifferentialDriveKinematics kinematics{0.990405073902434_m};
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,
       Eigen::Matrix<double, 10, 1>::Zero(),
-      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.01, 0.00001, 0.00001, 0.1, 0.1,
-                             1.0, 1.0, 0.5),
-      frc::MakeMatrix<3, 1>(0.001, 0.001, 0.01),
-      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
-      kinematics};
+      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+      frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
+      frc::MakeMatrix<3, 1>(0.5, 0.5, 0.5),
+      kinematics,
+      dt};
+
+  std::function<Eigen::Matrix<double, 10, 1>(
+    const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)>
+    modelDynamics =
+        [&](auto& x, auto& u) { return estimator.Dynamics(x, u); };
+  
+  LinearSystemFeedforward<10, 2> feedforward{modelDynamics, dt};
+
+  auto config = TrajectoryConfig(units::meters_per_second_t(12 / 3.02), units::meters_per_second_squared_t(12 / 0.642) - 16.5_mps_sq);
+  config.AddConstraint(DifferentialDriveVelocitySystemConstraint(
+      plant, kinematics, 8_V));
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
-                  frc::Pose2d(54_m, 54_m, frc::Rotation2d())},
-      frc::TrajectoryConfig(5.0_mps, 20.0_mps_sq));
-
+      frc::Pose2d(0_m, 0_m, 0_rad),
+      {},
+      frc::Pose2d(4.8768_m, 2.7432_m, 0_rad),
+      config);
+      
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
 
-  units::second_t dt = 0.02_s;
   units::second_t t = 0.0_s;
 
   units::second_t kVisionUpdateRate = 0.1_s;
@@ -66,9 +91,6 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
 
   Eigen::Matrix<double, 2, 1> input;
 
-  Eigen::Matrix<double, 2, 1> prevX;
-  prevX.setZero();
-
   while (t <= trajectory.TotalTime()) {
     auto groundTruthState = trajectory.Sample(t);
 
@@ -76,16 +98,17 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
         {groundTruthState.velocity, 0_mps,
          groundTruthState.velocity * groundTruthState.curvature});
 
-    Eigen::Matrix<double, 2, 1> x;
-    x << wheelSpeeds.left.to<double>(), wheelSpeeds.right.to<double>();
+    Eigen::Matrix<double, 10, 1> x;
+    x << groundTruthState.pose.Translation().X().to<double>(),
+         groundTruthState.pose.Translation().Y().to<double>(),
+         groundTruthState.pose.Rotation().Radians().to<double>(),
+         wheelSpeeds.left.to<double>(),
+         wheelSpeeds.right.to<double>(),
+         0.0, 0.0, 0.0, 0.0, 0.0;
 
-    Eigen::Matrix<double, 2, 1> xDot;
+    input = feedforward.Calculate(x);
 
-    xDot = (x - prevX) / dt.to<double>();
-
-    prevX = x;
-
-    input = plant.B().inverse() * (xDot - (plant.A() * x));
+    ScaleCappedU(&input);
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
@@ -95,9 +118,9 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
-                                 distribution(generator) * 0.1 * 1_m),
-              frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
+              frc::Translation2d(distribution(generator) * 0.5 * 1_m,
+                                 distribution(generator) * 0.5 * 1_m),
+              frc::Rotation2d(distribution(generator) * 0.5 * 1_rad));
 
       lastVisionUpdateRealTimestamp = frc2::Timer::GetFPGATimestamp();
       lastVisionUpdateTime = t;
@@ -106,24 +129,24 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
     leftDistance += wheelSpeeds.left * dt;
     rightDistance += wheelSpeeds.right * dt;
 
-    leftDistance += distribution(generator) * 0.001_m;
-    rightDistance += distribution(generator) * 0.001_m;
+    leftDistance += distribution(generator) * 0.005_m;
+    rightDistance += distribution(generator) * 0.005_m;
 
     auto xhat = estimator.UpdateWithTime(
         (groundTruthState.pose.Rotation() +
-         frc::Rotation2d(units::radian_t(distribution(generator) * 0.01)))
+         frc::Rotation2d(units::radian_t(distribution(generator) * 0.0001)))
             .Radians(),
         leftDistance, rightDistance, input, t);
-
+    
     frc::Translation2d estimatedTranslation{units::meter_t(xhat(0, 0)),
                                             units::meter_t(xhat(1, 0))};
 
-    // std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
-    // << groundTruthState.pose.Translation().Y().to<double>() << "," <<
-    // estimatedTranslation.X().to<double>() << "," <<
-    // estimatedTranslation.Y().to<double>() << "," <<
-    // lastVisionPose.Translation().X().to<double>() << "," <<
-    // lastVisionPose.Translation().Y().to<double>() << '\n';
+    //std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
+    //<< groundTruthState.pose.Translation().Y().to<double>() << "," <<
+    //estimatedTranslation.X().to<double>() << "," <<
+    //estimatedTranslation.Y().to<double>() << "," <<
+    //lastVisionPose.Translation().X().to<double>() << "," <<
+    //lastVisionPose.Translation().Y().to<double>() << '\n';
 
     double error = groundTruthState.pose.Translation()
                        .Distance(estimatedTranslation)

@@ -140,7 +140,7 @@ class LTVDiffDriveController {
    *
    * @param currentState  The current state of the robot as a vector.
    * @param stateRef      The reference state vector.
-   * @return The control input as a  pair of motor voltages [left, right].
+   * @return The control input as a matrix with motor voltages [left, right].
    */
   const Vector<2>& Calculate(const Vector<5>& currentState,
                              const Vector<5>& stateRef);
@@ -153,7 +153,7 @@ class LTVDiffDriveController {
    * @param currentState  The current state of the robot as a vector.
    * @param desiredState  The desired pose, linear velocity, and angular
    * velocity from a trajectory.
-   * @return The control input as a  pair of motor voltages [left, right].
+   * @return The control input as a matrix with motor voltages [left, right].
    */
   const Vector<2>& Calculate(const Vector<5>& currentState,
                              const Trajectory::State& desiredState);
