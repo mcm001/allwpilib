@@ -4843,16 +4843,28 @@ namespace std
 // tab-width: 4
 // End:
 
+namespace units {
+UNIT_ADD(moment_of_inertia, kilogram_square_meter, kilogram_square_meters,
+         kg_sq_m, compound_unit<mass::kilogram, area::square_meter>)
+using namespace moment_of_inertia;
+}  // namespace units
+
 using namespace units::literals;
 
 namespace units {
 using namespace acceleration;
-using namespace angular_velocity;
-using namespace length;
-using namespace time;
-using namespace velocity;
-using namespace acceleration;
 using namespace angle;
+using namespace angular_velocity;
+using namespace capacitance;
+using namespace current;
+using namespace frequency;
+using namespace impedance;
+using namespace inductance;
+using namespace length;
+using namespace mass;
+using namespace time;
+using namespace torque;
+using namespace velocity;
 using namespace voltage;
 
 /**
@@ -4864,4 +4876,6 @@ using curvature_t = units::unit_t<
 using dimensionless::scalar;
 using dimensionless::scalar_t;
 using dimensionless::dimensionless_t;
+using force::newton_t;
+using force::newtons;
 }  // namespace units
