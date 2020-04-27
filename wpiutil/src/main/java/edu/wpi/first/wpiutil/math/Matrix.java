@@ -15,7 +15,6 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpiutil.WPIUtilJNI;
-
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -380,7 +379,8 @@ public class Matrix<R extends Num, C extends Num> {
    * @param startingLocation A pair with the starting row and column of the extracted matrix.
    * @return A column vector from the given column.
    */
-  public final <R2 extends Num, C2 extends Num> Matrix<R2, C2> block(Nat<R2> height, Nat<C2> width, Pair<Integer, Integer> startingLocation) {
+  public final <R2 extends Num, C2 extends Num> Matrix<R2, C2> block(
+      Nat<R2> height, Nat<C2> width, Pair<Integer, Integer> startingLocation) {
     return new Matrix<>(this.m_storage.extractMatrix(
       startingLocation.getFirst(),
       height.getNum() + startingLocation.getFirst(),

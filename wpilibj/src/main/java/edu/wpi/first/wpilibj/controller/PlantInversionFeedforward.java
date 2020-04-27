@@ -130,6 +130,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
 
   /**
    * Returns the previously calculated feedforward as an input vector.
+   * 
+   * @return The calculated feedforward.
    */
   public Matrix<I, N1> getUff() {
     return m_uff;
@@ -138,7 +140,9 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
   /**
    * Returns an element of the previously calculated feedforward.
    *
-   * @param row Row of u.
+   * @param row Row of uff.
+   * 
+   * @return The row of the calculated feedforward.
    */
   public double getUff(int row) {
     return m_uff.get(row, 0);
@@ -146,6 +150,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
 
   /**
    * Returns the current reference vector r.
+   * 
+   * @return The current reference vector.
    */
   public Matrix<S, N1> getR() {
     return m_r;
@@ -155,6 +161,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
    * Returns an element of the current reference vector r.
    *
    * @param row Row of r.
+   * 
+   * @return The row of the current reference vector.
    */
   public double getR(int row) {
     return m_r.get(row, 0);
@@ -170,6 +178,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
 
   /**
    * Resets the feedforward with a specified initial state vector.
+   * 
+   * @param initialState The initial state vector.
    */
   public void reset(Matrix<S, N1> initialState) {
     m_r = initialState;
@@ -181,6 +191,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
    * uses the internally stored previous reference.
    *
    * @param nextR The future reference state of time k + dt.
+   * 
+   * @return The calculated feedforward.
    */
   public Matrix<I, N1> calculate(Matrix<S, N1> nextR) {
     return calculate(m_r, nextR);
@@ -191,6 +203,8 @@ public class PlantInversionFeedforward<S extends Num, I extends Num,
    *
    * @param r The current reference state of time k.
    * @param nextR The future reference state of time k + dt.
+   * 
+   * @return The calculated feedforward.
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public Matrix<I, N1> calculate(Matrix<S, N1> r, Matrix<S, N1> nextR) {

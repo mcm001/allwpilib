@@ -162,6 +162,8 @@ public class LTVUnicycleController {
    * @param currentPose  The current pose.
    * @param desiredState The desired pose, linear velocity, and angular velocity
    *                     from a trajectory.
+   * 
+   * @return The calculated {@link ChassisSpeeds}.
    */
   public ChassisSpeeds calculate(Pose2d currentPose, Trajectory.State desiredState) {
     return calculate(currentPose, desiredState.poseMeters,
