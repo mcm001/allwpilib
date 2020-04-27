@@ -37,10 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"PMD.AvoidInstantiatingObjectsInLoops",
       "PMD.ExcessiveMethodLength", "ParameterName", "LocalVariableName"})
-public class DifferentialDriveStateEstimatorTest {    
+public class DifferentialDriveStateEstimatorTest {
   private void scaleCappedU(Matrix<N2, N1> u) {
-    boolean isOutputCapped = Math.abs(u.get(0, 0)) > 12.0 || Math.abs(u.get(1, 0)) > 12.0;  
-    
+    boolean isOutputCapped = Math.abs(u.get(0, 0)) > 12.0 || Math.abs(u.get(1, 0)) > 12.0;
+
     if (isOutputCapped) {
       u.times(12.0 / CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM()));
     }
@@ -62,7 +62,7 @@ public class DifferentialDriveStateEstimatorTest {
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.5),
             kinematics);
-    
+
     var feedforward = new PlantInversionFeedforward<>(Nat.N10(), Nat.N2(),
         estimator::getDynamics, dt);
 

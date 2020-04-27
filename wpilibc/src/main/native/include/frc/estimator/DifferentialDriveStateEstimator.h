@@ -123,7 +123,8 @@ class DifferentialDriveStateEstimator {
    * @return The robot state estimate.
    */
   Vector<10> Update(units::radian_t heading, units::meter_t leftPosition,
-                    units::meter_t rightPosition, const Vector<2>& controlInput);
+                    units::meter_t rightPosition,
+                    const Vector<2>& controlInput);
 
   /**
    * Updates the the Unscented Kalman Filter using wheel encoder information,

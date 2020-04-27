@@ -48,11 +48,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
 
   const DifferentialDriveKinematics kinematics{1_m};
 
-  LTVDiffDriveController controller{plant,
-                                    {0.0625, 0.125, 2.5, 0.95, 0.95},
-                                    {12.0, 12.0},
-                                    kinematics,
-                                    kDt};
+  LTVDiffDriveController controller{
+      plant, {0.0625, 0.125, 2.5, 0.95, 0.95}, {12.0, 12.0}, kinematics, kDt};
 
   std::function<Eigen::Matrix<double, 10, 1>(
       const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)>
@@ -64,7 +61,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
   frc::DifferentialDriveStateEstimator estimator{
       plant,
       Eigen::Matrix<double, 10, 1>::Zero(),
-      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
+                             10.0, 2.0),
       frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
       frc::MakeMatrix<3, 1>(0.5, 0.5, 0.5),
       kinematics,
@@ -73,7 +71,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
   auto waypoints = std::vector{frc::Pose2d{0_m, 0_m, 0_rad},
                                frc::Pose2d{4.8768_m, 2.7432_m, 0_rad}};
 
-  auto config = TrajectoryConfig(12_mps / 3.02, (12_mps_sq / 0.642) - 16.5_mps_sq);
+  auto config =
+      TrajectoryConfig(12_mps / 3.02, (12_mps_sq / 0.642) - 16.5_mps_sq);
   config.AddConstraint(
       DifferentialDriveVelocitySystemConstraint(plant, kinematics, 8_V));
 
@@ -130,8 +129,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
 
     t += kDt;
 
-    //std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
-    //currentState(0) << "," << currentState(1) << '\n';
+    // std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
+    // currentState(0) << "," << currentState(1) << '\n';
 
     trueXhat = frc::RungeKutta(modelDynamics, trueXhat, u, kDt);
     EXPECT_TRUE(controller.AtReference());
@@ -146,11 +145,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
 
   const DifferentialDriveKinematics kinematics{1_m};
 
-  LTVDiffDriveController controller{plant,
-                                    {0.0625, 0.125, 2.5, 0.95, 0.95},
-                                    {12.0, 12.0},
-                                    kinematics,
-                                    kDt};
+  LTVDiffDriveController controller{
+      plant, {0.0625, 0.125, 2.5, 0.95, 0.95}, {12.0, 12.0}, kinematics, kDt};
 
   std::function<Eigen::Matrix<double, 10, 1>(
       const Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 2, 1>&)>
@@ -162,7 +158,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
   frc::DifferentialDriveStateEstimator estimator{
       plant,
       Eigen::Matrix<double, 10, 1>::Zero(),
-      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
+      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
+                             10.0, 2.0),
       frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
       frc::MakeMatrix<3, 1>(0.1, 0.1, 0.01),
       kinematics,
@@ -232,8 +229,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
 
     t += kDt;
 
-    //std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
-    //currentState(0) << "," << currentState(1) << '\n';
+    // std::cout << prevStateRef(0) << "," << prevStateRef(1) << "," <<
+    // currentState(0) << "," << currentState(1) << '\n';
 
     trueXhat = frc::RungeKutta(controllerDynamics, trueXhat, u, kDt);
     EXPECT_TRUE(controller.AtReference());

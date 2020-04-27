@@ -149,7 +149,7 @@ class LinearQuadraticRegulator {
 
   /**
    * Returns the reference vector r.
-   * 
+   *
    * @return The reference vector.
    */
   const Eigen::Matrix<double, States, 1>& R() const { return m_r; }
@@ -158,24 +158,23 @@ class LinearQuadraticRegulator {
    * Returns an element of the reference vector r.
    *
    * @param i Row of r.
-   * 
+   *
    * @return The row of the reference vector.
    */
   double R(int i) const { return m_r(i, 0); }
 
   /**
    * Returns the control input vector u.
-   * 
+   *
    * @return The control input.
    */
   const Eigen::Matrix<double, Inputs, 1>& U() const { return m_u; }
-
 
   /**
    * Returns an element of the control input vector u.
    *
    * @param i Row of u.
-   * 
+   *
    * @return The row of the control input vector.
    */
   double U(int i) const { return m_u(i, 0); }

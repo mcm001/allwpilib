@@ -52,7 +52,7 @@ class PlantInversionFeedforward {
    */
   template <int Outputs>
   PlantInversionFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
-                          units::second_t dt)
+                            units::second_t dt)
       : PlantInversionFeedforward(plant.A(), plant.B(), dt) {}
 
   /**
@@ -63,8 +63,8 @@ class PlantInversionFeedforward {
    * @param dtSeconds Discretization timestep.
    */
   PlantInversionFeedforward(const Eigen::Matrix<double, States, States>& A,
-                          const Eigen::Matrix<double, States, Inputs>& B,
-                          units::second_t dt)
+                            const Eigen::Matrix<double, States, Inputs>& B,
+                            units::second_t dt)
       : m_dt(dt) {
     DiscretizeAB<States, Inputs>(A, B, dt, &m_A, &m_B);
 
@@ -80,9 +80,9 @@ class PlantInversionFeedforward {
    * @param dtSeconds The timestep between calls of calculate().
    */
   PlantInversionFeedforward(std::function<Vector<States>(const Vector<States>&,
-                                                       const Vector<Inputs>&)>
-                              f,
-                          units::second_t dt)
+                                                         const Vector<Inputs>&)>
+                                f,
+                            units::second_t dt)
       : m_dt(dt), m_f(f) {
     m_B = NumericalJacobianU<States, States, Inputs>(f, Vector<States>::Zero(),
                                                      Vector<Inputs>::Zero());
@@ -95,7 +95,7 @@ class PlantInversionFeedforward {
 
   /**
    * Returns the previously calculated feedforward as an input vector.
-   * 
+   *
    * @return The calculated feedforward.
    */
   const Eigen::Matrix<double, Inputs, 1>& Uff() const { return m_uff; }
@@ -104,14 +104,14 @@ class PlantInversionFeedforward {
    * Returns an element of the previously calculated feedforward.
    *
    * @param row Row of uff.
-   * 
+   *
    * @return The row of the calculated feedforward.
    */
   double Uff(int i) const { return m_uff(i, 0); }
 
   /**
    * Returns the current reference vector r.
-   * 
+   *
    * @return The current reference vector.
    */
   const Eigen::Matrix<double, States, 1>& R() const { return m_r; }
@@ -120,7 +120,7 @@ class PlantInversionFeedforward {
    * Returns an element of the reference vector r.
    *
    * @param i Row of r.
-   * 
+   *
    * @return The row of the current reference vector.
    */
   double R(int i) const { return m_r(i, 0); }
@@ -135,7 +135,7 @@ class PlantInversionFeedforward {
 
   /**
    * Resets the feedforward with a specified initial state vector.
-   * 
+   *
    * @param initialState The initial state vector.
    */
   void Reset(Eigen::Matrix<double, States, 1>& initalState) {
@@ -148,7 +148,7 @@ class PlantInversionFeedforward {
    * uses the internally stored previous reference.
    *
    * @param nextR The future reference state of time k + dt.
-   * 
+   *
    * @return The calculated feedforward.
    */
   Eigen::Matrix<double, Inputs, 1> Calculate(
@@ -161,7 +161,7 @@ class PlantInversionFeedforward {
    *
    * @param r     The current reference state of time k.
    * @param nextR The future reference state of time k + dt.
-   * 
+   *
    * @return The calculated feedforward.
    */
   Eigen::Matrix<double, Inputs, 1> Calculate(

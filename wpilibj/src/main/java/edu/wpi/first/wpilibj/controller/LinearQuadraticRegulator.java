@@ -187,7 +187,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
 
   /**
    * Returns the control input vector u.
-   * 
+   *
    * @return The control input.
    */
   public Matrix<I, N1> getU() {
@@ -198,7 +198,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
    * Returns an element of the control input vector u.
    *
    * @param row Row of u.
-   * 
+   *
    * @return The row of the control input vector.
    */
   public double getU(int row) {
@@ -207,7 +207,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
 
   /**
    * Returns the reference vector r.
-   * 
+   *
    * @return The reference vector.
    */
   public Matrix<S, N1> getR() {
@@ -218,7 +218,7 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
    * Returns an element of the reference vector r.
    *
    * @param row Row of r.
-   * 
+   *
    * @return The row of the reference vector.
    */
   public double getR(int row) {

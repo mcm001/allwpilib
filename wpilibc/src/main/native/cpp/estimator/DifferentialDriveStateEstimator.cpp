@@ -55,10 +55,9 @@ Vector<10> DifferentialDriveStateEstimator::GetEstimatedState() const {
   return m_observer.Xhat();
 }
 
-Vector<10> DifferentialDriveStateEstimator::Update(units::radian_t heading,
-                                                   units::meter_t leftPosition,
-                                                   units::meter_t rightPosition,
-                                                   const Vector<2>& controlInput) {
+Vector<10> DifferentialDriveStateEstimator::Update(
+    units::radian_t heading, units::meter_t leftPosition,
+    units::meter_t rightPosition, const Vector<2>& controlInput) {
   return UpdateWithTime(heading, leftPosition, rightPosition, controlInput,
                         frc2::Timer::GetFPGATimestamp());
 }
@@ -76,7 +75,7 @@ Vector<10> DifferentialDriveStateEstimator::UpdateWithTime(
 
   m_latencyCompensator.AddObserverState(m_observer, controlInput, m_localY,
                                         currentTime);
-  
+
   m_observer.Predict(controlInput, dt);
   m_observer.Correct(controlInput, m_localY);
 
