@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -52,6 +52,17 @@ public final class MatrixUtils {
    * @return The DxD identity matrix.
    */
   public static <D extends Num> Matrix<D, D> eye(Nat<D> dim) {
+    return new Matrix<>(SimpleMatrix.identity(Objects.requireNonNull(dim).getNum()));
+  }
+
+  /**
+   * Creates the identity matrix of the given dimension.
+   *
+   * @param dim The dimension of the desired matrix.
+   * @param <D> The dimension of the desired matrix.
+   * @return The DxD identity matrix.
+   */
+  public static <D extends Num> Matrix<D, D> eye(D dim) {
     return new Matrix<>(SimpleMatrix.identity(Objects.requireNonNull(dim).getNum()));
   }
 

@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -9,9 +9,13 @@ package edu.wpi.first.wpiutil.math;
 
 import java.util.Objects;
 
+import org.ejml.MatrixDimensionException;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+
+import edu.wpi.first.wpiutil.WPIUtilJNI;
+import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
  * A shape-safe wrapper over Efficient Java Matrix Library (EJML) matrices.
@@ -58,12 +62,32 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Sets the value at the given indices.
    *
-   * @param row     The row of the element.
-   * @param col     The column of the element.
+   * @param row   The row of the element.
+   * @param col   The column of the element.
    * @param value The value to insert at the given location.
    */
   public final void set(int row, int col, double value) {
     this.m_storage.set(row, col, value);
+  }
+
+  /**
+   * Sets a row to a given row vector.
+   *
+   * @param row The row to set.
+   * @param val The row vector to set the given row to.
+   */
+  public final void setRow(int row, Matrix<N1, C> val) {
+    this.m_storage.setRow(row, 0, val.getStorage().getDDRM().getData());
+  }
+
+  /**
+   * Sets a column to a given column vector.
+   *
+   * @param column The column to set.
+   * @param val    The column vector to set the given row to.
+   */
+  public final void setColumn(int column, Matrix<R, N1> val) {
+    this.m_storage.setColumn(column, 0, val.getStorage().getDDRM().getData());
   }
 
   /**
@@ -234,6 +258,24 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
+   * Computes the matrix exponential using Eigen's solver.
+   * This method only works for square matrices, and will
+   * otherwise throw an {@link MatrixDimensionException}.
+   *
+   * @return the exponential of A.
+   */
+  public final Matrix<R, C> exp() {
+    if (this.getNumRows() != this.getNumCols()) {
+      throw new MatrixDimensionException("Non-square matrices cannot be exponentiated! "
+            + "This matrix is " + this.getNumRows() + " x " + this.getNumCols());
+    }
+    Matrix<R, C> toReturn = new Matrix<>(new SimpleMatrix(this.getNumRows(), this.getNumCols()));
+    WPIUtilJNI.exp(this.getStorage().getDDRM().getData(), this.getNumRows(),
+          toReturn.getStorage().getDDRM().getData());
+    return toReturn;
+  }
+
+  /**
    * Returns the determinant of this matrix.
    *
    * @return The determinant of this matrix.
@@ -307,6 +349,46 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
+   * Extracts a given row into a row vector, with this Matrix as the underlying storage (i.e.
+   * changes made to this Matrix will affect the extracted vector.)
+   *
+   * @param row The row to extract a vector from.
+   * @return A row vector from the given row.
+   */
+  public final Matrix<N1, C> extractRowVector(int row) {
+    return new Matrix<>(this.m_storage.extractVector(true, row));
+  }
+
+  /**
+   * Extracts a given column into a column vector, with this Matrix as the underlying storage (i.e.
+   * changes made to this Matrix will affect the extracted vector.)
+   *
+   * @param column The column to extract a vector from.
+   * @return A column vector from the given column.
+   */
+  public final Matrix<R, N1> extractColumnVector(int column) {
+    return new Matrix<>(this.m_storage.extractVector(false, column));
+  }
+
+  /**
+   * Extracts a matrix of a given size and start position, with this Matrix as
+   * the underlying storage (i.e. changes made to this Matrix will affect the extracted vector.)
+   *
+   * @param height The number of rows of the extracted matrix.
+   * @param width  The number of columns of the extracted matrix.
+   * @param startingLocation A pair with the starting row and column of the extracted matrix.
+   * @return A column vector from the given column.
+   */
+  public final <R2 extends Num, C2 extends Num> Matrix<R2, C2> block(
+      Nat<R2> height, Nat<C2> width, Pair<Integer, Integer> startingLocation) {
+    return new Matrix<>(this.m_storage.extractMatrix(
+      startingLocation.getFirst(),
+      height.getNum() + startingLocation.getFirst(),
+      startingLocation.getSecond(),
+      width.getNum() + startingLocation.getSecond()));
+  }
+
+  /**
    * Returns the EJML {@link SimpleMatrix} backing this wrapper.
    *
    * @return The untyped EJML {@link SimpleMatrix}.
@@ -324,4 +406,10 @@ public class Matrix<R extends Num, C extends Num> {
   public Matrix(SimpleMatrix storage) {
     this.m_storage = Objects.requireNonNull(storage);
   }
+
+  @Override
+  public String toString() {
+    return m_storage.toString();
+  }
+
 }
