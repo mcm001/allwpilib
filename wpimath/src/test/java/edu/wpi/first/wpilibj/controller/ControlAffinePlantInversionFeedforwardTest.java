@@ -42,10 +42,6 @@ class ControlAffinePlantInversionFeedforwardTest {
     ControlAffinePlantInversionFeedforward<N2, N1> feedforward =
             new ControlAffinePlantInversionFeedforward<N2, N1>(
                     Nat.N2(),
-                    Nat.N1(),
-                    this::getStateDynamics,
-                    B,
-                    0.02);
 
     assertEquals(48.0, feedforward.calculate(
             VecBuilder.fill(2, 2),
