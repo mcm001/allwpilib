@@ -18,7 +18,7 @@
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/DifferentialDriveKinematics.h"
-#include "frc/controller/LinearSystemFeedforward.h"
+#include "frc/controller/PlantInversionFeedforward.h"
 #include "frc/trajectory/constraint/DifferentialDriveVelocitySystemConstraint.h"
 #include "frc/kinematics/DifferentialDriveOdometry.h"
 #include "frc/system/LinearSystem.h"
@@ -61,7 +61,7 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
     modelDynamics =
         [&](auto& x, auto& u) { return estimator.Dynamics(x, u); };
   
-  LinearSystemFeedforward<10, 2> feedforward{modelDynamics, dt};
+  PlantInversionFeedforward<10, 2> feedforward{modelDynamics, dt};
 
   auto config = TrajectoryConfig(units::meters_per_second_t(12 / 3.02), units::meters_per_second_squared_t(12 / 0.642) - 16.5_mps_sq);
   config.AddConstraint(DifferentialDriveVelocitySystemConstraint(

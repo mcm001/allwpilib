@@ -14,7 +14,7 @@ import java.util.Random;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.junit.jupiter.api.Test;
 
-import edu.wpi.first.wpilibj.controller.LinearSystemFeedForward;
+import edu.wpi.first.wpilibj.controller.PlantInversionFeedforward;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
@@ -63,7 +63,7 @@ public class DifferentialDriveStateEstimatorTest {
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.5),
             kinematics);
     
-    var feedforward = new LinearSystemFeedForward<>(Nat.N10(), Nat.N2(),
+    var feedforward = new PlantInversionFeedforward<>(Nat.N10(), Nat.N2(),
         estimator::getDynamics, dt);
 
     var config = new TrajectoryConfig(12 / 3.02, (12 / 0.642) - 16.5);

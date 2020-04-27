@@ -42,7 +42,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 template <int States, int Inputs>
-class LinearSystemFeedforward {
+class PlantInversionFeedforward {
  public:
   /**
    * Constructs a feedforward with the given plant.
@@ -51,9 +51,9 @@ class LinearSystemFeedforward {
    * @param dtSeconds Discretization timestep.
    */
   template <int Outputs>
-  LinearSystemFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
+  PlantInversionFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
                           units::second_t dt)
-      : LinearSystemFeedforward(plant.A(), plant.B(), dt) {}
+      : PlantInversionFeedforward(plant.A(), plant.B(), dt) {}
 
   /**
    * Constructs a feedforward with the given coefficients.
@@ -62,7 +62,7 @@ class LinearSystemFeedforward {
    * @param B         Continuous input matrix of the plant being controlled.
    * @param dtSeconds Discretization timestep.
    */
-  LinearSystemFeedforward(const Eigen::Matrix<double, States, States>& A,
+  PlantInversionFeedforward(const Eigen::Matrix<double, States, States>& A,
                           const Eigen::Matrix<double, States, Inputs>& B,
                           units::second_t dt)
       : m_dt(dt) {
@@ -79,7 +79,7 @@ class LinearSystemFeedforward {
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  LinearSystemFeedforward(std::function<Vector<States>(const Vector<States>&,
+  PlantInversionFeedforward(std::function<Vector<States>(const Vector<States>&,
                                                        const Vector<Inputs>&)>
                               f,
                           units::second_t dt)
@@ -90,8 +90,8 @@ class LinearSystemFeedforward {
     Reset();
   }
 
-  LinearSystemFeedforward(LinearSystemFeedforward&&) = default;
-  LinearSystemFeedforward& operator=(LinearSystemFeedforward&&) = default;
+  PlantInversionFeedforward(PlantInversionFeedforward&&) = default;
+  PlantInversionFeedforward& operator=(PlantInversionFeedforward&&) = default;
 
   /**
    * Returns the previously calculated feedforward as an input vector.

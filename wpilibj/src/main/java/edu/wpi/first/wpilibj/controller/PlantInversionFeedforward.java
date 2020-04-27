@@ -35,7 +35,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 @SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
-public class LinearSystemFeedForward<S extends Num, I extends Num,
+public class PlantInversionFeedforward<S extends Num, I extends Num,
         O extends Num> {
   /**
    * The current reference state.
@@ -69,7 +69,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    * @param plant     The plant being controlled.
    * @param dtSeconds Discretization timestep.
    */
-  public LinearSystemFeedForward(
+  public PlantInversionFeedforward(
           LinearSystem<S, I, O> plant,
           double dtSeconds
   ) {
@@ -84,8 +84,8 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    * @param dtSeconds Discretization timestep.
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
-  public LinearSystemFeedForward(Matrix<S, S> A, Matrix<S, I> B,
-                                  double dtSeconds) {
+  public PlantInversionFeedforward(Matrix<S, S> A, Matrix<S, I> B,
+                                   double dtSeconds) {
     this.m_dt = dtSeconds;
 
     var discABPair = Discretization.discretizeAB(A, B, dtSeconds);
@@ -108,7 +108,7 @@ public class LinearSystemFeedForward<S extends Num, I extends Num,
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  public LinearSystemFeedForward(
+  public PlantInversionFeedforward(
         Nat<S> states,
         Nat<I> inputs,
         BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> f,
