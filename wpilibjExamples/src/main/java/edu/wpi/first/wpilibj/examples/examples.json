@@ -631,5 +631,23 @@
     "gradlebase": "java",
     "mainclass": "Main",
     "commandversion": 2
+  },
+  {
+    "name": "LTVUnicycleCommand",
+    "description": "An example command-based robot demonstrating the use of a LTV Unicycle Command to follow a pregenerated trajectory.",
+    "tags": [
+      "LTVUnicycleCommand",
+      "Drivetrain",
+      "State Space",
+      "Model",
+      "Digital",
+      "Sensors",
+      "Actuators",
+      "Trajectory"
+    ],
+    "foldername": "ltvunicyclecommand",
+    "gradlebase": "java",
+    "mainclass": "Main",
+    "commandversion": 2
   }
 ]

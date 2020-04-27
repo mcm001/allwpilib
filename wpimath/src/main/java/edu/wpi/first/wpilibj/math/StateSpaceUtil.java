@@ -9,6 +9,7 @@ package edu.wpi.first.wpilibj.math;
 
 import java.util.Random;
 
+import edu.wpi.first.wpiutil.math.numbers.N4;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -177,4 +178,31 @@ public final class StateSpaceUtil {
     return u;
   }
 
+  /**
+   * Convert a {@link Pose2d} to a vector of [x, y, cos(theta), sin(theta)], where theta is in radians.
+   *
+   * @param pose A pose to convert to a vector.
+   */
+  public static Matrix<N4, N1> poseTo4dVector(Pose2d pose) {
+    return VecBuilder.fill(
+      pose.getTranslation().getX(),
+      pose.getTranslation().getY(),
+      pose.getRotation().getCos(),
+      pose.getRotation().getSin()
+    );
+  }
+
+  /**
+   * Convert a {@link Pose2d} to a vector of [x, y, theta], where theta is in radians.
+   *
+   * @param pose A pose to convert to a vector.
+   * @return The given pose in vector form, with the third element, theta, in radians.
+   */
+  public static Matrix<N3, N1> poseTo3dVector(Pose2d pose) {
+    return VecBuilder.fill(
+      pose.getTranslation().getX(),
+      pose.getTranslation().getY(),
+      pose.getRotation().getRadians()
+    );
+  }
 }

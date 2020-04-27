@@ -225,7 +225,7 @@ public class Matrix<R extends Num, C extends Num> {
    * @param value The scalar value to multiply by.
    * @return A new matrix with all the elements multiplied by the given value.
    */
-  public final Matrix<R, C> times(double value) {
+  public Matrix<R, C> times(double value) {
     return new Matrix<>(this.m_storage.scale(value));
   }
 
