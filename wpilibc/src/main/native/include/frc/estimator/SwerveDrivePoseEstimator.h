@@ -117,12 +117,13 @@ class SwerveDrivePoseEstimator {
         Translation2d(chassisSpeeds.vx * 1_s, chassisSpeeds.vy * 1_s)
             .RotateBy(angle);
 
-    auto u = frc::MakeMatrix<3, 1>(fieldRelativeSpeeds.X().to<double>(),
-                                   fieldRelativeSpeeds.Y().to<double>(),
-                                   omega.to<double>());
+    auto u =
+        frc::MakeMatrix<3, 1>(fieldRelativeSpeeds.X().template to<double>(),
+                              fieldRelativeSpeeds.Y().template to<double>(),
+                              omega.template to<double>());
     m_previousAngle = angle;
 
-    auto localY = frc::MakeMatrix<1, 1>(angle.Radians().to<double>());
+    auto localY = frc::MakeMatrix<1, 1>(angle.Radians().template to<double>());
     m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
 
     m_observer.Predict(u, dt);

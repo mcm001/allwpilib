@@ -106,11 +106,12 @@ public class UnscentedKalmanFilterTest {
       observer.predict(u, 0.00505);
 
       var localY = getLocalMeasurementModel(observer.getXhat(), u);
-      //      observer.correct(u, localY);
+      observer.correct(u, localY);
     });
   }
 
-  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops"})
+  @SuppressWarnings({"LocalVariableName", "PMD.AvoidInstantiatingObjectsInLoops",
+        "PMD.ExcessiveMethodLength"})
   @Test
   public void testConvergence() {
     double dtSeconds = 0.00505;
@@ -177,78 +178,69 @@ public class UnscentedKalmanFilterTest {
     nextR = r.copy();
 
     double totalTime = trajectory.getTotalTimeSeconds();
-    try {
-      for (int i = 0; i < (totalTime / dtSeconds); i++) {
-        //        System.out.println("U: " + u);
-        observer.predict(u, dtSeconds);
+    for (int i = 0; i < (totalTime / dtSeconds); i++) {
+      //        System.out.println("U: " + u);
+      observer.predict(u, dtSeconds);
 
-        ref = trajectory.sample(dtSeconds * i);
-        double vl = ref.velocityMetersPerSecond * (1 - (ref.curvatureRadPerMeter * rbMeters));
-        double vr = ref.velocityMetersPerSecond * (1 + (ref.curvatureRadPerMeter * rbMeters));
+      ref = trajectory.sample(dtSeconds * i);
+      double vl = ref.velocityMetersPerSecond * (1 - (ref.curvatureRadPerMeter * rbMeters));
+      double vr = ref.velocityMetersPerSecond * (1 + (ref.curvatureRadPerMeter * rbMeters));
 
-        nextR.set(0, 0, ref.poseMeters.getTranslation().getX());
-        nextR.set(1, 0, ref.poseMeters.getTranslation().getY());
-        nextR.set(2, 0, ref.poseMeters.getRotation().getCos());
-        nextR.set(3, 0, ref.poseMeters.getRotation().getSin());
-        nextR.set(4, 0, vl);
-        nextR.set(5, 0, vr);
+      nextR.set(0, 0, ref.poseMeters.getTranslation().getX());
+      nextR.set(1, 0, ref.poseMeters.getTranslation().getY());
+      nextR.set(2, 0, ref.poseMeters.getRotation().getCos());
+      nextR.set(3, 0, ref.poseMeters.getRotation().getSin());
+      nextR.set(4, 0, vl);
+      nextR.set(5, 0, vr);
 
-        var localY =
-              getLocalMeasurementModel(observer.getXhat(), MatrixUtils.zeros(Nat.N2(), Nat.N1()));
-        var whiteNoiseStdDevs = VecBuilder.fill(0.0001, 0.5, 0.5);
+      Matrix<N4, N1> localY =
+            getLocalMeasurementModel(observer.getXhat(), MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+      var whiteNoiseStdDevs = VecBuilder.fill(0.001, 0.001, 0.5, 0.5);
 
-        //      observer.correct(u,
-        //            localY);//.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N3(),
-        //            whiteNoiseStdDevs)));
+      observer.correct(u,
+            localY.plus(StateSpaceUtil.makeWhiteNoiseVector(Nat.N4(),
+                  whiteNoiseStdDevs)));
 
-        var rdot = nextR.minus(r).div(dtSeconds);
-        u = new Matrix<>(B.getStorage()
-              .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))
-                    .getStorage()));
+      var rdot = nextR.minus(r).div(dtSeconds);
+      u = new Matrix<>(B.getStorage()
+            .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))
+                  .getStorage()));
 
-        if (Math.abs(observer.getXhat().get(0, 0)) > 100
-              || Math.abs(observer.getXhat().get(1, 0)) > 100) {
-          throw new RuntimeException("boof");
-        }
+      rdots.add(rdot);
 
-        rdots.add(rdot);
+      trajXs.add(ref.poseMeters.getTranslation().getX());
+      trajYs.add(ref.poseMeters.getTranslation().getY());
 
-        trajXs.add(ref.poseMeters.getTranslation().getX());
-        trajYs.add(ref.poseMeters.getTranslation().getY());
+      observerXs.add(observer.getXhat().get(0, 0));
+      observerYs.add(observer.getXhat().get(1, 0));
 
-        observerXs.add(observer.getXhat().get(0, 0));
-        observerYs.add(observer.getXhat().get(1, 0));
+      observerC.add(observer.getXhat(2));
+      observerS.add(observer.getXhat(3));
 
-        observerC.add(observer.getXhat(2));
-        observerS.add(observer.getXhat(3));
+      observervl.add(observer.getXhat(4));
+      observervr.add(observer.getXhat(5));
 
-        observervl.add(observer.getXhat(4));
-        observervr.add(observer.getXhat(5));
+      inputVl.add(u.get(0, 0));
+      inputVr.add(u.get(1, 0));
 
-        inputVl.add(u.get(0, 0));
-        inputVr.add(u.get(1, 0));
+      timeData.add(i * dtSeconds);
 
-        timeData.add(i * dtSeconds);
+      //      System.out.println(String.format("Ground Truth: x(%s) y(%s), xhat x(%s) y(%s)",
+      //            ref.poseMeters.getTranslation().getX(),
+      //            ref.poseMeters.getTranslation().getY(),
+      //            observer.getXhat(0), observer.getXhat(1)));
 
-        //      System.out.println(String.format("Ground Truth: x(%s) y(%s), xhat x(%s) y(%s)",
-        //            ref.poseMeters.getTranslation().getX(),
-        //            ref.poseMeters.getTranslation().getY(),
-        //            observer.getXhat(0), observer.getXhat(1)));
-
-        r = nextR;
-      }
-    } catch (RuntimeException ex) {
-      ex.printStackTrace();
+      r = nextR;
     }
 
     var localY = getLocalMeasurementModel(observer.getXhat(), u);
-    //    observer.correct(u, localY);
+    observer.correct(u, localY);
 
     var globalY = getGlobalMeasurementModel(observer.getXhat(), u);
     var R = StateSpaceUtil.makeCostMatrix(
-          VecBuilder.fill(0.01, 0.01, 0.0001, 0.5, 0.5));
-    //    observer.correct(Nat.N5(), u, globalY,
-    //    UnscentedKalmanFilterTest::getGlobalMeasurementModel, R);
+          VecBuilder.fill(0.01, 0.01, 0.0001, 0.0001, 0.5, 0.5));
+    observer.correct(Nat.N6(), u, globalY,
+          UnscentedKalmanFilterTest::getGlobalMeasurementModel, R);
 
     final var finalPosition = trajectory.sample(trajectory.getTotalTimeSeconds());
 
@@ -307,7 +299,7 @@ public class UnscentedKalmanFilterTest {
   }
 
   @Test
-  @SuppressWarnings({"LocalVariableName", "ParameterName"})
+  @SuppressWarnings({"LocalVariableName", "ParameterName", "PMD.AvoidInstantiatingObjectsInLoops"})
   public void testLinearUKF() {
     var dt = 0.020;
     var plant = LinearSystem.identifyVelocitySystem(0.02, 0.006, 12);
