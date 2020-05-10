@@ -64,3 +64,27 @@ TEST(DifferentialDriveVelocitySystemTest, Constraint) {
                 (u(1) <= (maxVoltage.to<double>() + 0.5)));
   }
 }
+
+TEST(DifferentialDriveVoltageConstraintTest, HighCurvature) {
+  const auto maxVoltage = 10_V;
+
+  const LinearSystem<2, 2, 2> system =
+      IdentifyDrivetrainSystem(1.0, 3.0, 1.0, 3.0, maxVoltage);
+  // Large trackwidth - need to test with radius of curvature less than half of
+  // trackwidth
+  const DifferentialDriveKinematics kinematics{3_m};
+
+  auto config = TrajectoryConfig(12_fps, 12_fps_sq);
+  config.AddConstraint(DifferentialDriveVelocitySystemConstraint(
+      system, kinematics, maxVoltage));
+
+  EXPECT_NO_FATAL_FAILURE(TrajectoryGenerator::GenerateTrajectory(
+      Pose2d{1_m, 0_m, Rotation2d{90_deg}}, std::vector<Translation2d>{},
+      Pose2d{0_m, 1_m, Rotation2d{180_deg}}, config));
+
+  config.SetReversed(true);
+
+  EXPECT_NO_FATAL_FAILURE(TrajectoryGenerator::GenerateTrajectory(
+      Pose2d{0_m, 1_m, Rotation2d{180_deg}}, std::vector<Translation2d>{},
+      Pose2d{1_m, 0_m, Rotation2d{90_deg}}, config));
+}

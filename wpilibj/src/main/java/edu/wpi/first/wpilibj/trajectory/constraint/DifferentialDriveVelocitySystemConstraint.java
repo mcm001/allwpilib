@@ -7,15 +7,12 @@
 
 package edu.wpi.first.wpilibj.trajectory.constraint;
 
-import org.ejml.dense.row.CommonOps_DDRM;
-
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.system.LinearSystem;
-import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 
@@ -57,21 +54,7 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
   @Override
   public double getMaxVelocityMetersPerSecond(Pose2d poseMeters, double curvatureRadPerMeter,
                                               double velocityMetersPerSecond) {
-
-    var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0,
-                                                    velocityMetersPerSecond
-                                                    * curvatureRadPerMeter));
-
-    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond,
-        wheelSpeeds.rightMetersPerSecond);
-
-    // Normalize wheel velocities to be in achievable range while maintaining curvature
-    if ((Math.abs(x.get(0, 0)) > velocityMetersPerSecond)
-        || (Math.abs(x.get(1, 0)) > velocityMetersPerSecond)) {
-      x.times(velocityMetersPerSecond / CommonOps_DDRM.elementMaxAbs(x.getStorage().getDDRM()));
-    }
-
-    return (x.get(0, 0) + x.get(1, 0)) / 2.0;
+    return Double.POSITIVE_INFINITY;
   }
 
   @Override
@@ -82,34 +65,21 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
                                                                    velocityMetersPerSecond
                                                                        * curvatureRadPerMeter));
 
-    var x = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(wheelSpeeds.leftMetersPerSecond,
+    var x = VecBuilder.fill(wheelSpeeds.leftMetersPerSecond,
         wheelSpeeds.rightMetersPerSecond);
 
     Matrix<N2, N1> xDot;
     Matrix<N2, N1> u;
 
     // dx/dt for minimum u
-    u = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(-m_maxVoltage, -m_maxVoltage);
+    u = VecBuilder.fill(-m_maxVoltage, -m_maxVoltage);
     xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
     double minAccel = (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
 
     // dx/dt for maximum u
-    u = new MatBuilder<N2, N1>(Nat.N2(), Nat.N1()).fill(m_maxVoltage, m_maxVoltage);
+    u = VecBuilder.fill(m_maxVoltage, m_maxVoltage);
     xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
     double maxAccel = (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
-
-    // When turning about a point inside of the wheelbase (i.e. radius less than half
-    // the trackwidth), the inner wheel's direction changes, but the magnitude remains
-    // the same.  The formula above changes sign for the inner wheel when this happens.
-    // We can accurately account for this by simply negating the inner wheel.
-
-    if ((m_kinematics.trackWidthMeters / 2) > (1 / Math.abs(curvatureRadPerMeter))) {
-      if (velocityMetersPerSecond > 0) {
-        minAccel = -minAccel;
-      } else if (velocityMetersPerSecond < 0) {
-        maxAccel = -maxAccel;
-      }
-    }
 
     return new MinMax(minAccel, maxAccel);
   }

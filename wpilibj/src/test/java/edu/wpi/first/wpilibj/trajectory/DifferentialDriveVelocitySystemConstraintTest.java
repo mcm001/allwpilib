@@ -7,10 +7,14 @@
 
 package edu.wpi.first.wpilibj.trajectory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
+import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.system.LinearSystem;
@@ -18,6 +22,7 @@ import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVelocitySyst
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Nat;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DifferentialDriveVelocitySystemConstraintTest {
@@ -70,5 +75,34 @@ class DifferentialDriveVelocitySystemConstraintTest {
       assertTrue((-11 <= right) && (right <= 11));
 
     }
+  }
+
+  @Test
+  void testEndpointHighCurvature() {
+    double maxVoltage = 10;
+
+    var system = LinearSystem.identifyDrivetrainSystem(1, 3, 1, 3, maxVoltage);
+
+    // Large trackwidth - need to test with radius of curvature less than half of trackwidth
+    var kinematics = new DifferentialDriveKinematics(3);
+    var constraint = new DifferentialDriveVelocitySystemConstraint(system,
+          kinematics,
+          maxVoltage);
+
+    var config = new TrajectoryConfig(12, 12).addConstraint(constraint);
+
+    // Radius of curvature should be ~1 meter.
+    assertDoesNotThrow(() -> TrajectoryGenerator.generateTrajectory(
+          new Pose2d(1, 0, Rotation2d.fromDegrees(90)),
+          new ArrayList<Translation2d>(),
+          new Pose2d(0, 1, Rotation2d.fromDegrees(180)),
+          config));
+
+    assertDoesNotThrow(() -> TrajectoryGenerator.generateTrajectory(
+          new Pose2d(0, 1, Rotation2d.fromDegrees(180)),
+          new ArrayList<Translation2d>(),
+          new Pose2d(1, 0, Rotation2d.fromDegrees(90)),
+          config.setReversed(true)));
+
   }
 }
