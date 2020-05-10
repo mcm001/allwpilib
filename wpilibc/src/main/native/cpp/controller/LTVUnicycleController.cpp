@@ -70,9 +70,9 @@ ChassisSpeeds LTVUnicycleController::Calculate(
   m_poseError = poseRef.RelativeTo(currentPose);
 
   double kx = m_K0(0, 0);
-  double ky0 = m_K0(0, 1);
-  double ky1 = m_K1(0, 1);
-  double ktheta1 = m_K1(0, 2);
+  double ky0 = m_K0(1, 1);
+  double ky1 = m_K1(1, 1);
+  double ktheta1 = m_K1(1, 2);
 
   double v = linearVelocityRef.to<double>();
   double sqrtAbsV = std::sqrt(std::abs(v));

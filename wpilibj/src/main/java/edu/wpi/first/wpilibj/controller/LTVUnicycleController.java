@@ -130,9 +130,9 @@ public class LTVUnicycleController {
     m_poseError = poseRef.relativeTo(currentPose);
 
     var kx = m_K0.get(0, 0);
-    var ky0 = m_K0.get(0, 1);
-    var ky1 = m_K1.get(0, 1);
-    var ktheta1 = m_K1.get(0, 2);
+    var ky0 = m_K0.get(1, 1);
+    var ky1 = m_K1.get(1, 1);
+    var ktheta1 = m_K1.get(1, 2);
 
     var sqrtAbsV = Math.sqrt(Math.abs(linearVelocityRefMetersPerSec));
     var gain = new MatBuilder<>(Nat.N2(), Nat.N3())
