@@ -169,21 +169,4 @@ public class LinearSystemLoopTest {
     assertEquals(0.0, loop.getError(0), 0.1);
   }
 
-  @Test
-  public void testStateSpaceDisabled() {
-    m_loop.disable();
-    Matrix<N2, N1> references = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(2.0, 0.0);
-    m_loop.setNextR(references);
-
-    assertEquals(0.0, m_loop.getXHat(0), 1e-6);
-    assertEquals(0.0, m_loop.getXHat(1), 1e-6);
-
-    for (int i = 0; i < 100; i++) {
-      updateTwoState(m_loop, 0.0);
-    }
-
-    assertEquals(0.0, m_loop.getXHat(0), 1e-6);
-    assertEquals(0.0, m_loop.getXHat(1), 1e-6);
-  }
-
 }

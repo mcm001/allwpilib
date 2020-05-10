@@ -85,15 +85,6 @@ public class LinearSystemLoop<S extends Num, I extends Num,
   }
 
   /**
-   * If the controller is enabled.
-   *
-   * @return if the controller is enabled.
-   */
-  public boolean isEnabled() {
-    return getController().isEnabled();
-  }
-
-  /**
    * Returns the observer's state estimate x-hat.
    *
    * @return the observer's state estimate x-hat.
