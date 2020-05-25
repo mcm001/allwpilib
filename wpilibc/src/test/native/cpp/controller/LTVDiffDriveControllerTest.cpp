@@ -130,7 +130,9 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
 
     t += kDt;
 
-    std::cout << trueXhat(0) << "," << trueXhat(1) << "," << trueXhat(2) << "," << stateRef(0) << "," << stateRef(1) << "," << stateRef(2) << "\n";
+    std::cout << trueXhat(0) << "," << trueXhat(1) << "," << trueXhat(2) << ","
+              << stateRef(0) << "," << stateRef(1) << "," << stateRef(2)
+              << "\n";
 
     trueXhat = frc::RungeKutta(modelDynamics, trueXhat, u, kDt);
     // EXPECT_TRUE(controller.AtReference());
@@ -153,7 +155,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
       controllerDynamics =
           [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
 
-  NonLinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics, kDt};
+  NonLinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics,
+                                                        kDt};
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,

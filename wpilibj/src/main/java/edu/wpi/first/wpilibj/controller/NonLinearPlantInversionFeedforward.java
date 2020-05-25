@@ -22,7 +22,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * Constructs a plant inversion model-based feedforward from given model dynamics.
  *
  * <p>B is calculated through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * 
+ *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse of B.
  *
@@ -44,16 +44,16 @@ public class NonLinearPlantInversionFeedforward<S extends Num, I extends Num,
   private Matrix<I, N1> m_uff;
 
   @SuppressWarnings("MemberName")
-  private Matrix<S, I> m_B;
+  private final Matrix<S, I> m_B;
 
-  private Nat<I> m_inputs;
+  private final Nat<I> m_inputs;
 
-  private double m_dt;
+  private final double m_dt;
 
   /**
    * The model dynamics.
    */
-  private BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> m_f;
+  private final BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> m_f;
 
   /**
    * Constructs a feedforward with given model dynamics.
@@ -160,7 +160,7 @@ public class NonLinearPlantInversionFeedforward<S extends Num, I extends Num,
 
     m_uff = new Matrix<>(m_B.getStorage()
             .solve(rDot.minus(m_f.apply(r, MatrixUtils.zeros(m_inputs))).getStorage()));
-            
+
     m_r = nextR;
     return m_uff;
   }

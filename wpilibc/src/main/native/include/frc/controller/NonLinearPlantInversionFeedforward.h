@@ -26,15 +26,13 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * Constructs a plant inversion model-based feedforward from a {@link
- * LinearSystem}.
+ * Constructs a plant inversion model-based feedforward from given model
+ * dynamics.
  *
- * <p>The feedforward is calculated as u_ff = B<sup>+</sup> (r_k+1 - A r_k),
- * were B<sup>+</sup> is the pseudoinverse of B.
+ * <p>B is calculated through a {@link
+ * edu.wpi.first.wpilibj.system.NumericalJacobian}.
  *
- * <p>The feedforward has an overload for model dynamics and calculates B
- * through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * With the dynamics, the feedforward is calculated as
+ * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
  * of B.
  *
@@ -52,10 +50,11 @@ class NonLinearPlantInversionFeedforward {
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  NonLinearPlantInversionFeedforward(std::function<Vector<States>(const Vector<States>&,
-                                                         const Vector<Inputs>&)>
-                                f,
-                            units::second_t dt)
+  NonLinearPlantInversionFeedforward(
+      std::function<Vector<States>(const Vector<States>&,
+                                   const Vector<Inputs>&)>
+          f,
+      units::second_t dt)
       : m_dt(dt), m_f(f) {
     m_B = NumericalJacobianU<States, States, Inputs>(f, Vector<States>::Zero(),
                                                      Vector<Inputs>::Zero());
@@ -64,8 +63,10 @@ class NonLinearPlantInversionFeedforward {
     Reset(m_r);
   }
 
-  NonLinearPlantInversionFeedforward(NonLinearPlantInversionFeedforward&&) = default;
-  NonLinearPlantInversionFeedforward& operator=(NonLinearPlantInversionFeedforward&&) = default;
+  NonLinearPlantInversionFeedforward(NonLinearPlantInversionFeedforward&&) =
+      default;
+  NonLinearPlantInversionFeedforward& operator=(
+      NonLinearPlantInversionFeedforward&&) = default;
 
   /**
    * Returns the previously calculated feedforward as an input vector.
@@ -133,11 +134,9 @@ class NonLinearPlantInversionFeedforward {
   Eigen::Matrix<double, Inputs, 1> Calculate(
       const Eigen::Matrix<double, States, 1>& r,
       const Eigen::Matrix<double, States, 1>& nextR) {
-
     Vector<States> rDot = (nextR - r) / m_dt.to<double>();
 
-    m_uff =
-        m_B.householderQr().solve(rDot - m_f(r, Vector<Inputs>::Zero()));
+    m_uff = m_B.householderQr().solve(rDot - m_f(r, Vector<Inputs>::Zero()));
 
     m_r = nextR;
     return m_uff;

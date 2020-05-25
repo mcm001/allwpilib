@@ -23,7 +23,8 @@ TEST(LinearPlantInversionFeedforwardTest, Calculate) {
   Eigen::Matrix<double, 2, 1> B;
   B << 0, 1;
 
-  frc::LinearPlantInversionFeedforward<2, 1> feedforward{A, B, units::second_t(0.02)};
+  frc::LinearPlantInversionFeedforward<2, 1> feedforward{A, B,
+                                                         units::second_t(0.02)};
 
   Eigen::Matrix<double, 2, 1> r;
   r << 2, 2;

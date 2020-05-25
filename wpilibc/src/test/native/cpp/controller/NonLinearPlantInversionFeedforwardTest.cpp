@@ -19,18 +19,19 @@ namespace frc {
 Vector<2> Dynamics(const Vector<2>& x, const Vector<1>& u) {
   Eigen::Matrix<double, 2, 1> result;
 
-  result = (frc::MakeMatrix<2, 2>(1.0, 0.0, 0.0, 1.0) * x) + (frc::MakeMatrix<2, 1>(0.0, 1.0) * u);
+  result = (frc::MakeMatrix<2, 2>(1.0, 0.0, 0.0, 1.0) * x) +
+           (frc::MakeMatrix<2, 1>(0.0, 1.0) * u);
 
   return result;
 }
 
 TEST(NonLinearPlantInversionFeedforwardTest, Calculate) {
-  std::function<Eigen::Matrix<double, 2, 1>(
-    const Eigen::Matrix<double, 2, 1>&, const Eigen::Matrix<double, 1, 1>&)>
-    modelDynamics =
-        [this](auto& x, auto& u) { return Dynamics(x, u); };
+  std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&,
+                                            const Eigen::Matrix<double, 1, 1>&)>
+      modelDynamics = [this](auto& x, auto& u) { return Dynamics(x, u); };
 
-  frc::NonLinearPlantInversionFeedforward<2, 1> feedforward{modelDynamics, units::second_t(0.02)};
+  frc::NonLinearPlantInversionFeedforward<2, 1> feedforward{
+      modelDynamics, units::second_t(0.02)};
 
   Eigen::Matrix<double, 2, 1> r;
   r << 2, 2;
