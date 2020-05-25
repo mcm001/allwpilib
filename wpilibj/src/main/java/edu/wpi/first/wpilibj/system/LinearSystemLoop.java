@@ -12,8 +12,8 @@ import java.util.function.Function;
 import org.ejml.MatrixDimensionException;
 import org.ejml.simple.SimpleMatrix;
 
+import edu.wpi.first.wpilibj.controller.LinearPlantInversionFeedforward;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
-import edu.wpi.first.wpilibj.controller.PlantInversionFeedforward;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpiutil.math.MatBuilder;
@@ -42,7 +42,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
   private final Nat<S> m_states;
   private final LinearSystem<S, I, O> m_plant;
   private final LinearQuadraticRegulator<S, I, O> m_controller;
-  private final PlantInversionFeedforward<S, I, O> m_feedforward;
+  private final LinearPlantInversionFeedforward<S, I, O> m_feedforward;
   private final KalmanFilter<S, I, O> m_observer;
   private Matrix<S, N1> m_nextR;
   private Function<Matrix<I, N1>, Matrix<I, N1>> m_clampFunction;
@@ -64,7 +64,8 @@ public class LinearSystemLoop<S extends Num, I extends Num,
                           KalmanFilter<S, I, O> observer,
                           double maxVoltageVolts,
                           double dtSeconds) {
-    this(states, plant, controller, new PlantInversionFeedforward<>(plant, dtSeconds), observer,
+    this(states, plant, controller,
+        new LinearPlantInversionFeedforward<>(plant, dtSeconds), observer,
         u -> StateSpaceUtil.normalizeInputVector(u, maxVoltageVolts));
   }
 
@@ -84,7 +85,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
                           KalmanFilter<S, I, O> observer,
                           Function<Matrix<I, N1>, Matrix<I, N1>> clampFunction,
                           double dtSeconds) {
-    this(states, plant, controller, new PlantInversionFeedforward<>(plant, dtSeconds),
+    this(states, plant, controller, new LinearPlantInversionFeedforward<>(plant, dtSeconds),
           observer, clampFunction);
   }
 
@@ -102,7 +103,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    */
   public LinearSystemLoop(Nat<S> states, LinearSystem<S, I, O> plant,
                           LinearQuadraticRegulator<S, I, O> controller,
-                          PlantInversionFeedforward<S, I, O> feedforward,
+                          LinearPlantInversionFeedforward<S, I, O> feedforward,
                           KalmanFilter<S, I, O> observer,
                           double maxVoltageVolts
   ) {
@@ -123,7 +124,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    */
   public LinearSystemLoop(Nat<S> states, LinearSystem<S, I, O> plant,
                           LinearQuadraticRegulator<S, I, O> controller,
-                          PlantInversionFeedforward<S, I, O> feedforward,
+                          LinearPlantInversionFeedforward<S, I, O> feedforward,
                           KalmanFilter<S, I, O> observer,
                           Function<Matrix<I, N1>, Matrix<I, N1>> clampFunction) {
     this.m_states = states;
@@ -260,7 +261,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    *
    * @return the feedforward used internally.
    */
-  public PlantInversionFeedforward<S, I, O> getFeedforward() {
+  public LinearPlantInversionFeedforward<S, I, O> getFeedforward() {
     return m_feedforward;
   }
 

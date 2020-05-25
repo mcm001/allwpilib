@@ -11,7 +11,7 @@
 #include <units/units.h>
 
 #include "frc/controller/LinearQuadraticRegulator.h"
-#include "frc/controller/PlantInversionFeedforward.h"
+#include "frc/controller/LinearPlantInversionFeedforward.h"
 #include "frc/estimator/KalmanFilter.h"
 #include "frc/system/LinearSystem.h"
 
@@ -48,7 +48,7 @@ class LinearSystemLoop {
    */
   LinearSystemLoop(LinearSystem<States, Inputs, Outputs>& plant,
                    LinearQuadraticRegulator<States, Inputs>& controller,
-                   PlantInversionFeedforward<States, Inputs>& feedforward,
+                   LinearPlantInversionFeedforward<States, Inputs>& feedforward,
                    KalmanFilter<States, Inputs, Outputs>& observer,
                    units::volt_t maxVoltage)
       : LinearSystemLoop(plant, controller, feedforward, observer,
@@ -68,7 +68,7 @@ class LinearSystemLoop {
    */
   LinearSystemLoop(LinearSystem<States, Inputs, Outputs>& plant,
                    LinearQuadraticRegulator<States, Inputs>& controller,
-                   PlantInversionFeedforward<States, Inputs>& feedforward,
+                   LinearPlantInversionFeedforward<States, Inputs>& feedforward,
                    KalmanFilter<States, Inputs, Outputs>& observer,
                    std::function<Eigen::Matrix<double, Inputs, 1>(
                        const Eigen::Matrix<double, Inputs, 1>&)>
@@ -170,7 +170,7 @@ class LinearSystemLoop {
    *
    * @return the feedforward used internally.
    */
-  const PlantInversionFeedforward<States, Inputs> Feedforward() const {
+  const LinearPlantInversionFeedforward<States, Inputs> Feedforward() const {
     return m_feedforward;
   }
 
@@ -240,7 +240,7 @@ class LinearSystemLoop {
  protected:
   LinearSystem<States, Inputs, Outputs>& m_plant;
   LinearQuadraticRegulator<States, Inputs>& m_controller;
-  PlantInversionFeedforward<States, Inputs>& m_feedforward;
+  LinearPlantInversionFeedforward<States, Inputs>& m_feedforward;
   KalmanFilter<States, Inputs, Outputs>& m_observer;
 
   /**

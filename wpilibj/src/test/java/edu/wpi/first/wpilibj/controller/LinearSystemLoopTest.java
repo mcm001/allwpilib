@@ -111,7 +111,7 @@ public class LinearSystemLoopTest {
     var controller = new LinearQuadraticRegulator<>(
           plant, qElms, rElms, kDt);
 
-    var feedforward = new PlantInversionFeedforward<>(plant, kDt);
+    var feedforward = new LinearPlantInversionFeedforward<>(plant, kDt);
 
     var loop = new LinearSystemLoop<>(Nat.N1(), plant, controller, feedforward, observer, 12);
 

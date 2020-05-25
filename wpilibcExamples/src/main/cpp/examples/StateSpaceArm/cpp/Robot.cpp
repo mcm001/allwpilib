@@ -12,7 +12,7 @@
 #include <frc/TimedRobot.h>
 #include <frc/XboxController.h>
 #include <frc/controller/LinearQuadraticRegulator.h>
-#include <frc/controller/PlantInversionFeedforward.h>
+#include <frc/controller/LinearPlantInversionFeedforward.h>
 #include <frc/drive/DifferentialDrive.h>
 #include <frc/estimator/KalmanFilter.h>
 #include <frc/system/LinearSystemLoop.h>
@@ -82,7 +82,7 @@ class Robot : public frc::TimedRobot {
 
   // Plant-inversion feedforward calculates the voltages necessary to reach our
   // reference.
-  frc::PlantInversionFeedforward<2, 1> m_feedforward{m_armPlant, 20_ms};
+  frc::LinearPlantInversionFeedforward<2, 1> m_feedforward{m_armPlant, 20_ms};
 
   // The state-space loop combines a controller, observer, feedforward and plant
   // for easy control.
