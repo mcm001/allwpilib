@@ -65,7 +65,7 @@ TEST(DifferentialDriveVelocitySystemTest, Constraint) {
   }
 }
 
-TEST(DifferentialDriveVoltageConstraintTest, HighCurvature) {
+TEST(DifferentialDriveVelocitySystemTest, HighCurvature) {
   const auto maxVoltage = 10_V;
 
   const LinearSystem<2, 2, 2> system =

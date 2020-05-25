@@ -10,8 +10,8 @@ package edu.wpi.first.wpilibj.system;
 import org.ejml.MatrixDimensionException;
 import org.ejml.simple.SimpleMatrix;
 
+import edu.wpi.first.wpilibj.controller.LinearPlantInversionFeedforward;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
-import edu.wpi.first.wpilibj.controller.PlantInversionFeedforward;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
@@ -39,7 +39,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
   private final Nat<S> m_states;
   private final LinearSystem<S, I, O> m_plant;
   private final LinearQuadraticRegulator<S, I, O> m_controller;
-  private final PlantInversionFeedforward<S, I, O> m_feedforward;
+  private final LinearPlantInversionFeedforward<S, I, O> m_feedforward;
   private final KalmanFilter<S, I, O> m_observer;
   private Matrix<S, N1> m_nextR;
 
@@ -57,7 +57,8 @@ public class LinearSystemLoop<S extends Num, I extends Num,
                           LinearQuadraticRegulator<S, I, O> controller,
                           KalmanFilter<S, I, O> observer,
                           double dtSeconds) {
-    this(states, plant, controller, new PlantInversionFeedforward<>(plant, dtSeconds), observer);
+    this(states, plant, controller,
+        new LinearPlantInversionFeedforward<>(plant, dtSeconds), observer);
   }
 
   /**
@@ -72,7 +73,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    */
   public LinearSystemLoop(Nat<S> states, LinearSystem<S, I, O> plant,
                           LinearQuadraticRegulator<S, I, O> controller,
-                          PlantInversionFeedforward<S, I, O> feedforward,
+                          LinearPlantInversionFeedforward<S, I, O> feedforward,
                           KalmanFilter<S, I, O> observer) {
     this.m_states = states;
     this.m_plant = plant;
@@ -207,7 +208,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
    *
    * @return the feedforward used internally.
    */
-  public PlantInversionFeedforward<S, I, O> getFeedforward() {
+  public LinearPlantInversionFeedforward<S, I, O> getFeedforward() {
     return m_feedforward;
   }
 

@@ -42,7 +42,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 template <int States, int Inputs>
-class PlantInversionFeedforward {
+class LinearPlantInversionFeedforward {
  public:
   /**
    * Constructs a feedforward with the given plant.
@@ -51,9 +51,9 @@ class PlantInversionFeedforward {
    * @param dtSeconds Discretization timestep.
    */
   template <int Outputs>
-  PlantInversionFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
+  LinearPlantInversionFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
                             units::second_t dt)
-      : PlantInversionFeedforward(plant.A(), plant.B(), dt) {}
+      : LinearPlantInversionFeedforward(plant.A(), plant.B(), dt) {}
 
   /**
    * Constructs a feedforward with the given coefficients.
@@ -62,7 +62,7 @@ class PlantInversionFeedforward {
    * @param B         Continuous input matrix of the plant being controlled.
    * @param dtSeconds Discretization timestep.
    */
-  PlantInversionFeedforward(const Eigen::Matrix<double, States, States>& A,
+  LinearPlantInversionFeedforward(const Eigen::Matrix<double, States, States>& A,
                             const Eigen::Matrix<double, States, Inputs>& B,
                             units::second_t dt)
       : m_dt(dt) {
@@ -72,28 +72,8 @@ class PlantInversionFeedforward {
     Reset(m_r);
   }
 
-  /**
-   * Constructs a feedforward with given model dynamics.
-   *
-   * @param f         A vector-valued function of x, the state, and
-   *                  u, the input, that returns the derivative of
-   *                  the state vector.
-   * @param dtSeconds The timestep between calls of calculate().
-   */
-  PlantInversionFeedforward(std::function<Vector<States>(const Vector<States>&,
-                                                         const Vector<Inputs>&)>
-                                f,
-                            units::second_t dt)
-      : m_dt(dt), m_f(f) {
-    m_B = NumericalJacobianU<States, States, Inputs>(f, Vector<States>::Zero(),
-                                                     Vector<Inputs>::Zero());
-
-    m_r.setZero();
-    Reset(m_r);
-  }
-
-  PlantInversionFeedforward(PlantInversionFeedforward&&) = default;
-  PlantInversionFeedforward& operator=(PlantInversionFeedforward&&) = default;
+  LinearPlantInversionFeedforward(LinearPlantInversionFeedforward&&) = default;
+  LinearPlantInversionFeedforward& operator=(LinearPlantInversionFeedforward&&) = default;
 
   /**
    * Returns the previously calculated feedforward as an input vector.
@@ -161,14 +141,9 @@ class PlantInversionFeedforward {
   Eigen::Matrix<double, Inputs, 1> Calculate(
       const Eigen::Matrix<double, States, 1>& r,
       const Eigen::Matrix<double, States, 1>& nextR) {
-    if (m_f) {
-      Vector<States> rDot = (nextR - r) / m_dt.to<double>();
+    
+    m_uff = m_B.householderQr().solve(nextR - (m_A * r));
 
-      m_uff =
-          m_B.householderQr().solve(rDot - m_f(m_r, Vector<Inputs>::Zero()));
-    } else {
-      m_uff = m_B.householderQr().solve(nextR - (m_A * r));
-    }
     m_r = nextR;
     return m_uff;
   }
@@ -178,12 +153,6 @@ class PlantInversionFeedforward {
   Eigen::Matrix<double, States, Inputs> m_B;
 
   units::second_t m_dt;
-
-  /**
-   * The model dynamics, if the overload is used.
-   */
-  std::function<Vector<States>(const Vector<States>&, const Vector<Inputs>&)>
-      m_f;
 
   // Current reference
   Vector<States> m_r;
