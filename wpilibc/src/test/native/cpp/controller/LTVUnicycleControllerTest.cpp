@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2019-2020 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -18,11 +18,7 @@
   EXPECT_LE(units::math::abs(val1 - val2), eps)
 
 TEST(LTVUnicycleControllerTest, ReachesReference) {
-  frc::LTVUnicycleController controller{      
-      {0.1, 0.1, 0.15},
-      {8.8, 4.0},
-      0.02_s
-  };
+  frc::LTVUnicycleController controller{{0.1, 0.1, 0.15}, {8.8, 4.0}, 0.02_s};
 
   frc::Pose2d robotPose{2.7_m, 23_m, frc::Rotation2d{0_deg}};
 

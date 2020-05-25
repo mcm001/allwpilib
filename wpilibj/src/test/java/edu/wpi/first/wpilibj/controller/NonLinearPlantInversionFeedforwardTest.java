@@ -7,6 +7,7 @@
 
 package edu.wpi.first.wpilibj.controller;
 
+import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpiutil.math.MatBuilder;
@@ -17,26 +18,29 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.ejml.simple.SimpleMatrix;
-
 class NonLinearPlantInversionFeedforwardTest {
-
   @SuppressWarnings("LocalVariableName")
   @Test
   void testCalculate() {
     NonLinearPlantInversionFeedforward<N2, N1, N1> feedforward =
-            new NonLinearPlantInversionFeedforward<N2, N1, N1>(Nat.N2(), Nat.N1(), this::getDynamics, 0.02);
+            new NonLinearPlantInversionFeedforward<N2, N1, N1>(
+                    Nat.N2(),
+                    Nat.N1(),
+                    this::getDynamics,
+                    0.02);
 
-     assertEquals(48.0, feedforward.calculate(
-             new MatBuilder<>(Nat.N2(), Nat.N1()).fill(2, 2),
-             new MatBuilder<>(Nat.N2(), Nat.N1()).fill(3, 3)).get(0, 0),
-             1e-6);
+    assertEquals(48.0, feedforward.calculate(
+         new MatBuilder<>(Nat.N2(), Nat.N1()).fill(2, 2),
+         new MatBuilder<>(Nat.N2(), Nat.N1()).fill(3, 3)).get(0, 0),
+         1e-6);
   }
 
+  @SuppressWarnings("ParameterName")
   protected Matrix<N2, N1> getDynamics(Matrix<N2, N1> x, Matrix<N1, N1> u) {
     var result = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
 
-    result = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1.000, 0, 0, 1.000).times(x).plus(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0, 1).times(u));
+    result = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1.000, 0, 0, 1.000).times(x)
+            .plus(new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0, 1).times(u));
 
     return result;
   }

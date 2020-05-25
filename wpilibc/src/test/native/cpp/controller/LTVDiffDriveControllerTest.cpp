@@ -155,7 +155,8 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
       controllerDynamics =
           [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
 
-  NonLinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics, kDt};
+  NonLinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics,
+                                                        kDt};
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,

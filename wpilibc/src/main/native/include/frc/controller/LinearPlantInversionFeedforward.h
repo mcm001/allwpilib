@@ -32,12 +32,6 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * <p>The feedforward is calculated as u_ff = B<sup>+</sup> (r_k+1 - A r_k),
  * were B<sup>+</sup> is the pseudoinverse of B.
  *
- * <p>The feedforward has an overload for model dynamics and calculates B
- * through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * With the dynamics, the feedforward is calculated as
- * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
- * of B.
- *
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
@@ -51,8 +45,8 @@ class LinearPlantInversionFeedforward {
    * @param dtSeconds Discretization timestep.
    */
   template <int Outputs>
-  LinearPlantInversionFeedforward(const LinearSystem<States, Inputs, Outputs>& plant,
-                            units::second_t dt)
+  LinearPlantInversionFeedforward(
+      const LinearSystem<States, Inputs, Outputs>& plant, units::second_t dt)
       : LinearPlantInversionFeedforward(plant.A(), plant.B(), dt) {}
 
   /**
@@ -62,9 +56,9 @@ class LinearPlantInversionFeedforward {
    * @param B         Continuous input matrix of the plant being controlled.
    * @param dtSeconds Discretization timestep.
    */
-  LinearPlantInversionFeedforward(const Eigen::Matrix<double, States, States>& A,
-                            const Eigen::Matrix<double, States, Inputs>& B,
-                            units::second_t dt)
+  LinearPlantInversionFeedforward(
+      const Eigen::Matrix<double, States, States>& A,
+      const Eigen::Matrix<double, States, Inputs>& B, units::second_t dt)
       : m_dt(dt) {
     DiscretizeAB<States, Inputs>(A, B, dt, &m_A, &m_B);
 
@@ -73,7 +67,8 @@ class LinearPlantInversionFeedforward {
   }
 
   LinearPlantInversionFeedforward(LinearPlantInversionFeedforward&&) = default;
-  LinearPlantInversionFeedforward& operator=(LinearPlantInversionFeedforward&&) = default;
+  LinearPlantInversionFeedforward& operator=(
+      LinearPlantInversionFeedforward&&) = default;
 
   /**
    * Returns the previously calculated feedforward as an input vector.
@@ -141,7 +136,6 @@ class LinearPlantInversionFeedforward {
   Eigen::Matrix<double, Inputs, 1> Calculate(
       const Eigen::Matrix<double, States, 1>& r,
       const Eigen::Matrix<double, States, 1>& nextR) {
-    
     m_uff = m_B.householderQr().solve(nextR - (m_A * r));
 
     m_r = nextR;

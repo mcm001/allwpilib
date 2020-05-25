@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -41,7 +41,7 @@ class LTVUnicycleControllerTest {
     controller.setTolerance(new Pose2d(0.01, 0.01, new Rotation2d(0.001)));
 
     List<Double> time = new ArrayList<>();
-    
+
     List<Double> trajXs = new ArrayList<>();
     List<Double> trajYs = new ArrayList<>();
     List<Double> trajHeadings = new ArrayList<>();
