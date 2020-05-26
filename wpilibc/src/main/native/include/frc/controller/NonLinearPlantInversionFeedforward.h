@@ -40,7 +40,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 template <int States, int Inputs>
-class NonLinearPlantInversionFeedforward {
+class NonlinearPlantInversionFeedforward {
  public:
   /**
    * Constructs a feedforward with given model dynamics.
@@ -50,7 +50,7 @@ class NonLinearPlantInversionFeedforward {
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  NonLinearPlantInversionFeedforward(
+  NonlinearPlantInversionFeedforward(
       std::function<Vector<States>(const Vector<States>&,
                                    const Vector<Inputs>&)>
           f,
@@ -63,10 +63,10 @@ class NonLinearPlantInversionFeedforward {
     Reset(m_r);
   }
 
-  NonLinearPlantInversionFeedforward(NonLinearPlantInversionFeedforward&&) =
+  NonlinearPlantInversionFeedforward(NonlinearPlantInversionFeedforward&&) =
       default;
-  NonLinearPlantInversionFeedforward& operator=(
-      NonLinearPlantInversionFeedforward&&) = default;
+  NonlinearPlantInversionFeedforward& operator=(
+      NonlinearPlantInversionFeedforward&&) = default;
 
   /**
    * Returns the previously calculated feedforward as an input vector.

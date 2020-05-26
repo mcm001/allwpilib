@@ -18,12 +18,12 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class NonLinearPlantInversionFeedforwardTest {
+class NonlinearPlantInversionFeedforwardTest {
   @SuppressWarnings("LocalVariableName")
   @Test
   void testCalculate() {
-    NonLinearPlantInversionFeedforward<N2, N1, N1> feedforward =
-            new NonLinearPlantInversionFeedforward<N2, N1, N1>(
+    NonlinearPlantInversionFeedforward<N2, N1, N1> feedforward =
+            new NonlinearPlantInversionFeedforward<N2, N1, N1>(
                     Nat.N2(),
                     Nat.N1(),
                     this::getDynamics,

@@ -14,7 +14,7 @@
 #include <wpi/MathExtras.h>
 
 #include "frc/StateSpaceUtil.h"
-#include "frc/controller/NonLinearPlantInversionFeedforward.h"
+#include "frc/controller/NonlinearPlantInversionFeedforward.h"
 #include "frc/estimator/DifferentialDriveStateEstimator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
@@ -61,7 +61,7 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
       modelDynamics =
           [&](auto& x, auto& u) { return estimator.Dynamics(x, u); };
 
-  NonLinearPlantInversionFeedforward<10, 2> feedforward{modelDynamics, dt};
+  NonlinearPlantInversionFeedforward<10, 2> feedforward{modelDynamics, dt};
 
   auto config = TrajectoryConfig(
       units::meters_per_second_t(12 / 3.02),

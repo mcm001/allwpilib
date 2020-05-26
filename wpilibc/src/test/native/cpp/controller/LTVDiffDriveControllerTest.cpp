@@ -14,7 +14,7 @@
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/controller/LTVDiffDriveController.h"
-#include "frc/controller/NonLinearPlantInversionFeedforward.h"
+#include "frc/controller/NonlinearPlantInversionFeedforward.h"
 #include "frc/estimator/DifferentialDriveStateEstimator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
@@ -55,7 +55,7 @@ TEST(LTVDiffDriveControllerTest, TrackingTest) {
       modelDynamics =
           [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
 
-  NonLinearPlantInversionFeedforward<10, 2> feedforward{modelDynamics, kDt};
+  NonlinearPlantInversionFeedforward<10, 2> feedforward{modelDynamics, kDt};
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,
@@ -155,7 +155,7 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
       controllerDynamics =
           [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
 
-  NonLinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics,
+  NonlinearPlantInversionFeedforward<10, 2> feedforward{controllerDynamics,
                                                         kDt};
 
   frc::DifferentialDriveStateEstimator estimator{
