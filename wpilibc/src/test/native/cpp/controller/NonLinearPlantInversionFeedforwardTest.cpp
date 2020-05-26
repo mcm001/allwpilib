@@ -12,7 +12,7 @@
 #include <Eigen/Core>
 #include <units/units.h>
 
-#include "frc/controller/NonLinearPlantInversionFeedforward.h"
+#include "frc/controller/NonlinearPlantInversionFeedforward.h"
 
 namespace frc {
 
@@ -25,12 +25,12 @@ Vector<2> Dynamics(const Vector<2>& x, const Vector<1>& u) {
   return result;
 }
 
-TEST(NonLinearPlantInversionFeedforwardTest, Calculate) {
+TEST(NonlinearPlantInversionFeedforwardTest, Calculate) {
   std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&,
                                             const Eigen::Matrix<double, 1, 1>&)>
       modelDynamics = [this](auto& x, auto& u) { return Dynamics(x, u); };
 
-  frc::NonLinearPlantInversionFeedforward<2, 1> feedforward{
+  frc::NonlinearPlantInversionFeedforward<2, 1> feedforward{
       modelDynamics, units::second_t(0.02)};
 
   Eigen::Matrix<double, 2, 1> r;

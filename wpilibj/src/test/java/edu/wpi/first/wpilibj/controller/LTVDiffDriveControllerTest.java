@@ -49,7 +49,7 @@ class LTVDiffDriveControllerTest {
 
   private LTVDiffDriveController controller;
   private DifferentialDriveStateEstimator estimator;
-  private NonLinearPlantInversionFeedforward<N10, N2, N3> feedforward;
+  private NonlinearPlantInversionFeedforward<N10, N2, N3> feedforward;
 
   private DifferentialDriveKinematics kinematics;
 
@@ -73,7 +73,7 @@ class LTVDiffDriveControllerTest {
             kinematics,
             kDt);
 
-    feedforward = new NonLinearPlantInversionFeedforward<>(
+    feedforward = new NonlinearPlantInversionFeedforward<>(
         Nat.N10(), Nat.N2(), controller::getDynamics, kDt);
 
     estimator = new DifferentialDriveStateEstimator(
