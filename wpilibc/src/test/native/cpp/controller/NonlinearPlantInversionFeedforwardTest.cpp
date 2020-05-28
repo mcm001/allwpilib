@@ -12,6 +12,7 @@
 #include <Eigen/Core>
 #include <units/units.h>
 
+#include "frc/StateSpaceUtil.h"
 #include "frc/controller/NonlinearPlantInversionFeedforward.h"
 
 namespace frc {

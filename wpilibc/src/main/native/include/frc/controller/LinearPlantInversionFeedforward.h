@@ -11,14 +11,10 @@
 #include <functional>
 
 #include <Eigen/Core>
-#include <Eigen/QR>
-#include <drake/math/discrete_algebraic_riccati_equation.h>
 #include <units/units.h>
 
-#include "frc/StateSpaceUtil.h"
 #include "frc/system/Discretization.h"
 #include "frc/system/LinearSystem.h"
-#include "frc/system/NumericalJacobian.h"
 
 namespace frc {
 
@@ -137,7 +133,6 @@ class LinearPlantInversionFeedforward {
       const Eigen::Matrix<double, States, 1>& r,
       const Eigen::Matrix<double, States, 1>& nextR) {
     m_uff = m_B.householderQr().solve(nextR - (m_A * r));
-
     m_r = nextR;
     return m_uff;
   }

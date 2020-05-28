@@ -9,7 +9,6 @@
 #include <units/units.h>
 #include <wpi/MathExtras.h>
 
-#include "frc/StateSpaceUtil.h"
 #include "frc/controller/LTVUnicycleController.h"
 #include "frc/trajectory/TrajectoryGenerator.h"
 #include "gtest/gtest.h"
