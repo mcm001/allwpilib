@@ -35,7 +35,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 @SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName"})
-public class NonlinearPlantInversionFeedforward<S extends Num, I extends Num,
+public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num,
         O extends Num> {
   /**
    * The current reference state.
@@ -71,7 +71,7 @@ public class NonlinearPlantInversionFeedforward<S extends Num, I extends Num,
    *                  the state vector.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  public NonlinearPlantInversionFeedforward(
+  public ControlAffinePlantInversionFeedforward(
         Nat<S> states,
         Nat<I> inputs,
         BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> f,
@@ -99,7 +99,7 @@ public class NonlinearPlantInversionFeedforward<S extends Num, I extends Num,
    * @param B         The B matrix of the plant.
    * @param dtSeconds The timestep between calls of calculate().
    */
-  public NonlinearPlantInversionFeedforward(
+  public ControlAffinePlantInversionFeedforward(
         Nat<S> states,
         Nat<I> inputs,
         Function<Matrix<S, N1>, Matrix<S, N1>> f,
