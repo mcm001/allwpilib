@@ -24,16 +24,16 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * Constructs a control-affine plant inversion model-based feedforward from
  * given model dynamics.
  *
- * <p>If given the vector valued function as f(x, u) where x is the state
+ * If given the vector valued function as f(x, u) where x is the state
  * vector and u is the input vector, the B matrix(continuous input matrix)
- * is calculated through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * In this case f has to be control-affine(of the form f(x) + Bu).
+ * is calculated through a NumericalJacobian. In this case f has to be
+ * control-affine (of the form f(x) + Bu).
  *
- * <p>The feedforward is calculated as
+ * The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
  * of B.
  *
- * <p>This feedforward does not account for a dynamic B matrix, B is either
+ * This feedforward does not account for a dynamic B matrix, B is either
  * determined or supplied when the feedforward is created and remains constant.
  *
  * <p>For more on the underlying math, read

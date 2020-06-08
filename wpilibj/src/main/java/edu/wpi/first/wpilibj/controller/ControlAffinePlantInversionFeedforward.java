@@ -26,7 +26,7 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * <p>If given the vector valued function as f(x, u) where x is the state
  * vector and u is the input vector, the B matrix(continuous input matrix)
  * is calculated through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
- * In this case f has to be control-affine(of the form f(x) + Bu).
+ * In this case f has to be control-affine (of the form f(x) + Bu).
  *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
