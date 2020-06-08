@@ -24,8 +24,9 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * Constructs a plant inversion model-based feedforward from given model
  * dynamics.
  *
- * <p>B is calculated through a {@link
- * edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * <p>If given the vector valued function as f(x, u) where x is the state
+ * vector and u is the input vector, B is calculated through a 
+ * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
  *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
@@ -38,12 +39,13 @@ template <int States, int Inputs>
 class NonlinearPlantInversionFeedforward {
  public:
   /**
-   * Constructs a feedforward with given model dynamics.
+   * Constructs a feedforward with given model dynamics as a function
+   * of state and input.
    *
    * @param f         A vector-valued function of x, the state, and
    *                  u, the input, that returns the derivative of
    *                  the state vector.
-   * @param dtSeconds The timestep between calls of calculate().
+   * @param dt        The timestep between calls of calculate().
    */
   NonlinearPlantInversionFeedforward(
       std::function<Vector<States>(const Vector<States>&,
@@ -53,6 +55,25 @@ class NonlinearPlantInversionFeedforward {
       : m_dt(dt), m_f(f) {
     m_B = NumericalJacobianU<States, States, Inputs>(f, Vector<States>::Zero(),
                                                      Vector<Inputs>::Zero());
+
+    m_r.setZero();
+    Reset(m_r);
+  }
+
+  /**
+   * Constructs a feedforward with given model dynamics and B matrix.
+   *
+   * @param f         A vector-valued function of x, the state,
+   *                  that returns the derivative of the state vector.
+   * @param B         The B matrix of the plant.
+   * @param dt The timestep between calls of calculate().
+   */
+  NonlinearPlantInversionFeedforward(
+      std::function<Vector<States>(const Vector<States>&)> f,
+      const Eigen::Matrix<double, States, Inputs>& B,
+      units::second_t dt)
+      : m_dt(dt), m_B(B) {
+    m_f = [=](const Vector<States>& x, const Vector<Inputs>& u) -> Vector<States> { return f(x); };
 
     m_r.setZero();
     Reset(m_r);
