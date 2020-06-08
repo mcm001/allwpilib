@@ -53,7 +53,7 @@ TEST(ControlAffinePlantInversionFeedforwardTest, Calculate) {
 TEST(ControlAffinePlantInversionFeedforwardTest, CalculateState) {
   std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&)>
       modelDynamics = [this](auto& x) { return StateDynamics(x); };
-  
+
   Eigen::Matrix<double, 2, 1> B;
   B << 0, 1;
 

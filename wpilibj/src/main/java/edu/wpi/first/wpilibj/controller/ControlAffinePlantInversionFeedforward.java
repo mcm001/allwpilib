@@ -20,16 +20,20 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
- * Constructs a plant inversion model-based feedforward from given model
+ * Constructs a control-affine plant inversion model-based feedforward from given model
  * dynamics.
  *
  * <p>If given the vector valued function as f(x, u) where x is the state
- * vector and u is the input vector, B is calculated through a 
- * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * vector and u is the input vector, B is calculated through a
+ * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}. In this case
+ * f has to be control-affine(of the from f(x) + Bu).
  *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
  * of B.
+ *
+ * <p>This feedforward does not account for a dynamic B matrix, B is either
+ * determined or supplied when the feedforward is created and remains constant.
  *
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -68,7 +72,8 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
    * @param inputs    A {@link Nat} representing the number of inputs.
    * @param f         A vector-valued function of x, the state, and
    *                  u, the input, that returns the derivative of
-   *                  the state vector.
+   *                  the state vector. HAS to be control-affine
+   *                  (of the from f(x) + Bu).
    * @param dtSeconds The timestep between calls of calculate().
    */
   public ControlAffinePlantInversionFeedforward(
@@ -90,7 +95,8 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
   }
 
   /**
-   * Constructs a feedforward with given model dynamics and B matrix.
+   * Constructs a feedforward with given model dynamics as a function of state,
+   * and supplied B matrix.
    *
    * @param states    A {@link Nat} representing the number of states.
    * @param inputs    A {@link Nat} representing the number of inputs.
@@ -170,9 +176,9 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
 
   /**
    * Calculate the feedforward with only the future reference. This
-   * uses the internally stored previous reference.
+   * uses the internally stored current reference.
    *
-   * @param nextR The future reference state of time k + dt.
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */
@@ -183,8 +189,8 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
   /**
    * Calculate the feedforward with current and future reference vectors.
    *
-   * @param r The current reference state of time k.
-   * @param nextR The future reference state of time k + dt.
+   * @param r     The reference state of the current timestep(k).
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */

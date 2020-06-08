@@ -13,8 +13,8 @@
 #include <wpi/MathExtras.h>
 
 #include "frc/StateSpaceUtil.h"
-#include "frc/controller/LTVDiffDriveController.h"
 #include "frc/controller/ControlAffinePlantInversionFeedforward.h"
+#include "frc/controller/LTVDiffDriveController.h"
 #include "frc/estimator/DifferentialDriveStateEstimator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
@@ -152,7 +152,7 @@ TEST(LTVDiffDriveControllerTest, TrackingTestNoise) {
           [&](auto& x, auto& u) { return controller.Dynamics(x, u); };
 
   ControlAffinePlantInversionFeedforward<10, 2> feedforward{controllerDynamics,
-                                                        kDt};
+                                                            kDt};
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,

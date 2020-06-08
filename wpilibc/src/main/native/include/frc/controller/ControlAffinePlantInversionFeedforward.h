@@ -21,16 +21,20 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * Constructs a plant inversion model-based feedforward from given model
- * dynamics.
+ * Constructs a control-affine plant inversion model-based feedforward from
+ * given model dynamics.
  *
  * <p>If given the vector valued function as f(x, u) where x is the state
- * vector and u is the input vector, B is calculated through a 
- * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * vector and u is the input vector, B is calculated through a
+ * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}. In this case
+ * f has to be control-affine(of the from f(x) + Bu).
  *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
  * of B.
+ *
+ * <p>This feedforward does not account for a dynamic B matrix, B is either
+ * determined or supplied when the feedforward is created and remains constant.
  *
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -42,10 +46,11 @@ class ControlAffinePlantInversionFeedforward {
    * Constructs a feedforward with given model dynamics as a function
    * of state and input.
    *
-   * @param f         A vector-valued function of x, the state, and
-   *                  u, the input, that returns the derivative of
-   *                  the state vector.
-   * @param dt        The timestep between calls of calculate().
+   * @param f  A vector-valued function of x, the state, and
+   *           u, the input, that returns the derivative of
+   *           the state vector. HAS to be control-affine
+   *           (of the from f(x) + Bu).
+   * @param dt The timestep between calls of calculate().
    */
   ControlAffinePlantInversionFeedforward(
       std::function<Vector<States>(const Vector<States>&,
@@ -61,26 +66,27 @@ class ControlAffinePlantInversionFeedforward {
   }
 
   /**
-   * Constructs a feedforward with given model dynamics and B matrix.
+   * Constructs a feedforward with given model dynamics as a function of state,
+   * and supplied B matrix.
    *
-   * @param f         A vector-valued function of x, the state,
-   *                  that returns the derivative of the state vector.
-   * @param B         The B matrix of the plant.
+   * @param f  A vector-valued function of x, the state,
+   *           that returns the derivative of the state vector.
+   * @param B  The B matrix of the plant.
    * @param dt The timestep between calls of calculate().
    */
   ControlAffinePlantInversionFeedforward(
       std::function<Vector<States>(const Vector<States>&)> f,
-      const Eigen::Matrix<double, States, Inputs>& B,
-      units::second_t dt)
+      const Eigen::Matrix<double, States, Inputs>& B, units::second_t dt)
       : m_dt(dt), m_B(B) {
-    m_f = [=](const Vector<States>& x, const Vector<Inputs>& u) -> Vector<States> { return f(x); };
+    m_f = [=](const Vector<States>& x,
+              const Vector<Inputs>& u) -> Vector<States> { return f(x); };
 
     m_r.setZero();
     Reset(m_r);
   }
 
-  ControlAffinePlantInversionFeedforward(ControlAffinePlantInversionFeedforward&&) =
-      default;
+  ControlAffinePlantInversionFeedforward(
+      ControlAffinePlantInversionFeedforward&&) = default;
   ControlAffinePlantInversionFeedforward& operator=(
       ControlAffinePlantInversionFeedforward&&) = default;
 
@@ -128,9 +134,9 @@ class ControlAffinePlantInversionFeedforward {
 
   /**
    * Calculate the feedforward with only the future reference. This
-   * uses the internally stored previous reference.
+   * uses the internally stored current reference.
    *
-   * @param nextR The future reference state of time k + dt.
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */
@@ -140,10 +146,10 @@ class ControlAffinePlantInversionFeedforward {
   }
 
   /**
-   * Calculate the feedforward with current anf future reference vectors.
+   * Calculate the feedforward with current and future reference vectors.
    *
-   * @param r     The current reference state of time k.
-   * @param nextR The future reference state of time k + dt.
+   * @param r     The reference state of the current timestep(k).
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */
@@ -164,7 +170,7 @@ class ControlAffinePlantInversionFeedforward {
   units::second_t m_dt;
 
   /**
-   * The model dynamics, if the overload is used.
+   * The model dynamics.
    */
   std::function<Vector<States>(const Vector<States>&, const Vector<Inputs>&)>
       m_f;
