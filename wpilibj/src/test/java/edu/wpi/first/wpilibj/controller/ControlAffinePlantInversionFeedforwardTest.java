@@ -18,12 +18,12 @@ import edu.wpi.first.wpiutil.math.numbers.N2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class NonlinearPlantInversionFeedforwardTest {
+class ControlAffinePlantInversionFeedforwardTest {
   @SuppressWarnings("LocalVariableName")
   @Test
   void testCalculate() {
-    NonlinearPlantInversionFeedforward<N2, N1, N1> feedforward =
-            new NonlinearPlantInversionFeedforward<N2, N1, N1>(
+    ControlAffinePlantInversionFeedforward<N2, N1, N1> feedforward =
+            new ControlAffinePlantInversionFeedforward<N2, N1, N1>(
                     Nat.N2(),
                     Nat.N1(),
                     this::getDynamics,
@@ -40,8 +40,8 @@ class NonlinearPlantInversionFeedforwardTest {
   void testCalculateState() {
     Matrix<N2, N1> B = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0, 1);
 
-    NonlinearPlantInversionFeedforward<N2, N1, N1> feedforward =
-            new NonlinearPlantInversionFeedforward<N2, N1, N1>(
+    ControlAffinePlantInversionFeedforward<N2, N1, N1> feedforward =
+            new ControlAffinePlantInversionFeedforward<N2, N1, N1>(
                     Nat.N2(),
                     Nat.N1(),
                     this::getStateDynamics,
