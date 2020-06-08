@@ -20,13 +20,13 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
- * Constructs a control-affine plant inversion model-based feedforward from given model
- * dynamics.
+ * Constructs a control-affine plant inversion model-based feedforward from 
+ * given model dynamics.
  *
  * <p>If given the vector valued function as f(x, u) where x is the state
- * vector and u is the input vector, B is calculated through a
- * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}. In this case
- * f has to be control-affine(of the from f(x) + Bu).
+ * vector and u is the input vector, the B matrix(continuous input matrix)
+ * is calculated through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * In this case f has to be control-affine(of the form f(x) + Bu).
  *
  * <p>The feedforward is calculated as
  * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
@@ -73,7 +73,7 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
    * @param f         A vector-valued function of x, the state, and
    *                  u, the input, that returns the derivative of
    *                  the state vector. HAS to be control-affine
-   *                  (of the from f(x) + Bu).
+   *                  (of the form f(x) + Bu).
    * @param dtSeconds The timestep between calls of calculate().
    */
   public ControlAffinePlantInversionFeedforward(
@@ -96,13 +96,13 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
 
   /**
    * Constructs a feedforward with given model dynamics as a function of state,
-   * and supplied B matrix.
+   * and the plant's B(continuous input matrix) matrix.
    *
    * @param states    A {@link Nat} representing the number of states.
    * @param inputs    A {@link Nat} representing the number of inputs.
    * @param f         A vector-valued function of x, the state,
    *                  that returns the derivative of the state vector.
-   * @param B         The B matrix of the plant.
+   * @param B         Continuous input matrix of the plant being controlled.
    * @param dtSeconds The timestep between calls of calculate().
    */
   public ControlAffinePlantInversionFeedforward(
