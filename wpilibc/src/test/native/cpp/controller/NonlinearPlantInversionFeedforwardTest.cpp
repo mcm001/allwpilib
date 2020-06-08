@@ -26,6 +26,14 @@ Vector<2> Dynamics(const Vector<2>& x, const Vector<1>& u) {
   return result;
 }
 
+Vector<2> StateDynamics(const Vector<2>& x) {
+  Eigen::Matrix<double, 2, 1> result;
+
+  result = (frc::MakeMatrix<2, 2>(1.0, 0.0, 0.0, 1.0) * x);
+
+  return result;
+}
+
 TEST(NonlinearPlantInversionFeedforwardTest, Calculate) {
   std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&,
                                             const Eigen::Matrix<double, 1, 1>&)>
@@ -33,6 +41,24 @@ TEST(NonlinearPlantInversionFeedforwardTest, Calculate) {
 
   frc::NonlinearPlantInversionFeedforward<2, 1> feedforward{
       modelDynamics, units::second_t(0.02)};
+
+  Eigen::Matrix<double, 2, 1> r;
+  r << 2, 2;
+  Eigen::Matrix<double, 2, 1> nextR;
+  nextR << 3, 3;
+
+  EXPECT_NEAR(48, feedforward.Calculate(r, nextR)(0, 0), 1e-6);
+}
+
+TEST(NonlinearPlantInversionFeedforwardTest, CalculateState) {
+  std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&)>
+      modelDynamics = [this](auto& x) { return StateDynamics(x); };
+  
+  Eigen::Matrix<double, 2, 1> B;
+  B << 0, 1;
+
+  frc::NonlinearPlantInversionFeedforward<2, 1> feedforward{
+      modelDynamics, B, units::second_t(0.02)};
 
   Eigen::Matrix<double, 2, 1> r;
   r << 2, 2;

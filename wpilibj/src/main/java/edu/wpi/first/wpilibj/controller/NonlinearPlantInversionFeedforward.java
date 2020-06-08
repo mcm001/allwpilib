@@ -8,6 +8,7 @@
 package edu.wpi.first.wpilibj.controller;
 
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -19,12 +20,16 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
- * Constructs a plant inversion model-based feedforward from given model dynamics.
+ * Constructs a plant inversion model-based feedforward from given model
+ * dynamics.
  *
- * <p>B is calculated through a {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
+ * <p>If given the vector valued function as f(x, u) where x is the state
+ * vector and u is the input vector, B is calculated through a 
+ * {@link edu.wpi.first.wpilibj.system.NumericalJacobian}.
  *
  * <p>The feedforward is calculated as
- * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse of B.
+ * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
+ * of B.
  *
  * <p>For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
@@ -56,7 +61,8 @@ public class NonlinearPlantInversionFeedforward<S extends Num, I extends Num,
   private final BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<S, N1>> m_f;
 
   /**
-   * Constructs a feedforward with given model dynamics.
+   * Constructs a feedforward with given model dynamics as a function
+   * of state and input.
    *
    * @param states    A {@link Nat} representing the number of states.
    * @param inputs    A {@link Nat} representing the number of inputs.
@@ -76,6 +82,34 @@ public class NonlinearPlantInversionFeedforward<S extends Num, I extends Num,
 
     this.m_B = NumericalJacobian.numericalJacobianU(states, inputs,
             m_f, MatrixUtils.zeros(states), MatrixUtils.zeros(inputs));
+
+    m_r = new Matrix<S, N1>(new SimpleMatrix(states.getNum(), 1));
+    m_uff = new Matrix<I, N1>(new SimpleMatrix(inputs.getNum(), 1));
+
+    reset(m_r);
+  }
+
+  /**
+   * Constructs a feedforward with given model dynamics and B matrix.
+   *
+   * @param states    A {@link Nat} representing the number of states.
+   * @param inputs    A {@link Nat} representing the number of inputs.
+   * @param f         A vector-valued function of x, the state,
+   *                  that returns the derivative of the state vector.
+   * @param B         The B matrix of the plant.
+   * @param dtSeconds The timestep between calls of calculate().
+   */
+  public NonlinearPlantInversionFeedforward(
+        Nat<S> states,
+        Nat<I> inputs,
+        Function<Matrix<S, N1>, Matrix<S, N1>> f,
+        Matrix<S, I> B,
+        double dtSeconds) {
+    this.m_dt = dtSeconds;
+    this.m_inputs = inputs;
+
+    this.m_f = (x, u) -> f.apply(x);
+    this.m_B = B;
 
     m_r = new Matrix<S, N1>(new SimpleMatrix(states.getNum(), 1));
     m_uff = new Matrix<I, N1>(new SimpleMatrix(inputs.getNum(), 1));
