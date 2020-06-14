@@ -36,7 +36,7 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * This feedforward does not account for a dynamic B matrix, B is either
  * determined or supplied when the feedforward is created and remains constant.
  *
- * <p>For more on the underlying math, read
+ * For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 template <int States, int Inputs>
