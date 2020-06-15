@@ -47,9 +47,9 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
  *
  * <p>Our state-space system is:
  *
- * <p>x = [[x, y, theta, vel_l, vel_r]]^T in the field coordinate system.
+ * <p><strong> x = [[x, y, theta, vel_l, vel_r]]^T </strong> in the field coordinate system.
  *
- * <p>u = [[voltage_l, voltage_r]]^T the control input.
+ * <p><strong> u = [[voltage_l, voltage_r]]^T </strong> the control input.
  */
 @SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName", "PMD.SingularField"})
 public class LTVDiffDriveController {

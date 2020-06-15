@@ -20,7 +20,7 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
- * Constructs a control-affine plant inversion model-based feedforward from 
+ * Constructs a control-affine plant inversion model-based feedforward from
  * given model dynamics.
  *
  * <p>If given the vector valued function as f(x, u) where x is the state
@@ -29,8 +29,8 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
  * In this case f has to be control-affine (of the form f(x) + Bu).
  *
  * <p>The feedforward is calculated as
- * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
- * of B.
+ * <strong> u_ff = B<sup>+</sup> (rDot - f(x))</strong>, where
+ * <strong> B<sup>+</sup> </strong> is the pseudoinverse of B.
  *
  * <p>This feedforward does not account for a dynamic B matrix, B is either
  * determined or supplied when the feedforward is created and remains constant.
@@ -175,8 +175,21 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
   }
 
   /**
-   * Calculate the feedforward with only the future reference. This
-   * uses the internally stored current reference.
+   * Resets the feedforward with a zero initial state vector.
+   */
+  public void reset() {
+    m_r.getStorage().fill(0.0);
+    m_uff.getStorage().fill(0.0);
+  }
+
+  /**
+   * Calculate the feedforward with only the desired
+   * future reference. This uses the internally stored "current"
+   * reference.
+   *
+   * <p>If this method is used the initial state of the system is the one
+   * set using {@link LinearPlantInversionFeedforward#reset(Matrix)}.
+   * If the initial state is not set it defaults to a zero vector.
    *
    * @param nextR The reference state of the future timestep(k + dt).
    *

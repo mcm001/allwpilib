@@ -23,43 +23,47 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * This class wraps an Extended Kalman Filter to fuse latency-compensated
+ * This class wraps an ExtendedKalmanFilter to fuse latency-compensated
  * global measurements(ex. vision) with differential drive encoder measurements.
  * It will correct for noisy global measurements and encoder drift.
  *
- * <p>This class is indented to be paired with LTVDiffDriveController as it
+ * This class is indented to be paired with a LTVDiffDriveController as it
  * provides a 10-state estimate. This can then be trimmed into 5-state
  * using Eigen::Matrix.block<>() with the operation
- * ```10-stateEstimate.block<5, 1>(0, 0)```
+ *
+ *     <10-stateEstimate>.block<5, 1>(0, 0)
+ *
  * then passed into the controller as the current state estimate.
  *
- * <p>{@link DifferentialDriveStateEstimator#update} should be called every
+ * DifferentialDriveStateEstimator::Update should be called every
  * robot loop (if your robot loops are faster than the default then you should
- * change the {@link
- * DifferentialDriveStateEstimator#DifferentialDriveStateEstimator(LinearSystem,
- * Matrix, Matrix, Matrix, Matrix, DifferentialDriveKinematics, double) nominal
- * delta time}.)
- * {@link DifferentialDriveStateEstimator#applyPastGlobalMeasurement} can be
+ * use DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(const
+ * LinearSystem<2, 2, 2>&, const Vector<10>&, const Vector<10>&, const
+ * Vector<3>&, const Vector<3>&, const DifferentialDriveKinematics&,
+ * units::second_t)
+ * to change the nominal delta time.)
+ *
+ * DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement can be
  * called as infrequently as you want.
  *
- * <p>Our state-space system is:
+ * Our state-space system is:
  *
- * <p>x = [[x, y, theta, vel_l, vel_r, dist_l, dist_r, voltError_l, voltError_r,
- * angularVelError]]^T in the field coordinate system (dist_* are wheel
- * distances.)
+ * <strong> x = [[x, y, theta, vel_l, vel_r, dist_l, dist_r, voltError_l,
+ * voltError_r, angularVelError]]^T </strong> in the field coordinate system
+ * (dist_* are wheel distances.)
  *
- * <p>u = [[voltage_l, voltage_r]]^T This is typically the control input of the
- * last timestep from a LTVDiffDriveController.
+ * <strong> u = [[voltage_l, voltage_r]]^T </strong> This is typically the
+ * control input of the last timestep from a LTVDiffDriveController.
  *
- * <p>y = [[x, y, theta]]^T from vision, or y = [[dist_l, dist_r, theta]] from
- * encoders and gyro.
+ * <strong> y = [[x, y, theta]]^T </strong> from vision, or
+ * <strong> y = [[dist_l, dist_r, theta]] </strong> from encoders and gyro.
  */
 class DifferentialDriveStateEstimator {
  public:
   /**
    * Constructs a DifferentialDriveStateEstimator.
    *
-   * @param plant                    A {@link LinearSystem} representing a
+   * @param plant                    A LinearSystem representing a
    * differential drivetrain.
    * @param initialState             The starting state estimate.
    * @param stateStdDevs             Standard deviations of model states.
@@ -69,7 +73,7 @@ class DifferentialDriveStateEstimator {
    *                                 angle less.
    * @param globalMeasurementStdDevs Standard deviations of the global(vision)
    * measurements. Increase these numbers to global(vision) measurements less.
-   * @param kinematics               A {@link DifferentialDriveKinematics}
+   * @param kinematics               A link DifferentialDriveKinematics
    * object representing the differential drivetrain's kinematics.
    * @param nominalDtSeconds         The time in seconds between each robot
    * loop.
@@ -88,13 +92,10 @@ class DifferentialDriveStateEstimator {
    * @param robotPoseMeters  The measured robot pose.
    * @param timestampSeconds The timestamp of the global measurement in seconds.
    * Note that if you don't use your own time source by calling
-   *                         {@link
-   * DifferentialDriveStateEstimator#updateWithTime} then you must use a
+   * DifferentialDriveStateEstimator::updateWithTime then you must use a
    * timestamp with an epoch since FPGA startup (i.e. the epoch of this
-   * timestamp is the same epoch as
-   *                         {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
-   *                         Timer.getFPGATimestamp}.) This means that you
-   * should use Timer.getFPGATimestamp as your time source in this case.
+   * timestamp is the same epoch as Timer::getFPGATimestamp.) This means that
+   * you should use Timer::getFPGATimestamp as your time source in this case.
    */
   void ApplyPastGlobalMeasurement(const Pose2d& visionRobotPose,
                                   units::second_t timestamp);
@@ -110,8 +111,7 @@ class DifferentialDriveStateEstimator {
   /**
    * Updates the the Extended Kalman Filter using wheel encoder information,
    * robot heading and the previous control input. The control input can be
-   * obtained from a
-   * {@link edu.wpi.first.wpilibc.controller.LTVDiffDriveController}.
+   * obtained from a LTVDiffDriveController.
    * Note that this should be called every loop.
    *
    * @param heading       The current heading of the robot in radians.
@@ -129,8 +129,7 @@ class DifferentialDriveStateEstimator {
   /**
    * Updates the the Extended Kalman Filter using wheel encoder information,
    * robot heading and the previous control input. The control input can be
-   * obtained from a
-   * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController}.
+   * obtained from a LTVDiffDriveController.
    * Note that this should be called every loop.
    *
    * @param headingRadians     The current heading of the robot in radians.

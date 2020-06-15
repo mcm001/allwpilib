@@ -22,13 +22,13 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * Constructs a plant inversion model-based feedforward from a {@link
- * LinearSystem}.
+ * Constructs a plant inversion model-based feedforward from a LinearSystem.
  *
- * <p>The feedforward is calculated as u_ff = B<sup>+</sup> (r_k+1 - A r_k),
- * were B<sup>+</sup> is the pseudoinverse of B.
+ * The feedforward is calculated as <strong> u_ff = B<sup>+</sup> (r_k+1 - A
+ * r_k) </strong>, where <strong> B<sup>+</sup> </strong> is the pseudoinverse
+ * of B.
  *
- * <p>For more on the underlying math, read
+ * For more on the underlying math, read
  * https://file.tavsys.net/control/controls-engineering-in-frc.pdf.
  */
 template <int States, int Inputs>
@@ -103,16 +103,29 @@ class LinearPlantInversionFeedforward {
    *
    * @param initialState The initial state vector.
    */
-  void Reset(const Eigen::Matrix<double, States, 1>& initalState) {
-    m_r = initalState;
+  void Reset(const Eigen::Matrix<double, States, 1>& initialState) {
+    m_r = initialState;
     m_uff.setZero();
   }
 
   /**
-   * Calculate the feedforward with only the future reference. This
-   * uses the internally stored previous reference.
+   * Resets the feedforward with a zero initial state vector.
+   */
+  void Reset() {
+    m_r.setZero();
+    m_uff.setZero();
+  }
+
+  /**
+   * Calculate the feedforward with only the desired
+   * future reference. This uses the internally stored "current"
+   * reference.
    *
-   * @param nextR The future reference state of time k + dt.
+   * If this method is used the initial state of the system is the one
+   * set using Reset(const Eigen::Matrix<double, States, 1>&).
+   * If the initial state is not set it defaults to a zero vector.
+   *
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */
@@ -122,10 +135,10 @@ class LinearPlantInversionFeedforward {
   }
 
   /**
-   * Calculate the feedforward with current anf future reference vectors.
+   * Calculate the feedforward with current and future reference vectors.
    *
-   * @param r     The current reference state of time k.
-   * @param nextR The future reference state of time k + dt.
+   * @param r     The reference state of the current timestep(k).
+   * @param nextR The reference state of the future timestep(k + dt).
    *
    * @return The calculated feedforward.
    */
