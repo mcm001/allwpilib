@@ -24,7 +24,9 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
 import edu.wpi.first.wpiutil.math.numbers.N5;
 
 /**
- * This class wraps an Extended Kalman Filter to fuse latency-compensated vision
+ * This class wraps an
+ * {@link edu.wpi.first.wpilibj.estimator.ExtendedKalmanFilter Extended Kalman Filter}
+ * to fuse latency-compensated vision
  * measurements with differential drive encoder measurements. It will correct
  * for noisy vision measurements and encoder drift. It is intended to be an easy
  * drop-in for
@@ -43,15 +45,17 @@ import edu.wpi.first.wpiutil.math.numbers.N5;
  *
  * <p>Our state-space system is:
  *
- * <p>x = [[x, y, theta, dist_l, dist_r]]^T in the field coordinate system (dist_* are wheel
- * distances.)
+ * <p><strong> x = [[x, y, theta, dist_l, dist_r]]^T </strong>
+ * in the field coordinate system (dist_* are wheel distances.)
  *
- * <p>u = [[vx, vy, omega]]^T (robot-relative velocities) -- NB: using velocities make things
- * considerably easier, because it means that teams don't have to worry about getting an accurate
- * model. Basically, we suspect that it's easier for teams to get good encoder data than it is for
+ * <p><strong> u = [[vx, vy, omega]]^T </strong> (robot-relative velocities)
+ *  -- NB: using velocities make things considerably easier, because it means that
+ * teams don't have to worry about getting an accurate model.
+ * Basically, we suspect that it's easier for teams to get good encoder data than it is for
  * them to perform system identification well enough to get a good model.
  *
- * <p>y = [[x, y, theta]]^T from vision, or y = [[dist_l, dist_r, theta]] from encoders and gyro.
+ * <p><strong>y = [[x, y, theta]]^T </strong> from vision,
+ * or <strong>y = [[dist_l, dist_r, theta]] </strong> from encoders and gyro.
  */
 public class DifferentialDrivePoseEstimator {
   private final ExtendedKalmanFilter<N5, N3, N3> m_observer;

@@ -29,22 +29,26 @@ import edu.wpi.first.wpiutil.math.numbers.N4;
 import edu.wpi.first.wpiutil.math.numbers.N7;
 
 /**
- * This class wraps an Extended Kalman Filter to fuse latency-compensated global
- * measurements(ex. vision) with differential drive encoder
+ * This class wraps an
+ * {@link edu.wpi.first.wpilibj.estimator.ExtendedKalmanFilter Extended Kalman Filter}
+ * to fuse latency-compensated global measurements(ex. vision) with differential drive encoder
  * measurements. It will correct for noisy global measurements and encoder drift.
  *
  * <p>This class is indented to be paired with
  * {@link edu.wpi.first.wpilibj.controller.LTVDiffDriveController} as it provides a
- * 10-state estimate. This can then be trimmed into 5-state using{@link Matrix#block}
+ * 10-state estimate. This can then be trimmed into 5-state using {@link Matrix#block}
  * with the operation
- * ```10-stateEstimate.block(Nat.N5(), Nat.N1(), new Pair(0, 0))```
+ * <code>
+ * "10-stateEstimate".block(Nat.N5(), Nat.N1(), new Pair(0, 0))
+ * </code>
  * then passed into the controller as the current state estimate.
  *
  * <p>{@link DifferentialDriveStateEstimator#update} should be called every robot
  * loop (if your robot loops are faster than the default then you should change
  * the {@link DifferentialDriveStateEstimator#DifferentialDriveStateEstimator(LinearSystem,
  * Matrix, Matrix, Matrix, Matrix, DifferentialDriveKinematics, double) nominal delta time}.)
- * {@link DifferentialDriveStateEstimator#applyPastGlobalMeasurement} can be called as
+ *
+ * <p>{@link DifferentialDriveStateEstimator#applyPastGlobalMeasurement} can be called as
  * infrequently as you want.
  *
  * <p>Our state-space system is:

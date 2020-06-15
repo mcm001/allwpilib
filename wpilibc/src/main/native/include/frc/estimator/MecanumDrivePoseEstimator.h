@@ -25,7 +25,7 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * This class wraps a Kalman Filter to fuse latency-compensated vision
+ * This class wraps a KalmanFilter to fuse latency-compensated vision
  * measurements with mecanum drive encoder velocity measurements. It will
  * correct for noisy measurements and encoder drift. It is intended to be an
  * easy but more accurate drop-in for MecanumDriveOdometry.
@@ -40,12 +40,12 @@ using Vector = Eigen::Matrix<double, N, 1>;
  *
  * Our state-space system is:
  *
- * x = [[x, y, theta]]^T in the field-coordinate system.
+ * <strong> x = [[x, y, theta]]^T </strong> in the field-coordinate system.
  *
- * u = [[vx, vy, omega]]^T in the field-coordinate system.
+ * <strong> u = [[vx, vy, omega]]^T </strong> in the field-coordinate system.
  *
- * y = [[x, y, theta]]^T in field coords from vision, or y = [[theta]]^T from
- * the gyro.
+ * <strong> y = [[x, y, theta]]^T </strong> in field coords from vision,
+ * or <strong> y = [[theta]]^T </strong> from the gyro.
  */
 class MecanumDrivePoseEstimator {
  public:

@@ -30,8 +30,8 @@ using Vector = Eigen::Matrix<double, N, 1>;
  * control-affine (of the form f(x) + Bu).
  *
  * The feedforward is calculated as
- * u_ff = B<sup>+</sup> (rDot - f(x)), were B<sup>+</sup> is the pseudoinverse
- * of B.
+ * <strong> u_ff = B<sup>+</sup> (rDot - f(x)) </strong>, where <strong>
+ * B<sup>+</sup> </strong> is the pseudoinverse of B.
  *
  * This feedforward does not account for a dynamic B matrix, B is either
  * determined or supplied when the feedforward is created and remains constant.
@@ -127,14 +127,27 @@ class ControlAffinePlantInversionFeedforward {
    *
    * @param initialState The initial state vector.
    */
-  void Reset(const Eigen::Matrix<double, States, 1>& initalState) {
-    m_r = initalState;
+  void Reset(const Eigen::Matrix<double, States, 1>& initialState) {
+    m_r = initialState;
     m_uff.setZero();
   }
 
   /**
-   * Calculate the feedforward with only the future reference. This
-   * uses the internally stored current reference.
+   * Resets the feedforward with a zero initial state vector.
+   */
+  void Reset() {
+    m_r.setZero();
+    m_uff.setZero();
+  }
+
+  /**
+   * Calculate the feedforward with only the desired
+   * future reference. This uses the internally stored "current"
+   * reference.
+   *
+   * If this method is used the initial state of the system is the one
+   * set using Reset(const Eigen::Matrix<double, States, 1>&).
+   * If the initial state is not set it defaults to a zero vector.
    *
    * @param nextR The reference state of the future timestep(k + dt).
    *

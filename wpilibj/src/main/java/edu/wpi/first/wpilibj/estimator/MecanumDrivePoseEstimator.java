@@ -27,8 +27,8 @@ import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N3;
 
 /**
- * This class wraps a Kalman Filter to fuse latency-compensated vision measurements
- * with mecanum drive encoder velocity measurements. It will correct for noisy
+ * This class wraps a {@link KalmanFilter KalmanFilter} to fuse latency-compensated vision
+ * measurements with mecanum drive encoder velocity measurements. It will correct for noisy
  * measurements and encoder drift. It is intended to be an easy but more accurate drop-in for
  * {@link edu.wpi.first.wpilibj.kinematics.MecanumDriveOdometry}.
  *
@@ -42,11 +42,12 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
  *
  * <p>Our state-space system is:
  *
- * <p>x = [[x, y, theta]]^T in the field-coordinate system.
+ * <p><strong> x = [[x, y, theta]]^T </strong> in the field-coordinate system.
  *
- * <p>u = [[vx, vy, omega]]^T in the field-coordinate system.
+ * <p><strong> u = [[vx, vy, omega]]^T </strong> in the field-coordinate system.
  *
- * <p>y = [[x, y, theta]]^T in field coords from vision, or y = [[theta]]^T from the gyro.
+ * <p><strong> y = [[x, y, theta]]^T </strong> in field coords from vision,
+ * or <strong> y = [[theta]]^T </strong> from the gyro.
  */
 public class MecanumDrivePoseEstimator {
   private final KalmanFilter<N3, N3, N1> m_observer;

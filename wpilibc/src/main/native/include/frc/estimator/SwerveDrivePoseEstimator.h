@@ -28,7 +28,7 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * This class wraps a Kalman Filter to fuse latency-compensated vision
+ * This class wraps a KalmanFilter to fuse latency-compensated vision
  * measurements with swerve drive encoder velocity and angle measurements. It
  * will correct for noisy measurements and encoder drift. It is intended to be
  * an easy drop-in replacement for SwerveDriveOdometry.
@@ -42,12 +42,12 @@ using Vector = Eigen::Matrix<double, N, 1>;
  *
  * Our state-space system is as follows:
  *
- * x = [[x, y, theta]]^T in the field coordinate system.
+ * <strong> x = [[x, y, theta]]^T </strong> in the field-coordinate system.
  *
- * u = [[vx, vy, omega]]^T in the field coordinate system.
+ * <strong> u = [[vx, vy, omega]]^T </strong> in the field-coordinate system.
  *
- * y = [[x, y, theta]]^T in the field coords from vision or y = [[theta]]^T from
- * a gyro.
+ * <strong> y = [[x, y, theta]]^T </strong> in field coords from vision,
+ * or <strong> y = [[theta]]^T </strong> from the gyro.
  */
 template <size_t NumModules>
 class SwerveDrivePoseEstimator {

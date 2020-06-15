@@ -24,33 +24,33 @@ using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
  * A Linear Time-Varying Differential Drive Controller for differential drive
- * robots. This class takes in a {@link LinearSystem} of a
- * differential drive, which can be created from known linear and angular
- * Kv, and Ka terms with {@link LinearSystem#identifyDrivetrainSystem}.
- * This is then used to calculate the model dynamics
- * {@link LTVDiffDriveController#getDynamics}.
+ * robots. This class takes in a LinearSystem of a differential drive,
+ * which can be created from known linear and angular
+ * Kv, and Ka terms with LinearSystemId::IdentifyDrivetrainSystem.
+ * This is then used to calculate the model dynamics #Dynamics.
  *
- * <p>This controller is advantageous over the {@link LTVUnicycleController}
+ * This controller is advantageous over the LTVUnicycleController
  * due to the fact that it is easier to specify the relative weighting of
  * state vs. input (ex. being able to have the X, Y, Theta controller
  * have more jurisdiction over the input than the left and right velocity
  * controller.)
  *
- * <p>The current state estimate for the controller can be determined by using
- * a {@link DifferentialDriveStateEstimator}.
+ * The current state estimate for the controller can be determined by using
+ * a DifferentialDriveStateEstimator.
  *
- * <p>Our state-space system is:
+ * Our state-space system is:
  *
- * <p>x = [[x, y, theta, vel_l, vel_r]]^T in the field coordinate system.
+ * <strong> x = [[x, y, theta, vel_l, vel_r]]^T </strong> in the field
+ * coordinate system.
  *
- * <p>u = [[voltage_l, voltage_r]]^T the control input.
+ * <strong> u = [[voltage_l, voltage_r]]^T </strong> the control input.
  */
 class LTVDiffDriveController {
  public:
   /**
    * Construct a LTV Unicycle Controller.
    *
-   * @param plant       A {@link LinearSystem} representing a differential
+   * @param plant       A LinearSystem representing a differential
    * drivetrain.
    * @param controllerQ The maximum desired error tolerance for the robot's
    * state, in the form [X, Y, Heading, leftVelocity, right Velocity]^T. Units
@@ -59,7 +59,7 @@ class LTVDiffDriveController {
    * @param controllerR The maximum desired control effort by the feedback
    * controller, in the form [voltsLeft, voltsRight]^T. should apply on top of
    * the trajectory feedforward.
-   * @param kinematics  A {@link DifferentialDriveKinematics} object
+   * @param kinematics  A DifferentialDriveKinematics object
    * representing the differential drivetrain's kinematics.
    * @param dtSeconds   The nominal dt of this controller. With command based
    * this is 0.020.
@@ -73,7 +73,7 @@ class LTVDiffDriveController {
   /**
    * Construct a LTV Unicycle Controller.
    *
-   * @param plant       A {@link LinearSystem} representing a differential
+   * @param plant       A LinearSystem representing a differential
    * drivetrain.
    * @param controllerQ The maximum desired error tolerance for the robot's
    * state, in the form [X, Y, Heading, leftVelocity, right Velocity]^T. Units
@@ -84,7 +84,7 @@ class LTVDiffDriveController {
    * @param controllerR The maximum desired control effort by the feedback
    * controller, in the form [voltsLeft, voltsRight]^T. should apply on top of
    * the trajectory feedforward.
-   * @param kinematics  A {@link DifferentialDriveKinematics} object
+   * @param kinematics  A DifferentialDriveKinematics object
    * representing the differential drivetrain's kinematics.
    * @param dtSeconds   The nominal dt of this controller. With command based
    * this is 0.020.
@@ -98,15 +98,14 @@ class LTVDiffDriveController {
   /**
    * Returns if the controller is at the reference pose on the trajectory.
    * Note that this is different than if the robot has traversed the entire
-   * trajectory. The tolerance is set by the {@link #setTolerance(Pose2d,
-   * double)} method.
+   * trajectory. The tolerance is set by the #SetTolerance method.
    *
    * @return If the robot is within the specified tolerances.
    */
   bool AtReference() const;
 
   /**
-   * Set the tolerance for if the robot is {@link #atReference()} or not.
+   * Set the tolerance for if the robot is #AtReference or not.
    *
    * @param poseTolerance The new pose tolerance.
    * @param velocityTolerance The velocity tolerance.
@@ -149,7 +148,7 @@ class LTVDiffDriveController {
   /**
    * Returns the next output of the controller.
    *
-   * <p>The desired state should come from a {@link Trajectory}.
+   * <p>The desired state should come from a Trajectory.
    *
    * @param currentState  The current state of the robot as a vector.
    * @param desiredState  The desired pose, linear velocity, and angular

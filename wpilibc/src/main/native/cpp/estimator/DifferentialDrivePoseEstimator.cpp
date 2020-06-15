@@ -16,12 +16,13 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
     const Vector<5>& stateStdDevs, const Vector<3>& localMeasurementStdDevs,
     const Vector<3>& visionMeasurmentStdDevs, units::second_t nominalDt)
-    : m_observer(&DifferentialDrivePoseEstimator::F,
-                 [](const Vector<5>& x, const Vector<3>& u) {
-                   return frc::MakeMatrix<3, 1>(x(3, 0), x(4, 0), x(2, 0));
-                 },
-                 StdDevMatrixToArray<5>(stateStdDevs),
-                 StdDevMatrixToArray<3>(localMeasurementStdDevs), nominalDt),
+    : m_observer(
+          &DifferentialDrivePoseEstimator::F,
+          [](const Vector<5>& x, const Vector<3>& u) {
+            return frc::MakeMatrix<3, 1>(x(3, 0), x(4, 0), x(2, 0));
+          },
+          StdDevMatrixToArray<5>(stateStdDevs),
+          StdDevMatrixToArray<3>(localMeasurementStdDevs), nominalDt),
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
@@ -30,11 +31,12 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
 
   // Create correction mechanism for vision measurements.
   m_visionCorrect = [&](const Vector<3>& u, const Vector<3>& y) {
-    m_observer.Correct<3>(u, y,
-                          [](const Vector<5>& x, const Vector<3>&) {
-                            return x.block<3, 1>(0, 0);
-                          },
-                          m_visionDiscR);
+    m_observer.Correct<3>(
+        u, y,
+        [](const Vector<5>& x, const Vector<3>&) {
+          return x.block<3, 1>(0, 0);
+        },
+        m_visionDiscR);
   };
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
