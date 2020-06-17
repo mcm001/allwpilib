@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.wpilibj.simulation.SimDifferentialDrivetrain;
+import edu.wpi.first.wpilibj.sim.SimDifferentialDrivetrain;
 import edu.wpi.first.wpilibj.simulation.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 

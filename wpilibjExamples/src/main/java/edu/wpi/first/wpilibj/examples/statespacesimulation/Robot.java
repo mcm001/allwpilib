@@ -9,7 +9,7 @@ package edu.wpi.first.wpilibj.examples.statespacesimulation;
 
 import edu.wpi.first.hal.sim.RoboRioSim;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.simulation.SimBattery;
+import edu.wpi.first.wpilibj.sim.SimBattery;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
