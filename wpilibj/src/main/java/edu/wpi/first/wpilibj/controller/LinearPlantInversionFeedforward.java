@@ -144,7 +144,7 @@ public class LinearPlantInversionFeedforward<S extends Num, I extends Num,
    * set using {@link LinearPlantInversionFeedforward#reset(Matrix)}.
    * If the initial state is not set it defaults to a zero vector.
    *
-   * @param nextR The reference state of the future timestep(k + dt).
+   * @param nextR The reference state of the future timestep (k + dt).
    *
    * @return The calculated feedforward.
    */
@@ -155,8 +155,8 @@ public class LinearPlantInversionFeedforward<S extends Num, I extends Num,
   /**
    * Calculate the feedforward with current and future reference vectors.
    *
-   * @param r     The reference state of the current timestep(k).
-   * @param nextR The reference state of the future timestep(k + dt).
+   * @param r     The reference state of the current timestep (k).
+   * @param nextR The reference state of the future timestep (k + dt).
    *
    * @return The calculated feedforward.
    */
