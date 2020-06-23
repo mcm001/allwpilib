@@ -14,6 +14,8 @@ Subsystem::~Subsystem() {
 
 void Subsystem::Periodic() {}
 
+void Subsystem::SimulationPeriodic() {}
+
 Command* Subsystem::GetDefaultCommand() const {
   return CommandScheduler::GetInstance().GetDefaultCommand(this);
 }
