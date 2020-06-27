@@ -73,6 +73,9 @@ dependencies {
     devImplementation project(':cscore')
     devImplementation project(':cameraserver')
     devImplementation sourceSets.main.output
+
+    compile 'org.knowm.xchart:xchart:3.6.3'
+    compile group: 'org.knowm.xchart', name: 'xchart-parent', version: '3.6.3', ext: 'pom'
 }
 
 apply plugin: 'cpp'
