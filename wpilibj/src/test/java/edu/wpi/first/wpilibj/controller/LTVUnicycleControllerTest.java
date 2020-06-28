@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Twist2d;
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.VecBuilder;
@@ -23,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LTVUnicycleControllerTest {
   @Test
-  @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+  @SuppressWarnings({"PMD.AvoidInstantiatingObjectsInLoops", "LocalVariableName"})
   void testReachesReference() {
     final var controller = new LTVUnicycleController(
         VecBuilder.fill(0.1, 0.1, 0.15),
@@ -39,6 +41,10 @@ class LTVUnicycleControllerTest {
     final var trajectory = TrajectoryGenerator.generateTrajectory(waypoints, config);
 
     controller.setTolerance(new Pose2d(0.01, 0.01, new Rotation2d(0.001)));
+
+    final var kinematics = new DifferentialDriveKinematics(1);
+
+    var speeds = new DifferentialDriveWheelSpeeds();
 
     List<Double> time = new ArrayList<>();
 
@@ -62,9 +68,11 @@ class LTVUnicycleControllerTest {
       trajYs.add(state.poseMeters.getTranslation().getY());
       trajHeadings.add(state.poseMeters.getRotation().getRadians());
 
-      var output = controller.calculate(robotPose, state);
+      var output = controller.calculate(robotPose, speeds.toLinearChassisVelocity(), state);
       robotPose = robotPose.exp(new Twist2d(output.vxMetersPerSecond * kDt, 0,
           output.omegaRadiansPerSecond * kDt));
+
+      speeds = kinematics.toWheelSpeeds(output);
 
       robotXs.add(robotPose.getTranslation().getX());
       robotYs.add(robotPose.getTranslation().getY());

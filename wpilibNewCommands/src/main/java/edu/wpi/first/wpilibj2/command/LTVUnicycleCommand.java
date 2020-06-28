@@ -165,7 +165,12 @@ public class LTVUnicycleCommand extends CommandBase {
     double dt = curTime - m_prevTime;
 
     var targetWheelSpeeds = m_kinematics.toWheelSpeeds(
-        m_follower.calculate(m_pose.get(), m_trajectory.sample(curTime)));
+        m_follower.calculate(
+          m_pose.get(),
+          m_speeds.get().toLinearChassisVelocity(),
+          m_trajectory.sample(curTime)
+        )
+    );
 
     var leftSpeedSetpoint = targetWheelSpeeds.leftMetersPerSecond;
     var rightSpeedSetpoint = targetWheelSpeeds.rightMetersPerSecond;
