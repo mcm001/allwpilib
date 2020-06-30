@@ -35,5 +35,13 @@ struct DifferentialDriveWheelSpeeds {
    * @param attainableMaxSpeed The absolute max speed that a wheel can reach.
    */
   void Normalize(units::meters_per_second_t attainableMaxSpeed);
+
+  /** 
+   * Converts the left and right wheels speeds to a linear chassis velocity
+   * by averaging them.
+   * 
+   * @return The linear chassis velocity in meters per second.
+   */
+  units::meters_per_second_t ToLinearChassisVelocity();
 };
 }  // namespace frc

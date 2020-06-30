@@ -31,6 +31,7 @@ public class LTVUnicycleController {
   private final Matrix<N3, N2> m_B;
 
   private final Matrix<N3, N1> m_qElms;
+  private final double m_rho;
   private final Matrix<N2, N1> m_rElms;
 
   private final double m_dt;
@@ -79,7 +80,8 @@ public class LTVUnicycleController {
     m_dt = dtSeconds;
     m_B = new MatBuilder<>(Nat.N3(), Nat.N2()).fill(1, 0, 0, 0, 0, 1);
     
-    m_qElms = qElms.times(rho);
+    m_qElms = qElms;
+    m_rho = rho;
     m_rElms = rElms;
   }
 
@@ -115,6 +117,10 @@ public class LTVUnicycleController {
    *
    * <p>The reference pose, linear velocity, and angular velocity should come
    * from a {@link Trajectory}.
+   * 
+   * <p>The current linear velocity of the chassis can be found from a 
+   * DifferentialDriveWheelSpeeds object using
+   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}.
    *
    * @param currentPose                       The current position of the robot.
    * @param currentLinearVelocityMetersPerSec The current linear velocity of the robot.
@@ -140,7 +146,7 @@ public class LTVUnicycleController {
     var A = new MatBuilder<>(Nat.N3(), Nat.N3())
             .fill(0, 0, 0, 0, 0, currentLinearVelocityMetersPerSec, 0, 0, 0);
     
-    var K = new LinearQuadraticRegulator<N3, N2, N2>(A, m_B, m_qElms, m_rElms, m_dt).getK();
+    var K = new LinearQuadraticRegulator<N3, N2, N2>(A, m_B, m_qElms, m_rho, m_rElms, m_dt).getK();
 
     var error = new MatBuilder<>(Nat.N3(), Nat.N1()).fill(
           m_poseError.getTranslation().getX(),
@@ -159,10 +165,18 @@ public class LTVUnicycleController {
    * Returns the next output of the controller.
    *
    * <p>The reference pose and desired state should come from a {@link Trajectory}.
+   * 
+   * <p>The current linear velocity of the chassis can be found from a 
+   * DifferentialDriveWheelSpeeds object using
+   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}.
    *
-   * @param currentPose  The current pose.
-   * @param desiredState The desired pose, linear velocity, and angular velocity
-   *                     from a trajectory.
+   * @param currentPose                       The current pose.
+   * @param currentLinearVelocityMetersPerSec The current linear velocity of the robot.
+   *                                          this can be determined by averaging the
+   *                                          measured left and right wheel velocities.
+   * @param desiredState                      The desired pose, linear velocity, and angular 
+   *                                          velocity from a trajectory.
+   *
    * @return The calculated {@link ChassisSpeeds}.
    */
   public ChassisSpeeds calculate(Pose2d currentPose,

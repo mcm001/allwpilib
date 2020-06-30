@@ -43,7 +43,6 @@ class LTVUnicycleControllerTest {
     controller.setTolerance(new Pose2d(0.01, 0.01, new Rotation2d(0.001)));
 
     final var kinematics = new DifferentialDriveKinematics(1);
-
     var speeds = new DifferentialDriveWheelSpeeds();
 
     List<Double> time = new ArrayList<>();

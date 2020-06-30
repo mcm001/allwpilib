@@ -21,3 +21,7 @@ void DifferentialDriveWheelSpeeds::Normalize(
     right = right / realMaxSpeed * attainableMaxSpeed;
   }
 }
+
+units::meters_per_second_t DifferentialDriveWheelSpeeds::ToLinearChassisVelocity(){
+  return (left + right) / 2.0;
+}
