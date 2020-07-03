@@ -108,7 +108,6 @@ public class LTVUnicycleController {
    *
    * @param poseTolerance The new pose tolerance.
    */
-  @SuppressWarnings({"LineLength"})
   public void setTolerance(final Pose2d poseTolerance) {
     this.m_poseTolerance = poseTolerance;
   }
@@ -121,7 +120,8 @@ public class LTVUnicycleController {
    *
    * <p>The current linear velocity of the chassis can be found from a
    * DifferentialDriveWheelSpeeds object using
-   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}.
+   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}
+   * .
    *
    * @param currentPose                       The current position of the robot.
    * @param currentLinearVelocityMetersPerSec The current linear velocity of the robot.
@@ -132,7 +132,7 @@ public class LTVUnicycleController {
    * @param angularVelocityRefRadPerSec       The desired angular velocity of the robot.
    * @return The next calculated output.
    */
-  @SuppressWarnings({"LineLength", "LocalVariableName"})
+  @SuppressWarnings("LocalVariableName")
   public ChassisSpeeds calculate(Pose2d currentPose,
                                  double currentLinearVelocityMetersPerSec,
                                  Pose2d poseRef,
@@ -171,7 +171,8 @@ public class LTVUnicycleController {
    *
    * <p>The current linear velocity of the chassis can be found from a
    * DifferentialDriveWheelSpeeds object using
-   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}.
+   * {@link edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds#toLinearChassisVelocity()}
+   * .
    *
    * @param currentPose                       The current pose.
    * @param currentLinearVelocityMetersPerSec The current linear velocity of the robot.
