@@ -42,6 +42,6 @@ struct DifferentialDriveWheelSpeeds {
    * 
    * @return The linear chassis velocity in meters per second.
    */
-  units::meters_per_second_t ToLinearChassisVelocity();
+  units::meters_per_second_t ToLinearChassisVelocity() const;
 };
 }  // namespace frc

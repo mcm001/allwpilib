@@ -108,6 +108,7 @@ public class LTVUnicycleController {
    *
    * @param poseTolerance The new pose tolerance.
    */
+  @SuppressWarnings({"LineLength"})
   public void setTolerance(final Pose2d poseTolerance) {
     this.m_poseTolerance = poseTolerance;
   }
@@ -131,7 +132,7 @@ public class LTVUnicycleController {
    * @param angularVelocityRefRadPerSec       The desired angular velocity of the robot.
    * @return The next calculated output.
    */
-  @SuppressWarnings("LocalVariableName")
+  @SuppressWarnings({"LineLength", "LocalVariableName"})
   public ChassisSpeeds calculate(Pose2d currentPose,
                                  double currentLinearVelocityMetersPerSec,
                                  Pose2d poseRef,
@@ -139,8 +140,10 @@ public class LTVUnicycleController {
                                  double angularVelocityRefRadPerSec) {
     m_poseError = poseRef.relativeTo(currentPose);
 
-    if (currentLinearVelocityMetersPerSec < 1e-9) {
+    if (currentLinearVelocityMetersPerSec == 0.0) {
       currentLinearVelocityMetersPerSec = 1e-9;
+    } else if (Math.abs(currentLinearVelocityMetersPerSec) < 1e-9) {
+      currentLinearVelocityMetersPerSec = 1e-9 * Math.signum(currentLinearVelocityMetersPerSec);
     }
 
     var A = new MatBuilder<>(Nat.N3(), Nat.N3())

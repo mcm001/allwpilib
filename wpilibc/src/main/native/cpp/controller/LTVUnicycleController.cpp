@@ -27,7 +27,6 @@ LTVUnicycleController::LTVUnicycleController(
     m_Qelms(Qelems),
     m_rho(rho),
     m_Relems(Relems){
-
   m_B << 1, 0, 0, 0, 0, 1;
 }
 
@@ -53,8 +52,10 @@ ChassisSpeeds LTVUnicycleController::Calculate(
     units::radians_per_second_t angularVelocityRef) {
   m_poseError = poseRef.RelativeTo(currentPose);
 
-  if (currentLinearVelocity.to<double>() < 1e-9) {
+  if(currentLinearVelocity == 0_mps){
     currentLinearVelocity = 1e-9_mps;
+  } else if (units::math::abs(currentLinearVelocity) < 1e-9_mps) {
+    currentLinearVelocity = 1e-9_mps * wpi::sgn(currentLinearVelocity);
   }
 
   Eigen::Matrix<double, 3, 3> A;

@@ -22,6 +22,6 @@ void DifferentialDriveWheelSpeeds::Normalize(
   }
 }
 
-units::meters_per_second_t DifferentialDriveWheelSpeeds::ToLinearChassisVelocity(){
+units::meters_per_second_t DifferentialDriveWheelSpeeds::ToLinearChassisVelocity() const {
   return (left + right) / 2.0;
 }

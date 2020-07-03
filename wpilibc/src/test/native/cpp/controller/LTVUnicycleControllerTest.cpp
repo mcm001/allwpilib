@@ -42,8 +42,6 @@ TEST(LTVUnicycleControllerTest, ReachesReference) {
     speeds = kinematics.ToWheelSpeeds(frc::ChassisSpeeds{vx, vy, omega});
     static_cast<void>(vy);
 
-    std::cout << robotPose.Translation().X().to<double>() << ", " << robotPose.Translation().Y().to<double>() << "\n"; 
-
     robotPose = robotPose.Exp(frc::Twist2d{vx * kDt, 0_m, omega * kDt});
   }
 
