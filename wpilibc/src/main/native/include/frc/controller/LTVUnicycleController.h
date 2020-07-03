@@ -84,21 +84,23 @@ class LTVUnicycleController {
    *
    * The reference pose, linear velocity, and angular velocity should come
    * from a Trajectory.
-   * 
-   * The current linear velocity of the chassis can be found from a 
+   *
+   * The current linear velocity of the chassis can be found from a
    * DifferentialDriveWheelSpeeds object using
    * DifferentialDriveWheelSpeeds::ToLinearChassisVelocity.
    *
    * @param currentPose                   The current position of the robot.
-   * @param currentLinearVelocity         The current linear velocity of the robot.
-   *                                      this can be determined by averaging the
-   *                                      measured left and right wheel velocities.
+   * @param currentLinearVelocity         The current linear velocity of the
+   * robot. this can be determined by averaging the measured left and right
+   * wheel velocities.
    * @param poseRef                       The desired pose of the robot.
-   * @param linearVelocityRefMetersPerSec The desired linear velocity of the robot.
-   * @param angularVelocityRefRadPerSec   The desired angular velocity of the robot.
+   * @param linearVelocityRefMetersPerSec The desired linear velocity of the
+   * robot.
+   * @param angularVelocityRefRadPerSec   The desired angular velocity of the
+   * robot.
    * @return The next calculated output.
    */
-  ChassisSpeeds Calculate(const Pose2d& currentPose, 
+  ChassisSpeeds Calculate(const Pose2d& currentPose,
                           units::meters_per_second_t currentLinearVelocity,
                           const Pose2d& poseRef,
                           units::meters_per_second_t linearVelocityRef,
@@ -109,8 +111,8 @@ class LTVUnicycleController {
    *
    * The reference pose, linear velocity, and angular velocity should come from
    * a drivetrain trajectory.
-   * 
-   * The current linear velocity of the chassis can be found from a 
+   *
+   * The current linear velocity of the chassis can be found from a
    * DifferentialDriveWheelSpeeds object using
    * DifferentialDriveWheelSpeeds::ToLinearChassisVelocity.
    *
@@ -118,8 +120,8 @@ class LTVUnicycleController {
    * @param currentLinearVelocity The current linear velocity of the robot.
    *                              this can be determined by averaging the
    *                              measured left and right wheel velocities.
-   * @param desiredState          The desired pose, linear velocity, and angular velocity
-   *                              from a trajectory.
+   * @param desiredState          The desired pose, linear velocity, and angular
+   * velocity from a trajectory.
    */
   ChassisSpeeds Calculate(const Pose2d& currentPose,
                           units::meters_per_second_t currentLinearVelocity,

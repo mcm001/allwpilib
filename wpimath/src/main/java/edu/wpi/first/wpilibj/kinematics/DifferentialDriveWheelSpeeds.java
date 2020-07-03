@@ -60,11 +60,11 @@ public class DifferentialDriveWheelSpeeds {
     }
   }
 
-  
-  /** 
+
+  /**
    * Converts the left and right wheels speeds to a linear chassis velocity
    * by averaging them.
-   * 
+   *
    * @return The linear chassis velocity in meters per second.
    */
   public double toLinearChassisVelocity() {

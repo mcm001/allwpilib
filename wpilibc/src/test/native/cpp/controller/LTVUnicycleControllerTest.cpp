@@ -37,7 +37,8 @@ TEST(LTVUnicycleControllerTest, ReachesReference) {
   auto totalTime = trajectory.TotalTime();
   for (size_t i = 0; i < (totalTime / kDt).to<double>(); ++i) {
     auto state = trajectory.Sample(kDt * i);
-    auto [vx, vy, omega] = controller.Calculate(robotPose, speeds.ToLinearChassisVelocity(), state);
+    auto [vx, vy, omega] = controller.Calculate(
+        robotPose, speeds.ToLinearChassisVelocity(), state);
 
     speeds = kinematics.ToWheelSpeeds(frc::ChassisSpeeds{vx, vy, omega});
     static_cast<void>(vy);

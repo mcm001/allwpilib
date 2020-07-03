@@ -23,10 +23,7 @@ LTVUnicycleController::LTVUnicycleController(
 LTVUnicycleController::LTVUnicycleController(
     const std::array<double, 3>& Qelems, const double rho,
     const std::array<double, 2>& Relems, units::second_t dt)
-    : m_dt(dt),
-    m_Qelms(Qelems),
-    m_rho(rho),
-    m_Relems(Relems){
+    : m_dt(dt), m_Qelms(Qelems), m_rho(rho), m_Relems(Relems) {
   m_B << 1, 0, 0, 0, 0, 1;
 }
 
@@ -45,14 +42,12 @@ void LTVUnicycleController::SetTolerance(const Pose2d& poseTolerance) {
 }
 
 ChassisSpeeds LTVUnicycleController::Calculate(
-    const Pose2d& currentPose,
-    units::meters_per_second_t currentLinearVelocity,
-    const Pose2d& poseRef,
-    units::meters_per_second_t linearVelocityRef,
+    const Pose2d& currentPose, units::meters_per_second_t currentLinearVelocity,
+    const Pose2d& poseRef, units::meters_per_second_t linearVelocityRef,
     units::radians_per_second_t angularVelocityRef) {
   m_poseError = poseRef.RelativeTo(currentPose);
 
-  if(currentLinearVelocity == 0_mps){
+  if (currentLinearVelocity == 0_mps) {
     currentLinearVelocity = 1e-9_mps;
   } else if (units::math::abs(currentLinearVelocity) < 1e-9_mps) {
     currentLinearVelocity = 1e-9_mps * wpi::sgn(currentLinearVelocity);
@@ -61,7 +56,9 @@ ChassisSpeeds LTVUnicycleController::Calculate(
   Eigen::Matrix<double, 3, 3> A;
   A << 0, 0, 0, 0, 0, currentLinearVelocity.to<double>(), 0, 0, 0;
 
-  Eigen::Matrix<double, 2, 3> K = LinearQuadraticRegulator<3, 2>(A, m_B, m_Qelms, m_rho, m_Relems, m_dt).K();
+  Eigen::Matrix<double, 2, 3> K =
+      LinearQuadraticRegulator<3, 2>(A, m_B, m_Qelms, m_rho, m_Relems, m_dt)
+          .K();
 
   Eigen::Matrix<double, 3, 1> error;
   error(0, 0) = m_poseError.Translation().X().to<double>();
@@ -78,7 +75,7 @@ ChassisSpeeds LTVUnicycleController::Calculate(
 ChassisSpeeds LTVUnicycleController::Calculate(
     const Pose2d& currentPose, units::meters_per_second_t currentLinearVelocity,
     const Trajectory::State& desiredState) {
-  return Calculate(currentPose, currentLinearVelocity,
-                  desiredState.pose, desiredState.velocity,
+  return Calculate(currentPose, currentLinearVelocity, desiredState.pose,
+                   desiredState.velocity,
                    desiredState.velocity * desiredState.curvature);
 }
