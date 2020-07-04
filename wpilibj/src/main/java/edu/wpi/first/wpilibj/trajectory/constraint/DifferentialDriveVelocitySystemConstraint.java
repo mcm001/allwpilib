@@ -10,6 +10,7 @@ package edu.wpi.first.wpilibj.trajectory.constraint;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.VecBuilder;
@@ -35,26 +36,36 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
   /**
    * Creates a new DifferentialDriveVelocitySystemConstraint.
    *
-   * @param system      A {@link LinearSystem} representing the drivetrain..
-   * @param kinematics  A kinematics component describing the drive geometry.
-   * @param maxVoltage  The maximum voltage available to the motors while following the path.
-   *                    Should be somewhat less than the nominal battery voltage (12V) to account
-   *                    for "voltage sag" due to current draw.
+   * @param system     A {@link LinearSystem} representing the drivetrain..
+   * @param kinematics A kinematics component describing the drive geometry.
+   * @param maxVoltage The maximum voltage available to the motors while following the path.
+   *                   Should be somewhat less than the nominal battery voltage (12V) to account
+   *                   for "voltage sag" due to current draw.
    */
   public DifferentialDriveVelocitySystemConstraint(LinearSystem<N2, N2, N2> system,
-                                            DifferentialDriveKinematics kinematics,
-                                            double maxVoltage) {
+                                                   DifferentialDriveKinematics kinematics,
+                                                   double maxVoltage) {
     m_system = requireNonNullParam(system, "system",
-                                        "DifferentialDriveVoltageConstraint");
+      "DifferentialDriveVoltageConstraint");
     m_kinematics = requireNonNullParam(kinematics, "kinematics",
-                                       "DifferentialDriveVoltageConstraint");
+      "DifferentialDriveVoltageConstraint");
     m_maxVoltage = maxVoltage;
   }
 
   @Override
   public double getMaxVelocityMetersPerSecond(Pose2d poseMeters, double curvatureRadPerMeter,
                                               double velocityMetersPerSecond) {
-    return Double.POSITIVE_INFINITY;
+    // Calculate wheel velocity states from current velocity and curvature
+    var speeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0, curvatureRadPerMeter));
+
+    var x = VecBuilder.fill(speeds.leftMetersPerSecond, speeds.rightMetersPerSecond);
+
+    // If either wheel velocity is greater than its maximum, normalize the wheel
+    // speeds to within an achievable range while maintaining the curvature
+    x = StateSpaceUtil.normalizeInputVector(x, velocityMetersPerSecond);
+
+    // chassis speed is average of wheel speeds
+    return (x.get(0, 0) + x.get(1, 0)) / 2.0;
   }
 
   @Override
@@ -62,25 +73,27 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
                                                        double curvatureRadPerMeter,
                                                        double velocityMetersPerSecond) {
     var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0,
-                                                                   velocityMetersPerSecond
-                                                                       * curvatureRadPerMeter));
+        velocityMetersPerSecond
+        * curvatureRadPerMeter));
 
     var x = VecBuilder.fill(wheelSpeeds.leftMetersPerSecond,
         wheelSpeeds.rightMetersPerSecond);
 
-    Matrix<N2, N1> xDot;
     Matrix<N2, N1> u;
 
     // dx/dt for minimum u
     u = VecBuilder.fill(-m_maxVoltage, -m_maxVoltage);
-    xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
-    double minAccel = (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
+    double minAccel = getChassisAccel(x, u);
 
     // dx/dt for maximum u
     u = VecBuilder.fill(m_maxVoltage, m_maxVoltage);
-    xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
-    double maxAccel = (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
+    double maxAccel = getChassisAccel(x, u);
 
     return new MinMax(minAccel, maxAccel);
+  }
+
+  public double getChassisAccel(Matrix<N2, N1> x, Matrix<N2, N1> u) {
+    var xDot = m_system.getA().times(x).plus(m_system.getB().times(u));
+    return (xDot.get(0, 0) + xDot.get(1, 0)) / 2.0;
   }
 }
