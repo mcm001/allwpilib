@@ -7,8 +7,14 @@
 
 package edu.wpi.first.wpilibj.trajectory;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,11 +48,17 @@ class DifferentialDriveVelocitySystemConstraintTest {
 
     Trajectory trajectory = TrajectoryGeneratorTest.getTrajectory(
           Collections.singletonList(constraint));
+//    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+//      List.of(new Pose2d(), new Pose2d(new Translation2d(10, 10), Rotation2d.fromDegrees(90))),
+//      new TrajectoryConfig(300000000000.0, 300000000000.00).addConstraint(constraint)
+//    );
 
     var duration = trajectory.getTotalTimeSeconds();
     var t = 0.0;
     var dt = 0.02;
     var previousSpeeds = new DifferentialDriveWheelSpeeds(0, 0);
+
+    System.out.println("time, uleft, uright, vleft, vright, vx, max_vleft, curvature");
 
     while (t < duration) {
       var point = trajectory.sample(t);
@@ -73,9 +85,13 @@ class DifferentialDriveVelocitySystemConstraintTest {
       t += dt;
       previousSpeeds = wheelSpeeds;
 
-      System.out.println(left + ", " + right);
-      assertTrue((-10 <= left) && (left <= 10));
-      assertTrue((-10 <= right) && (right <= 10));
+      System.out.println(String.format("%s, %s, %s, %s, %s, %s, %s, %s", t, u.get(0, 0), u.get(1, 0),
+          wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond, chassisSpeeds.vxMetersPerSecond, constraint
+      .getMaxVelocityMetersPerSecond(point.poseMeters, point.curvatureRadPerMeter, point.velocityMetersPerSecond), point.curvatureRadPerMeter));
+
+//      System.out.println(left + ", " + right);
+//      assertTrue((-10.1 <= left) && (left <= 10.1));
+//      assertTrue((-10.1 <= right) && (right <= 10.1));
 
     }
   }
@@ -107,5 +123,42 @@ class DifferentialDriveVelocitySystemConstraintTest {
           new Pose2d(1, 0, Rotation2d.fromDegrees(90)),
           config.setReversed(true)));
 
+  }
+
+  @Test
+  void testGraph() throws IOException {
+    double maxVoltage = 10;
+
+    // Pick an unreasonably large kA to ensure the constraint has to do some work
+    var system = LinearSystemId.identifyDrivetrainSystem(1, 3, 1, 3);
+    var kinematics = new DifferentialDriveKinematics(0.5);
+
+    var constraint = new DifferentialDriveVelocitySystemConstraint(system, kinematics, maxVoltage);
+
+    var velocity = 12.0;
+    var curvature = 10.0;
+
+    var wheelSpeeds = kinematics.toWheelSpeeds(new ChassisSpeeds(velocity, 0,
+      velocity
+        * curvature));
+
+    var x = VecBuilder.fill(wheelSpeeds.leftMetersPerSecond,
+      wheelSpeeds.rightMetersPerSecond);
+
+    var writer = new BufferedWriter(new FileWriter(Path.of("D:\\Documents\\out.csv").toString()));
+
+    System.out.println(x);
+
+    // iterate by steps of 1 over the voltage range
+    for(int uLeft = -10; uLeft <= 10; uLeft++) {
+      for(int uRight = -10; uRight <= 10; uRight++) {
+        var u = VecBuilder.fill(uLeft, uRight);
+        var xdot = system.getA().times(x).plus(system.getB().times(u));
+        writer.write(String.format("%s,%s,%s", uLeft, uRight, (xdot.get(0, 0) + xdot.get(1, 0)) / 2.0));
+        writer.newLine();
+        writer.flush();
+      }
+    }
+    var foo= 4;
   }
 }
