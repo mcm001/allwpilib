@@ -19,6 +19,8 @@
 #include <frc/system/plant/LinearSystemId.h>
 #include <frc/trajectory/TrapezoidProfile.h>
 #include <units/length.h>
+#include <units/velocity.h>
+#include <units/acceleration.h>
 #include <units/mass.h>
 #include <wpi/math>
 

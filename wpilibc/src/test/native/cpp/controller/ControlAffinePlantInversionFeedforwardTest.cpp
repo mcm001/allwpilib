@@ -37,7 +37,7 @@ Vector<2> StateDynamics(const Vector<2>& x) {
 TEST(ControlAffinePlantInversionFeedforwardTest, Calculate) {
   std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&,
                                             const Eigen::Matrix<double, 1, 1>&)>
-      modelDynamics = [this](auto& x, auto& u) { return Dynamics(x, u); };
+      modelDynamics = [](auto& x, auto& u) { return Dynamics(x, u); };
 
   frc::ControlAffinePlantInversionFeedforward<2, 1> feedforward{
       modelDynamics, units::second_t(0.02)};
@@ -52,7 +52,7 @@ TEST(ControlAffinePlantInversionFeedforwardTest, Calculate) {
 
 TEST(ControlAffinePlantInversionFeedforwardTest, CalculateState) {
   std::function<Eigen::Matrix<double, 2, 1>(const Eigen::Matrix<double, 2, 1>&)>
-      modelDynamics = [this](auto& x) { return StateDynamics(x); };
+      modelDynamics = [](auto& x) { return StateDynamics(x); };
 
   Eigen::Matrix<double, 2, 1> B;
   B << 0, 1;
