@@ -11,7 +11,6 @@
 #include <cmath>
 
 #include <Eigen/Core>
-#include <units/time.h>
 #include <units/moment_of_inertia.h>
 #include <units/time.h>
 

@@ -10,8 +10,8 @@
 #include <array>
 
 #include <Eigen/Core>
-#include <units/time.h>
 #include <units/length.h>
+#include <units/time.h>
 
 #include "frc/geometry/Pose2d.h"
 #include "frc/kinematics/DifferentialDriveKinematics.h"

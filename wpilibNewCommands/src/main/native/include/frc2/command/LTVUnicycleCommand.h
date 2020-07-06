@@ -18,8 +18,8 @@
 #include <frc/kinematics/DifferentialDriveKinematics.h>
 #include <frc/trajectory/Trajectory.h>
 #include <units/length.h>
-#include <units/voltage.h>
 #include <units/velocity.h>
+#include <units/voltage.h>
 #include <wpi/ArrayRef.h>
 
 #include "frc2/Timer.h"

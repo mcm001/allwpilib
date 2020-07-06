@@ -10,9 +10,9 @@
 #include <array>
 
 #include <Eigen/Core>
+#include <units/angular_velocity.h>
 #include <units/time.h>
 #include <units/velocity.h>
-#include <units/angular_velocity.h>
 
 #include "frc/geometry/Pose2d.h"
 #include "frc/kinematics/ChassisSpeeds.h"

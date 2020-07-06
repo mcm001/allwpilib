@@ -1,3 +1,10 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package edu.wpi.first.wpilibj.simulation;
 
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
@@ -19,7 +26,6 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SimSwerveDriveTest {
-
   private SimSwerveDrive m_sim = new SimSwerveDrive(50, 2.0,
 //      new SimSwerveDrive.SimSwerveModule(DCMotor.getNEO(1), 8.0,
 //          Units.inchesToMeters(2.0), new Translation2d(1, 1)),

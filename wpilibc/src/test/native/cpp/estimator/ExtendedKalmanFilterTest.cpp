@@ -12,7 +12,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/QR>
-
 #include <units/moment_of_inertia.h>
 
 #include "frc/StateSpaceUtil.h"

@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <units/moment_of_inertia.h>
+
 #include "frc/StateSpaceUtil.h"
 #include "frc/system/LinearSystem.h"
 #include "frc/system/plant/DCMotor.h"
-
-#include <units/moment_of_inertia.h>
 
 namespace frc {
 

@@ -9,10 +9,9 @@
 #include <limits>
 #include <random>
 
-#include <units/time.h>
-#include <units/length.h>
 #include <units/angle.h>
-
+#include <units/length.h>
+#include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"

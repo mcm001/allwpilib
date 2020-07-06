@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <units/voltage.h>
 #include <units/angular_velocity.h>
-#include <units/torque.h>
 #include <units/current.h>
 #include <units/impedance.h>
+#include <units/torque.h>
+#include <units/voltage.h>
 
 namespace frc {
 
