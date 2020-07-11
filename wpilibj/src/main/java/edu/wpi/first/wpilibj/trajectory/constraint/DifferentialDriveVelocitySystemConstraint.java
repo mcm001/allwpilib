@@ -16,6 +16,7 @@ import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
+import org.ejml.dense.row.CommonOps_DDRM;
 
 import static edu.wpi.first.wpilibj.util.ErrorMessages.requireNonNullParam;
 
@@ -73,21 +74,36 @@ public class DifferentialDriveVelocitySystemConstraint implements TrajectoryCons
                                                        double curvatureRadPerMeter,
                                                        double velocityMetersPerSecond) {
     var wheelSpeeds = m_kinematics.toWheelSpeeds(new ChassisSpeeds(velocityMetersPerSecond, 0,
-        velocityMetersPerSecond
+      velocityMetersPerSecond
         * curvatureRadPerMeter));
 
     var x = VecBuilder.fill(wheelSpeeds.leftMetersPerSecond,
-        wheelSpeeds.rightMetersPerSecond);
+      wheelSpeeds.rightMetersPerSecond);
 
     Matrix<N2, N1> u;
+    double minAccel, maxAccel;
 
-    // dx/dt for minimum u
-    u = VecBuilder.fill(-m_maxVoltage, -m_maxVoltage);
-    double minAccel = getChassisAccel(x, u);
+      u = VecBuilder.fill(wheelSpeeds.leftMetersPerSecond, wheelSpeeds.rightMetersPerSecond);
+      u = u.times(m_maxVoltage / CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM()));
+      if (velocityMetersPerSecond > 1e-6) {
+          maxAccel = getChassisAccel(x, u);
+          minAccel = getChassisAccel(x, u.times(-1));
+      } else if (velocityMetersPerSecond < -1e-6) {
+          maxAccel = getChassisAccel(x, u.times(-1));
+          minAccel = getChassisAccel(x, u);
+      } else {
+          u = VecBuilder.fill(m_maxVoltage, m_maxVoltage);
+          maxAccel = getChassisAccel(x, u);
+          minAccel = getChassisAccel(x, u.times(-1));
+      }
 
-    // dx/dt for maximum u
-    u = VecBuilder.fill(m_maxVoltage, m_maxVoltage);
-    double maxAccel = getChassisAccel(x, u);
+//      // dx/dt for minimum u
+//      u = VecBuilder.fill(-m_maxVoltage, -m_maxVoltage);
+//      minAccel = getChassisAccel(x, u);
+//
+//      // dx/dt for maximum u
+//      u = VecBuilder.fill(m_maxVoltage, m_maxVoltage);
+//      maxAccel = getChassisAccel(x, u);
 
     return new MinMax(minAccel, maxAccel);
   }

@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -29,6 +31,8 @@ import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVelocitySyst
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChartBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,9 +46,11 @@ class DifferentialDriveVelocitySystemConstraintTest {
     // Pick an unreasonably large kA to ensure the constraint has to do some work
     var system = LinearSystemId.identifyDrivetrainSystem(1, 3, 1, 3);
     var kinematics = new DifferentialDriveKinematics(0.5);
-    var constraint = new DifferentialDriveVelocitySystemConstraint(system,
-          kinematics,
-          maxVoltage);
+//    var constraint = new DifferentialDriveVelocitySystemConstraint(system,
+//          kinematics,
+//          maxVoltage);
+
+    var constraint = new DifferentialDriveVoltageConstraint(new SimpleMotorFeedforward(0, 1, 3), kinematics, 10);
 
     Trajectory trajectory = TrajectoryGeneratorTest.getTrajectory(
           Collections.singletonList(constraint));
@@ -57,6 +63,9 @@ class DifferentialDriveVelocitySystemConstraintTest {
     var t = 0.0;
     var dt = 0.02;
     var previousSpeeds = new DifferentialDriveWheelSpeeds(0, 0);
+
+    List<Double> vleft = new ArrayList<>();
+    List<Double> vright = new ArrayList<>();
 
     System.out.println("time, uleft, uright, vleft, vright, vx, max_vleft, curvature");
 
@@ -82,6 +91,9 @@ class DifferentialDriveVelocitySystemConstraintTest {
       double left = u.get(0, 0);
       double right = u.get(1, 0);
 
+      vleft.add(left);
+      vright.add(right);
+
       t += dt;
       previousSpeeds = wheelSpeeds;
 
@@ -94,6 +106,14 @@ class DifferentialDriveVelocitySystemConstraintTest {
 //      assertTrue((-10.1 <= right) && (right <= 10.1));
 
     }
+    var c = new XYChartBuilder().build();
+    c.addSeries("left voltage", vleft);
+    c.addSeries("right voltage", vright);
+     new SwingWrapper<>(c).displayChart();
+     try {
+      Thread.sleep(1000000000);
+     } catch (InterruptedException e) {
+     }
   }
 
   @Test
