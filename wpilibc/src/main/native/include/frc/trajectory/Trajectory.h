@@ -16,6 +16,7 @@
 
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Transform2d.h"
+#include <wpi/MathExtras.h>
 
 namespace wpi {
 class json;
@@ -149,20 +150,6 @@ class Trajectory {
  private:
   std::vector<State> m_states;
   units::second_t m_totalTime = 0_s;
-
-  /**
-   * Linearly interpolates between two values.
-   *
-   * @param startValue The start value.
-   * @param endValue The end value.
-   * @param t The fraction for interpolation.
-   *
-   * @return The interpolated value.
-   */
-  template <typename T>
-  static T Lerp(const T& startValue, const T& endValue, const double t) {
-    return startValue + (endValue - startValue) * t;
-  }
 };
 
 void to_json(wpi::json& json, const Trajectory::State& state);
