@@ -50,7 +50,7 @@ public final class Drake {
           Matrix B,
           Matrix Q,
           Matrix R) {
-    return discreteAlgebraicRiccatiEquation(A.getStorage(), B.getStorage(), Q.getStorage(),
-            R.getStorage());
+    return discreteAlgebraicRiccatiEquation(A.m_storage, B.m_storage, Q.m_storage,
+            R.m_storage);
   }
 }
