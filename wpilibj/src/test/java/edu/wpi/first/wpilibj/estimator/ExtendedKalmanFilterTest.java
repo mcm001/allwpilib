@@ -171,8 +171,7 @@ public class ExtendedKalmanFilterTest {
             localY.plus(StateSpaceUtil.makeWhiteNoiseVector(whiteNoiseStdDevs)));
 
       Matrix<N5, N1> rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(B.getStorage()
-            .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1()))).getStorage()));
+      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))));
 
       observer.predict(u, dtSeconds);
 

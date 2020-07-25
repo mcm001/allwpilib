@@ -109,7 +109,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
 
     // New mean is just the sum of the sigmas * weight
     // dot = \Sigma^n_1 (W[k]*Xi[k])
-    Matrix<C, N1> x = sigmas.times(changeBoundsUnchecked(Wm));
+    Matrix<C, N1> x = sigmas.times(Matrix.changeBoundsUnchecked(Wm));
 
     // New covariance is the sum of the outer product of the residuals times the
     // weights
@@ -117,8 +117,8 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
     for (int i = 0; i < 2 * s.getNum() + 1; i++) {
       y.setColumn(i, sigmas.extractColumnVector(i).minus(x));
     }
-    Matrix<C, C> P = y.times(changeBoundsUnchecked(Wc.diag()))
-          .times(changeBoundsUnchecked(y.transpose()));
+    Matrix<C, C> P = y.times(Matrix.changeBoundsUnchecked(Wc.diag()))
+          .times(Matrix.changeBoundsUnchecked(y.transpose()));
 
     return new Pair<>(x, P);
   }
@@ -204,8 +204,8 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
    */
   @Override
   public void reset() {
-    m_xHat = new Matrix<>(new SimpleMatrix(m_states.getNum(), 1));
-    m_P = new Matrix<>(new SimpleMatrix(m_states.getNum(), m_states.getNum()));
+    m_xHat = new Matrix<>(m_states, Nat.N1());
+    m_P = new Matrix<>(m_states, m_states);
     m_sigmasF = new Matrix<>(new SimpleMatrix(m_states.getNum(), 2 * m_states.getNum() + 1));
   }
 
@@ -302,19 +302,10 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
     // K^T = P_y^T.solve(P_{xy}^T)
     // K = (P_y^T.solve(P_{xy}^T)^T
     Matrix<S, R> K = new Matrix<>(
-          Py.transpose().getStorage()
-                .solve(Pxy.transpose().getStorage())
-                .transpose()
+          Py.transpose().solve(Pxy.transpose()).transpose()
     );
 
     m_xHat = m_xHat.plus(K.times(y.minus(yHat)));
     m_P = m_P.minus(K.times(Py).times(K.transpose()));
   }
-
-  private static <R extends Num, C extends Num>
-        Matrix<R, C> changeBoundsUnchecked(Matrix<?, ?> mat) {
-    return new Matrix<>(mat.getStorage());
-  }
-
-
 }

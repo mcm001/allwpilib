@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
@@ -34,7 +33,7 @@ public class StateSpaceUtilTest {
   @Test
   public void testCostArray() {
     var mat = StateSpaceUtil.makeCostMatrix(
-          new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+          Matrix.mat(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -50,7 +49,7 @@ public class StateSpaceUtilTest {
   @Test
   public void testCovArray() {
     var mat = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(),
-          new MatBuilder<>(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+          Matrix.mat(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -67,26 +66,26 @@ public class StateSpaceUtilTest {
   @SuppressWarnings("LocalVariableName")
   public void testIsStabilizable() {
     Matrix<N2, N2> A;
-    Matrix<N2, N1> B = new MatBuilder<>(Nat.N2(), Nat.N1()).fill(0, 1);
+    Matrix<N2, N1> B = Matrix.mat(Nat.N2(), Nat.N1()).fill(0, 1);
 
     // First eigenvalue is uncontrollable and unstable.
     // Second eigenvalue is controllable and stable.
-    A = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1.2, 0, 0, 0.5);
+    A = Matrix.mat(Nat.N2(), Nat.N2()).fill(1.2, 0, 0, 0.5);
     assertFalse(StateSpaceUtil.isStabilizable(A, B));
 
     // First eigenvalue is uncontrollable and marginally stable.
     // Second eigenvalue is controllable and stable.
-    A = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1, 0, 0, 0.5);
+    A = Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 0, 0, 0.5);
     assertFalse(StateSpaceUtil.isStabilizable(A, B));
 
     // First eigenvalue is uncontrollable and stable.
     // Second eigenvalue is controllable and stable.
-    A = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(0.2, 0, 0, 0.5);
+    A = Matrix.mat(Nat.N2(), Nat.N2()).fill(0.2, 0, 0, 0.5);
     assertTrue(StateSpaceUtil.isStabilizable(A, B));
 
     // First eigenvalue is uncontrollable and stable.
     // Second eigenvalue is controllable and unstable.
-    A = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(0.2, 0, 0, 1.2);
+    A = Matrix.mat(Nat.N2(), Nat.N2()).fill(0.2, 0, 0, 1.2);
     assertTrue(StateSpaceUtil.isStabilizable(A, B));
   }
 
@@ -123,7 +122,7 @@ public class StateSpaceUtilTest {
 
   @Test
   public void testDiscretizeA() {
-    var contA = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(0, 1, 0, 0);
+    var contA = Matrix.mat(Nat.N2(), Nat.N2()).fill(0, 1, 0, 0);
     var x0 = VecBuilder.fill(1, 1);
     var discA = Discretization.discretizeA(contA, 1.0);
     var x1Discrete = discA.times(x0);
@@ -131,14 +130,13 @@ public class StateSpaceUtilTest {
     // We now have pos = vel = 1 and accel = 0, which should give us:
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + 1.0 * x0.get(1, 0),
           x0.get(1, 0));
-    assertTrue(MatrixFeatures_DDRM.isIdentical(x1Truth.getStorage().getDDRM(),
-          x1Discrete.getStorage().getDDRM(), 1e-4));
+    assertTrue(x1Truth.isIdentical(x1Discrete, 1e-4));
   }
 
   @SuppressWarnings("LocalVariableName")
   @Test
   public void testDiscretizeAB() {
-    var contA = new MatBuilder<>(Nat.N2(), Nat.N2()).fill(0, 1, 0, 0);
+    var contA = Matrix.mat(Nat.N2(), Nat.N2()).fill(0, 1, 0, 0);
     var contB = VecBuilder.fill(0, 1);
     var x0 = VecBuilder.fill(1, 1);
     var u = VecBuilder.fill(1);
@@ -151,39 +149,27 @@ public class StateSpaceUtilTest {
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + x0.get(1, 0) + 0.5 * u.get(0, 0), x0.get(0, 0)
           + u.get(0, 0));
 
-    assertTrue(MatrixFeatures_DDRM.isIdentical(
-          x1Truth.getStorage().getDDRM(),
-          x1Discrete.getStorage().getDDRM(),
-          1e-4
-    ));
+    assertTrue(x1Truth.isIdentical(x1Discrete, 1e-4));
   }
 
   @Test
   public void testMatrixExp() {
     Matrix<N2, N2> wrappedMatrix = MatrixUtils.eye(Nat.N2());
     var wrappedResult = wrappedMatrix.exp();
-    SimpleMatrix result = wrappedResult.getStorage();
 
-    assertTrue(MatrixFeatures_DDRM.isIdentical(
-          result.getDDRM(),
-          new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
-          1E-9
-    ));
+    assertTrue(wrappedResult.isIdentical(
+        Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1e-9));
 
     var matrix = new Matrix<N2, N2>(new SimpleMatrix(2, 2, true, new double[]{1, 2, 3, 4}));
     wrappedResult = matrix.times(0.01).exp();
-    result = wrappedResult.getStorage();
 
-    assertTrue(MatrixFeatures_DDRM.isIdentical(
-          result.getDDRM(),
-          new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
-              0.03076368, 1.04111993}).getDDRM(), 1E-8
-    ));
+    assertTrue(wrappedResult.isIdentical(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912,
+              0.03076368, 1.04111993), 1e-8));
   }
 
   @Test
   public void testSimpleMatrixExp() {
-    SimpleMatrix matrix = MatrixUtils.eye(Nat.N2()).getStorage();
+    SimpleMatrix matrix = SimpleMatrixUtils.eye(2);
     var result = SimpleMatrixUtils.exp(matrix);
 
     assertTrue(MatrixFeatures_DDRM.isIdentical(

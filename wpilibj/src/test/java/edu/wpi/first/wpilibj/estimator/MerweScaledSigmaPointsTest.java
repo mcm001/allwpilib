@@ -7,10 +7,8 @@
 
 package edu.wpi.first.wpilibj.estimator;
 
-import org.ejml.EjmlUnitTests;
 import org.junit.jupiter.api.Test;
 
-import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
@@ -20,9 +18,9 @@ public class MerweScaledSigmaPointsTest {
   public void testZeroMeanPoints() {
     var merweScaledSigmaPoints = new MerweScaledSigmaPoints<>(Nat.N2());
     var points = merweScaledSigmaPoints.sigmaPoints(VecBuilder.fill(0, 0),
-          new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1, 0, 0, 1));
+          Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 0, 0, 1));
 
-    assertMatrixEquals(points, new MatBuilder<>(Nat.N2(), Nat.N5()).fill(
+    assertMatrixEquals(points, Matrix.mat(Nat.N2(), Nat.N5()).fill(
             0.0, 0.00173205, 0.0, -0.00173205, 0.0,
             0.0, 0.0, 0.00173205, 0.0, -0.00173205
     ));
@@ -32,9 +30,9 @@ public class MerweScaledSigmaPointsTest {
   public void testNonzeroMeanPoints() {
     var merweScaledSigmaPoints = new MerweScaledSigmaPoints<>(Nat.N2());
     var points = merweScaledSigmaPoints.sigmaPoints(VecBuilder.fill(1, 2),
-          new MatBuilder<>(Nat.N2(), Nat.N2()).fill(1, 0, 0, 10));
+          Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 0, 0, 10));
 
-    assertMatrixEquals(points, new MatBuilder<>(Nat.N2(), Nat.N5()).fill(
+    assertMatrixEquals(points, Matrix.mat(Nat.N2(), Nat.N5()).fill(
             1.0, 1.00173205, 1.0, 0.99826795, 1.0,
             2.0, 2.0, 2.00547723, 2.0, 1.99452277
     ));
@@ -42,7 +40,7 @@ public class MerweScaledSigmaPointsTest {
 
   @SuppressWarnings("ParameterName")
   void assertMatrixEquals(Matrix<?, ?> a, Matrix<?, ?> b) {
-    EjmlUnitTests.assertEquals(a.getStorage().getDDRM(), b.getStorage().getDDRM());
+    a.equals(b); //TODO: Kinda hacky idk
   }
 
 }

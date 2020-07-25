@@ -175,7 +175,7 @@ public class LinearSystem<S extends Num, I extends Num,
 
   @Override
   public String toString() {
-    return String.format("Linear System: A\n%s\n\nB:\n%s\n\nC:\n%s\n\nD:\n%s\n", m_A.getStorage(),
-            m_B.getStorage(), m_C.getStorage(), m_D.getStorage());
+    return String.format("Linear System: A\n%s\n\nB:\n%s\n\nC:\n%s\n\nD:\n%s\n", m_A.toString(),
+            m_B.toString(), m_C.toString(), m_D.toString());
   }
 }

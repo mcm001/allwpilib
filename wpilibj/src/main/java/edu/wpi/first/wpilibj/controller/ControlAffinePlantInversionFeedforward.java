@@ -10,8 +10,6 @@ package edu.wpi.first.wpilibj.controller;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.ejml.simple.SimpleMatrix;
-
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
@@ -88,8 +86,8 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
     this.m_B = NumericalJacobian.numericalJacobianU(states, inputs,
             m_f, MatrixUtils.zeros(states), MatrixUtils.zeros(inputs));
 
-    m_r = new Matrix<>(new SimpleMatrix(states.getNum(), 1));
-    m_uff = new Matrix<>(new SimpleMatrix(inputs.getNum(), 1));
+    m_r = new Matrix<>(states, Nat.N1());
+    m_uff = new Matrix<>(inputs, Nat.N1());
 
     reset(m_r);
   }
@@ -117,8 +115,8 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
     this.m_f = (x, u) -> f.apply(x);
     this.m_B = B;
 
-    m_r = new Matrix<S, N1>(new SimpleMatrix(states.getNum(), 1));
-    m_uff = new Matrix<I, N1>(new SimpleMatrix(inputs.getNum(), 1));
+    m_r = new Matrix<>(states, Nat.N1());
+    m_uff = new Matrix<>(inputs, Nat.N1());
 
     reset(m_r);
   }
@@ -171,15 +169,15 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
    */
   public void reset(Matrix<S, N1> initialState) {
     m_r = initialState;
-    m_uff.getStorage().fill(0.0);
+    m_uff.fill(0.0);
   }
 
   /**
    * Resets the feedforward with a zero initial state vector.
    */
   public void reset() {
-    m_r.getStorage().fill(0.0);
-    m_uff.getStorage().fill(0.0);
+    m_r.fill(0.0);
+    m_uff.fill(0.0);
   }
 
   /**
@@ -211,8 +209,7 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
   public Matrix<I, N1> calculate(Matrix<S, N1> r, Matrix<S, N1> nextR) {
     var rDot = (nextR.minus(r)).div(m_dt);
 
-    m_uff = new Matrix<>(m_B.getStorage()
-            .solve(rDot.minus(m_f.apply(r, MatrixUtils.zeros(m_inputs))).getStorage()));
+    m_uff = m_B.solve(rDot.minus(m_f.apply(r, Matrix.zeros(m_inputs))));
 
     m_r = nextR;
     return m_uff;

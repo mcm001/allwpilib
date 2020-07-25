@@ -9,7 +9,6 @@ package edu.wpi.first.wpilibj.math;
 
 import java.util.Random;
 
-import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -114,7 +113,7 @@ public final class StateSpaceUtil {
           Matrix<S, S> A, Matrix<S, I> B
   ) {
     return WPIUtilJNI.isStabilizable(A.getNumRows(), B.getNumCols(),
-            A.getStorage().getDDRM().getData(), B.getStorage().getDDRM().getData());
+            A.getData(), B.getData());
   }
 
   /**
@@ -165,7 +164,7 @@ public final class StateSpaceUtil {
    */
   public static <I extends Num> Matrix<I, N1> normalizeInputVector(Matrix<I, N1> u,
                                                                       double maxMagnitude) {
-    double maxValue = CommonOps_DDRM.elementMaxAbs(u.getStorage().getDDRM());
+    double maxValue = u.maxAbsInternal();
     boolean isCapped = maxValue > maxMagnitude;
 
     if (isCapped) {

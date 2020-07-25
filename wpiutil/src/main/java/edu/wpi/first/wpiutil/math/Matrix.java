@@ -10,9 +10,12 @@ package edu.wpi.first.wpiutil.math;
 import java.util.Objects;
 
 import org.ejml.MatrixDimensionException;
+import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
+import org.ejml.interfaces.decomposition.CholeskyDecomposition_F64;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpiutil.WPIUtilJNI;
@@ -52,7 +55,7 @@ public class Matrix<R extends Num, C extends Num> {
    *
    * @param storage The {@link SimpleMatrix} to back this value.
    */
-  Matrix(SimpleMatrix storage) {
+  public Matrix(SimpleMatrix storage) {
     this.m_storage = Objects.requireNonNull(storage);
   }
 
@@ -157,6 +160,16 @@ public class Matrix<R extends Num, C extends Num> {
   public final double maxInternal() {
     return CommonOps_DDRM.elementMax(this.m_storage.getDDRM());
   }
+
+  /**
+   * Returns the absolute value of the element in this matrix with the largest absolute value.
+   *
+   * @return The absolute value of the element with the largest absolute value.
+   */
+  public final double maxAbsInternal() {
+    return CommonOps_DDRM.elementMaxAbs(this.m_storage.getDDRM());
+  }
+
 
   /**
    * Returns the smallest element of this matrix.
@@ -316,7 +329,7 @@ public class Matrix<R extends Num, C extends Num> {
    * @param b The right-hand side of the equation to solve.
    * @return The solution to the linear system.
    */
-  public final Matrix<C, N1> solve(Matrix<R, N1> b) {
+  public final <C2 extends Num> Matrix<C, C2> solve(Matrix<R, C2> b) {
     return new Matrix<>(this.m_storage.solve(Objects.requireNonNull(b).m_storage));
   }
 
@@ -467,6 +480,60 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
+   * Extracts a submatrix from the supplied matrix and inserts it in a submatrix in "this". The shape of "this"
+   * is used to determine the size of the matrix extracted.
+   *
+   * @param startingRow The starting row in the supplied matrix to extract the submatrix.
+   * @param startingCol The starting column in the supplied matrix to extract the submatrix.
+   * @param other       The matrix to extract the submatrix from.
+   */
+  public <R2 extends Num, C2 extends Num> void extractFrom(int startingRow, int startingCol, Matrix<R2, C2> other) {
+    CommonOps_DDRM.extract(other.m_storage.getDDRM(), startingRow, startingCol, this.m_storage.getDDRM());
+  }
+
+  /**
+   * Decompose "this" matrix using Cholesky Decomposition. If the input matrix is zeros, it 
+   * will return the zero matrix.
+   *
+   * @param lowerTriangular if we want to decompose to the lower triangular Cholesky matrix.
+   * @return The decomposed matrix.
+   * @throws RuntimeException if the matrix could not be decomposed (ie. is not positive
+   *                          semidefinite).
+   */
+  @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
+  public Matrix<R, C> lltDecompose(boolean lowerTriangular) {
+    SimpleMatrix temp = m_storage.copy();
+
+    CholeskyDecomposition_F64<DMatrixRMaj> chol =
+            DecompositionFactory_DDRM.chol(temp.numRows(), lowerTriangular);
+    if (!chol.decompose(temp.getMatrix())) {
+      // check that the input is not all zeros -- if they are, we special case and return all
+      // zeros.
+      var matData = temp.getDDRM().data;
+      var isZeros = true;
+      for (double matDatum : matData) {
+        isZeros &= Math.abs(matDatum) < 1e-6;
+      }
+      if (isZeros) {
+        return new Matrix<>(new SimpleMatrix(temp.numRows(), temp.numCols()));
+      }
+
+      throw new RuntimeException("Cholesky decomposition failed! Input matrix:\n" + m_storage.toString());
+    }
+
+    return new Matrix<>(SimpleMatrix.wrap(chol.getT(null)));
+  }
+
+  /**
+   * Returns the row major data of this matrix as a double array.
+   *
+   * @return he row major data of this matrix as a double array.
+   */
+  public double[] getData() {
+    return m_storage.getDDRM().getData();
+  }
+
+  /**
    * Creates a new vector of zeros.
    *
    * @param nums The size of the desired vector.
@@ -513,6 +580,17 @@ public class Matrix<R extends Num, C extends Num> {
     return new MatBuilder<>(Objects.requireNonNull(rows), Objects.requireNonNull(cols));
   }
 
+  /**
+   * Essentially reassigns dimensions of a {@link Matrix} to allow for operations with
+   * other matrices that have wildcard dimensions.
+   * 
+   * @param mat The {@link Matrix} to remove the dimensions from.
+   * @return The matrix with reassigned dimensions.
+   */
+  public static <R1 extends Num, C1 extends Num> Matrix<R1, C1> changeBoundsUnchecked(Matrix<?, ?> mat) {
+    return new Matrix<>(mat.m_storage);
+  }
+
   /** 
    * Checks if another {@link Matrix} is identical to this one within a specified tolerance.
    *
@@ -550,6 +628,11 @@ public class Matrix<R extends Num, C extends Num> {
   public boolean equals(Matrix<?, ?> other, double tolerance) {
     return MatrixFeatures_DDRM.isEquals(this.m_storage.getDDRM(),
         other.m_storage.getDDRM(), tolerance);
+  }
+
+  @Override
+  public String toString() {
+    return m_storage.toString();
   }
 
   /** 

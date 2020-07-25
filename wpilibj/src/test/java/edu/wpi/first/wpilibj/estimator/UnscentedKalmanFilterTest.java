@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.ejml.EjmlUnitTests;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -24,7 +23,6 @@ import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
@@ -190,9 +188,7 @@ public class UnscentedKalmanFilterTest {
                   noiseStdDev)));
 
       var rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(B.getStorage()
-            .solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))
-                  .getStorage()));
+      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))));
 
       rdots.add(rdot);
 
@@ -313,8 +309,7 @@ public class UnscentedKalmanFilterTest {
     for (int i = 0; i < (2.0 / dt); i++) {
       observer.predict(u, dt);
 
-      u = new Matrix<>(discB.getStorage()
-            .solve((ref.minus(discA.times(ref))).getStorage()));
+      u = new Matrix<>(discB.solve(ref.minus(discA.times(ref))));
 
       xdot = plant.getA().times(observer.getXhat()).plus(plant.getB().times(u));
 
@@ -347,7 +342,7 @@ public class UnscentedKalmanFilterTest {
   public void testUnscentedTransform() {
     // From FilterPy
     var ret = UnscentedKalmanFilter.unscentedTransform(Nat.N4(), Nat.N4(),
-          new MatBuilder<>(Nat.N4(), Nat.N9()).fill(
+          Matrix.mat(Nat.N4(), Nat.N9()).fill(
               -0.9, -0.822540333075852, -0.8922540333075852, -0.9,
                   -0.9, -0.9774596669241481, -0.9077459666924148, -0.9, -0.9,
               1.0, 1.0, 1.077459666924148, 1.0, 1.0, 1.0, 0.9225403330758519, 1.0, 1.0,
@@ -355,7 +350,7 @@ public class UnscentedKalmanFilterTest {
                   -0.9, -0.9774596669241481, -0.9077459666924148,
               1.0, 1.0, 1.0, 1.0, 1.077459666924148, 1.0, 1.0, 1.0, 0.9225403330758519
           ),
-          new MatBuilder<>(Nat.N9(), Nat.N1()).fill(
+          Matrix.mat(Nat.N9(), Nat.N1()).fill(
               -132.33333333,
               16.66666667,
               16.66666667,
@@ -366,7 +361,7 @@ public class UnscentedKalmanFilterTest {
               16.66666667,
               16.66666667
           ),
-          new MatBuilder<>(Nat.N9(), Nat.N1()).fill(
+          Matrix.mat(Nat.N9(), Nat.N1()).fill(
               -129.34333333,
               16.66666667,
               16.66666667,
@@ -380,12 +375,12 @@ public class UnscentedKalmanFilterTest {
     );
 
     assertMatEqual(
-          new MatBuilder<>(Nat.N4(), Nat.N1()).fill(-0.9, 1, -0.9, 1),
+          Matrix.mat(Nat.N4(), Nat.N1()).fill(-0.9, 1, -0.9, 1),
           ret.getFirst()
     );
 
     assertMatEqual(
-          new MatBuilder<>(Nat.N4(), Nat.N4()).fill(
+          Matrix.mat(Nat.N4(), Nat.N4()).fill(
                 2.02000002e-01, 2.00000500e-02, -2.69044710e-29,
                 -4.59511477e-29,
                 2.00000500e-02, 2.00001000e-01, -2.98781068e-29,
@@ -400,7 +395,7 @@ public class UnscentedKalmanFilterTest {
   }
 
   void assertMatEqual(Matrix<?, ?> first, Matrix<?, ?> second) {
-    EjmlUnitTests.assertEquals(first.getStorage().getDDRM(), second.getStorage().getDDRM(), 1e-5);
+    first.equals(second, 1e-5);
   }
 
 }

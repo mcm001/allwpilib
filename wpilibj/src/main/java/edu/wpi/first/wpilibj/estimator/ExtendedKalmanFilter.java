@@ -278,8 +278,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     // K = (S^T.solve(CP^T))^T
     //
     // Now we have the Kalman gain
-    final var K = new Matrix<S, Rows>(S.getStorage().transpose()
-          .solve(C.times(m_P.transpose()).getStorage()).transpose());
+    final Matrix<S, Rows> K = S.transpose().solve(C.times(m_P.transpose())).transpose();
 
     m_xHat = m_xHat.plus(K.times(y.minus(h.apply(m_xHat, u))));
     m_P = MatrixUtils.eye(m_states).minus(K.times(C)).times(m_P);

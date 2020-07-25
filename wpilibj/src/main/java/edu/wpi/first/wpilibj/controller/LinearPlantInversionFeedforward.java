@@ -124,15 +124,15 @@ public class LinearPlantInversionFeedforward<S extends Num, I extends Num,
    */
   public void reset(Matrix<S, N1> initialState) {
     m_r = initialState;
-    m_uff.getStorage().fill(0.0);
+    m_uff.fill(0.0);
   }
 
   /**
    * Resets the feedforward with a zero initial state vector.
    */
   public void reset() {
-    m_r.getStorage().fill(0.0);
-    m_uff.getStorage().fill(0.0);
+    m_r.fill(0.0);
+    m_uff.fill(0.0);
   }
 
   /**
@@ -162,8 +162,7 @@ public class LinearPlantInversionFeedforward<S extends Num, I extends Num,
    */
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public Matrix<I, N1> calculate(Matrix<S, N1> r, Matrix<S, N1> nextR) {
-    m_uff = new Matrix<>(m_B.getStorage()
-            .solve((nextR.minus(m_A.times(r))).getStorage()));
+    m_uff = new Matrix<>(m_B.solve(nextR.minus(m_A.times(r))));
 
     m_r = nextR;
     return m_uff;

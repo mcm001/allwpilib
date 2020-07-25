@@ -12,7 +12,6 @@ import org.ejml.simple.SimpleMatrix;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 /**
@@ -90,17 +89,18 @@ public class MerweScaledSigmaPoints<S extends Num> {
           Matrix<S, S> P) {
     double lambda = Math.pow(m_alpha, 2) * (m_states.getNum() + m_kappa) - m_states.getNum();
 
-    var intermediate = P.times(lambda + m_states.getNum()).getStorage();
-    var U = SimpleMatrixUtils.lltDecompose(intermediate, true); // Lower triangular
+    var intermediate = P.times(lambda + m_states.getNum());
+    var U = intermediate.lltDecompose(true); // Lower triangular
 
     // 2 * states + 1 by states
-    SimpleMatrix sigmas = new SimpleMatrix(m_states.getNum(), 2 * m_states.getNum() + 1);
-    sigmas.setColumn(0, 0, x.getStorage().getDDRM().getData());
+    Matrix<S, ?> sigmas = new Matrix<>(
+        new SimpleMatrix(m_states.getNum(), 2 * m_states.getNum() + 1));
+    sigmas.setColumn(0, x);
     for (int k = 0; k < m_states.getNum(); k++) {
-      var xPlusU = x.getStorage().plus(U.extractVector(false, k)).getDDRM().getData();
-      var xMinusU = x.getStorage().minus(U.extractVector(false, k)).getDDRM().getData();
-      sigmas.setColumn(k + 1, 0, xPlusU);
-      sigmas.setColumn(m_states.getNum() + k + 1, 0, xMinusU);
+      var xPlusU = x.plus(U.extractColumnVector(k));
+      var xMinusU = x.minus(U.extractColumnVector(k));
+      sigmas.setColumn(k + 1, xPlusU);
+      sigmas.setColumn(m_states.getNum() + k + 1, xMinusU);
     }
 
     return new Matrix<>(sigmas);
@@ -116,16 +116,16 @@ public class MerweScaledSigmaPoints<S extends Num> {
     double lambda = Math.pow(m_alpha, 2) * (m_states.getNum() + m_kappa) - m_states.getNum();
     double c = 0.5 / (m_states.getNum() + lambda);
 
-    var wM = new SimpleMatrix(2 * m_states.getNum() + 1, 1);
-    var wC = new SimpleMatrix(2 * m_states.getNum() + 1, 1);
+    Matrix<?, N1> wM = new Matrix<>(new SimpleMatrix(2 * m_states.getNum() + 1, 1));
+    Matrix<?, N1> wC = new Matrix<>(new SimpleMatrix(2 * m_states.getNum() + 1, 1));
     wM.fill(c);
     wC.fill(c);
 
     wM.set(0, 0, lambda / (m_states.getNum() + lambda));
     wC.set(0, 0, lambda / (m_states.getNum() + lambda) + (1 - Math.pow(m_alpha, 2) + beta));
 
-    this.m_wm = new Matrix<>(wM);
-    this.m_wc = new Matrix<>(wC);
+    this.m_wm = wM;
+    this.m_wc = wC;
   }
 
   /**

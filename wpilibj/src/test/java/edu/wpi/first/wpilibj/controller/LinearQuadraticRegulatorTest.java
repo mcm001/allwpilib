@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
@@ -57,9 +58,9 @@ public class LinearQuadraticRegulatorTest {
   public void testLQROnElevator() {
 
     var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
-    qElms.getStorage().setColumn(0, 0, 0.02, 0.4);
+    qElms.setColumn(0, Matrix.mat(Nat.N2(), Nat.N1()).fill(0.02, 0.4));
     var rElms = new Matrix<N1, N1>(new SimpleMatrix(1, 1));
-    rElms.getStorage().setColumn(0, 0, 12.0);
+    rElms.setColumn(0, Matrix.mat(Nat.N1(), Nat.N1()).fill(12.0));
     var dt = 0.00505;
 
     var controller = new LinearQuadraticRegulator<>(

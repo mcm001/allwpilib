@@ -7,13 +7,12 @@
 
 package edu.wpi.first.wpilibj.math;
 
-import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.Pair;
-import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 
 @SuppressWarnings({"PMD.TooManyMethods", "ParameterName"})
 public final class Discretization {
@@ -45,15 +44,17 @@ public final class Discretization {
    * matrix, which we can approximate using a taylor series to several terms
    * and still be substantially cheaper than taking the big exponential.
    *
+   * @param states    Nat representing the states of the system.
    * @param contA     Continuous system matrix.
    * @param contB     Continuous input matrix.
    * @param dtseconds Discretization timestep.
    */
   public static <S extends Num, I extends Num> Pair<Matrix<S, S>, Matrix<S, I>>
-      discretizeABTaylor(Matrix<S, S> contA,
+      discretizeABTaylor(Nat<S> states,
+                         Matrix<S, S> contA,
                          Matrix<S, I> contB,
                          double dtseconds) {
-    var lastTerm = new Matrix<S, S>(SimpleMatrix.identity(contA.getNumRows()));
+    Matrix<S, S> lastTerm = Matrix.eye(states);
     double lastCoeff = dtseconds;
 
     var phi12 = lastTerm.times(lastCoeff);
@@ -149,22 +150,24 @@ public final class Discretization {
    */
   @SuppressWarnings("LocalVariableName")
   public static <S extends Num, I extends Num> Pair<Matrix<S, S>,
-            Matrix<S, I>> discretizeAB(Matrix<S, S> contA,
+            Matrix<S, I>> discretizeAB(
+                                     Matrix<S, S> contA,
                                      Matrix<S, I> contB,
                                      double dtSeconds) {
     var scaledA = contA.times(dtSeconds);
     var scaledB = contB.times(dtSeconds);
 
     var contSize = contB.getNumRows() + contB.getNumCols();
-    SimpleMatrix Mcont = new SimpleMatrix(contSize, contSize);
-    Mcont.insertIntoThis(0, 0, scaledA.getStorage());
-    Mcont.insertIntoThis(0, scaledA.getNumCols(), scaledB.getStorage());
-    var Mdisc = SimpleMatrixUtils.exp(Mcont);
+    var Mcont = new Matrix<>(new SimpleMatrix(contSize, contSize));
+    Mcont.assignBlock(0, 0, scaledA);
+    Mcont.assignBlock(0, scaledA.getNumCols(), scaledB);
+    var Mdisc = Mcont.exp();
 
     var discA = new Matrix<S, S>(new SimpleMatrix(contB.getNumRows(), contB.getNumRows()));
     var discB = new Matrix<S, I>(new SimpleMatrix(contB.getNumRows(), contB.getNumCols()));
-    CommonOps_DDRM.extract(Mdisc.getDDRM(), 0, 0, discA.getStorage().getDDRM());
-    CommonOps_DDRM.extract(Mdisc.getDDRM(), 0, contB.getNumRows(), discB.getStorage().getDDRM());
+
+    discA.extractFrom(0, 0, Mdisc);
+    discB.extractFrom(0, contB.getNumRows(), Mdisc);
 
     return new Pair<>(discA, discB);
   }

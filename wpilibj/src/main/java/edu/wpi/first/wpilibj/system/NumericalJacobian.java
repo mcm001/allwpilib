@@ -11,7 +11,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -42,7 +41,7 @@ public final class NumericalJacobian {
           Function<Matrix<C, N1>, Matrix<S, N1>> f,
           Matrix<C, N1> x
   ) {
-    var result = MatrixUtils.zeros(rows, cols);
+    var result = new Matrix<>(rows, cols);
 
     for (int i = 0; i < cols.getNum(); i++) {
       var dxPlus = x.copy();
@@ -52,7 +51,7 @@ public final class NumericalJacobian {
       @SuppressWarnings("LocalVariableName")
       var dF = f.apply(dxPlus).minus(f.apply(dxMinus)).div(2 * kEpsilon);
 
-      result.getStorage().setColumn(i, 0, dF.getStorage().getDDRM().getData());
+      result.setColumn(i, Matrix.changeBoundsUnchecked(dF));
     }
 
     return result;
