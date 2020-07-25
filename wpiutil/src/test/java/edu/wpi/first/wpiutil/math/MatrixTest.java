@@ -162,23 +162,14 @@ public class MatrixTest {
 
   @Test
   void testMatrixExponential() {
-    SimpleMatrix matrix = Matrix.eye(Nat.N2()).m_storage;
-    var result = SimpleMatrixUtils.expm(matrix);
+    var matrix = Matrix.eye(Nat.N2());
+    var result = matrix.exp();
 
-    assertTrue(MatrixFeatures_DDRM.isIdentical(
-        result.getDDRM(),
-        new SimpleMatrix(2, 2, true, new double[]{Math.E, 0, 0, Math.E}).getDDRM(),
-        1E-9
-    ));
+    assertTrue(result.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1E-9));
 
-    matrix = new SimpleMatrix(2, 2, true, new double[]{1, 2, 3, 4});
-    result = SimpleMatrixUtils.expm(matrix.scale(0.01));
+    matrix = Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 2, 3, 4);
+    result = matrix.times(0.01).exp();
 
-    assertTrue(MatrixFeatures_DDRM.isIdentical(
-        result.getDDRM(),
-        new SimpleMatrix(2, 2, true, new double[]{1.01035625, 0.02050912,
-            0.03076368, 1.04111993}).getDDRM(),
-        1E-8
-    ));
+    assertTrue(result.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912, 0.03076368, 1.04111993), 1E-8));
   }
 }

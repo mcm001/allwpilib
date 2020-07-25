@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -57,7 +56,7 @@ public class ExtendedKalmanFilterTest {
     final var Vl = u.get(0, 0);
     final var Vr = u.get(1, 0);
 
-    final Matrix<N5, N1> result = new Matrix<>(new SimpleMatrix(5, 1));
+    final Matrix<N5, N1> result = new Matrix<>(Nat.N5(), Nat.N1());
     final var v = 0.5 * (vl + vr);
     result.set(0, 0, v * Math.cos(x.get(2, 0)));
     result.set(1, 0, v * Math.sin(x.get(2, 0)));

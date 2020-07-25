@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -73,7 +72,7 @@ public class KalmanFilterTest {
               0, 1, 0, 0, 0, 0,
               0, 0, 1, 0, 0, 0
         ),
-        new Matrix<>(new SimpleMatrix(3, 3))); // D
+        new Matrix<>(Nat.N3(), Nat.N3())); // D
 
   @Test
   @SuppressWarnings("LocalVariableName")

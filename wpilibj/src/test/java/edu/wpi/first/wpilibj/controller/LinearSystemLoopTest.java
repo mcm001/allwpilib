@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
@@ -43,9 +42,9 @@ public class LinearSystemLoopTest {
           Matrix.mat(Nat.N2(), Nat.N1()).fill(0.05, 1.0),
           Matrix.mat(Nat.N1(), Nat.N1()).fill(0.0001), kDt);
 
-    var qElms = new Matrix<N2, N1>(new SimpleMatrix(2, 1));
+    var qElms = new Matrix<>(Nat.N2(), Nat.N1());
     qElms.setColumn(0, Matrix.mat(Nat.N2(), Nat.N1()).fill(0.02, 0.4));
-    var rElms = new Matrix<N1, N1>(new SimpleMatrix(1, 1));
+    var rElms = new Matrix<>(Nat.N1(), Nat.N1());
     rElms.setColumn(0, Matrix.mat(Nat.N1(), Nat.N1()).fill(12.0));
     var dt = 0.00505;
 

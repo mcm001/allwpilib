@@ -130,7 +130,7 @@ public class StateSpaceUtilTest {
     // We now have pos = vel = 1 and accel = 0, which should give us:
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + 1.0 * x0.get(1, 0),
           x0.get(1, 0));
-    assertTrue(x1Truth.isIdentical(x1Discrete, 1e-4));
+    assertTrue(x1Truth.equals(x1Discrete, 1e-4));
   }
 
   @SuppressWarnings("LocalVariableName")
@@ -149,7 +149,7 @@ public class StateSpaceUtilTest {
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + x0.get(1, 0) + 0.5 * u.get(0, 0), x0.get(0, 0)
           + u.get(0, 0));
 
-    assertTrue(x1Truth.isIdentical(x1Discrete, 1e-4));
+    assertTrue(x1Truth.equals(x1Discrete, 1e-4));
   }
 
   @Test
@@ -157,14 +157,14 @@ public class StateSpaceUtilTest {
     Matrix<N2, N2> wrappedMatrix = MatrixUtils.eye(Nat.N2());
     var wrappedResult = wrappedMatrix.exp();
 
-    assertTrue(wrappedResult.isIdentical(
-        Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1e-9));
+    assertTrue(wrappedResult.equals(
+        Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1E-9));
 
-    var matrix = new Matrix<N2, N2>(new SimpleMatrix(2, 2, true, new double[]{1, 2, 3, 4}));
+    var matrix = Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 2, 3, 4);
     wrappedResult = matrix.times(0.01).exp();
 
-    assertTrue(wrappedResult.isIdentical(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912,
-              0.03076368, 1.04111993), 1e-8));
+    assertTrue(wrappedResult.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912,
+              0.03076368, 1.04111993), 1E-8));
   }
 
   @Test
