@@ -44,8 +44,11 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Constructs a new matrix with the given storage.
-   * Caller should make sure that the provided generic bounds match the shape of the provided matrix
+   * Constructs a new {@link Matrix} with the given storage.
+   * Caller should make sure that the provided generic bounds match the shape of the provided {@link Matrix}.
+   * 
+   * <p>NOTE:It is not recommend to use this constructor unless the {@link SimpleMatrix} API is absolutely
+   * necessary due to the desired function not being accessible through the {@link Matrix} wrapper.
    *
    * @param storage The {@link SimpleMatrix} to back this value.
    */
@@ -56,7 +59,7 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Constructs a new matrix with the storage of the supplied matrix.
    *
-   * @param other The {@link Matrix} to copy the storage of
+   * @param other The {@link Matrix} to copy the storage of.
    */
   public Matrix(Matrix<R, C> other) {
     this.m_storage = Objects.requireNonNull(other).m_storage;
@@ -126,7 +129,7 @@ public class Matrix<R extends Num, C extends Num> {
 
 
   /**
-   * Sets all the elements in this matrix equal to the specified value.
+   * Sets all the elements in "this" matrix equal to the specified value.
    *
    * @param value The value each element is set to.
    */
@@ -135,10 +138,12 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * If a vector then a square matrix is returned
-   * if a matrix then a vector of diagonal elements is returned.
+   * Returns the diagonal elements inside a vector or square matrix.
+   * 
+   * <p>If "this" {@link Matrix} is a vector then a square matrix is returned. If a "this" 
+   * {@link Matrix} is a matrix then a vector of diagonal elements is returned.
    *
-   * @return Diagonal elements inside a vector or a square matrix with the same diagonal elements.
+   * @return The diagonal elements inside a vector or a square matrix.
    */
   public final Matrix<R, C> diag() {
     return new Matrix<>(this.m_storage.diag());
@@ -180,7 +185,7 @@ public class Matrix<R extends Num, C extends Num> {
    *
    * @param other The other matrix to multiply by.
    * @param <C2>  The number of columns in the second matrix.
-   * @return The result of the matrix multiplication between this and the given matrix.
+   * @return The result of the matrix multiplication between "this" and the given matrix.
    */
   public final <C2 extends Num> Matrix<R, C2> times(Matrix<C, C2> other) {
     return new Matrix<>(this.m_storage.mult(Objects.requireNonNull(other).m_storage));
@@ -197,16 +202,16 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * <p>
-   * Returns a matrix which is the result of an element by element multiplication of 'this' and 'b'.
-   * c<sub>i,j</sub> = a<sub>i,j</sub>*b<sub>i,j</sub>
-   * </p>
+   * Returns a matrix which is the result of an element by element multiplication of "this" and b.
+   * 
+   * <p>c<sub>i,j</sub> = a<sub>i,j</sub>*b<sub>i,j</sub>
+   * 
    *
-   * @param other A matrix.
-   * @return The element by element multiplication of 'this' and 'b'.
+   * @param b The other matrix to preform element multiplication on.
+   * @return The element by element multiplication of "this" and b.
    */
-  public final Matrix<R, C> elementTimes(Matrix<R, C> other) {
-    return new Matrix<>(this.m_storage.elementMult(Objects.requireNonNull(other).m_storage));
+  public final Matrix<R, C> elementTimes(Matrix<R, C> b) {
+    return new Matrix<>(this.m_storage.elementMult(Objects.requireNonNull(b).m_storage));
   }
 
   /**
@@ -292,10 +297,10 @@ public class Matrix<R extends Num, C extends Num> {
 
 
   /**
-   * Returns the inverse matrix of this matrix.
+   * Returns the inverse matrix of "this" matrix.
    *
-   * @return The inverse of this matrix.
-   * @throws org.ejml.data.SingularMatrixException If this matrix is non-invertable.
+   * @return The inverse of "this" matrix.
+   * @throws org.ejml.data.SingularMatrixException If "this" matrix is non-invertable.
    */
   public final Matrix<R, C> inv() {
     return new Matrix<>(this.m_storage.invert());
@@ -304,11 +309,14 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Returns the solution x to the equation Ax = b, where A is the matrix
    * "this".
+   * 
+   * <p>The matrix equation could also be written as x = A<sup>-1</sup>b. Where the
+   * pseudo inverse is used if A is not square.
    *
    * @param b The right-hand side of the equation to solve.
    * @return The solution to the linear system.
    */
-  public final Matrix<R, N1> solve(Matrix<R, N1> b) {
+  public final Matrix<C, N1> solve(Matrix<R, N1> b) {
     return new Matrix<>(this.m_storage.solve(Objects.requireNonNull(b).m_storage));
   }
 
@@ -340,9 +348,9 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Computes the Frobenius normal of the matrix.<br>
-   * <br>
-   * normF = Sqrt{  &sum;<sub>i=1:m</sub> &sum;<sub>j=1:n</sub> { a<sub>ij</sub><sup>2</sup>}   }
+   * Computes the Frobenius normal of the matrix.
+   * 
+   * <p>normF = Sqrt{  &sum;<sub>i=1:m</sub> &sum;<sub>j=1:n</sub> { a<sub>ij</sub><sup>2</sup>}   }
    *
    * @return The matrix's Frobenius normal.
    */
@@ -351,9 +359,9 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Computes the induced p = 1 matrix norm.<br>
-   * <br>
-   * ||A||<sub>1</sub>= max(j=1 to n; sum(i=1 to m; |a<sub>ij</sub>|))
+   * Computes the induced p = 1 matrix norm.
+   * 
+   * <p>||A||<sub>1</sub>= max(j=1 to n; sum(i=1 to m; |a<sub>ij</sub>|))
    *
    * @return The norm.
    */
@@ -380,26 +388,28 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Returns a matrix which is the result of an element by element power of 'this' and 'b':
-   * c<sub>i,j</sub> = a<sub>i,j</sub> ^ b.
+   * Returns a matrix which is the result of an element by element power of "this" and b:
+   * 
+   * <p>c<sub>i,j</sub> = a<sub>i,j</sub> ^ b
    *
    * @param b Scalar
-   * @return The element by element power of 'this' and 'b'.
+   * @return The element by element power of "this" and b.
    */
   @SuppressWarnings("ParameterName")
-  public final Matrix<R, C> epow(double b) {
+  public final Matrix<R, C> elementPower(double b) {
     return new Matrix<>(this.m_storage.elementPower(b));
   }
 
   /**
-   * Returns a matrix which is the result of an element by element power of 'this' and 'b':
-   * c<sub>i,j</sub> = a<sub>i,j</sub> ^ b.
+   * Returns a matrix which is the result of an element by element power of "this" and b.
+   * 
+   * <p>c<sub>i,j</sub> = a<sub>i,j</sub> ^ b
    *
    * @param b Scalar.
-   * @return The element by element power of 'this' and 'b'.
+   * @return The element by element power of "this" and b.
    */
   @SuppressWarnings("ParameterName")
-  public final Matrix<R, C> epow(int b) {
+  public final Matrix<R, C> elementPower(int b) {
     return new Matrix<>(this.m_storage.elementPower((double) b));
   }
 
@@ -450,12 +460,10 @@ public class Matrix<R extends Num, C extends Num> {
    * @param other  The matrix to assign the block to.
    */
   public <R2 extends Num, C2 extends Num> void assignBlock(int startingRow, int startingCol, Matrix<R2, C2> other) {
-    this.m_storage.insertIntoThis(startingRow, startingCol, Objects.requireNonNull(other).m_storage);
-  }
-
-  @Override
-  public String toString() {
-    return m_storage.toString();
+    this.m_storage.insertIntoThis(
+      startingRow,
+      startingCol,
+      Objects.requireNonNull(other).m_storage);
   }
 
   /**
@@ -484,7 +492,7 @@ public class Matrix<R extends Num, C extends Num> {
    * Creates the identity matrix of the given dimension.
    *
    * @param dim The dimension of the desired matrix.
-   * @param <D> The dimension of the desired matrix.
+   * @param <D> The dimension of the desired matrix as a generic.
    * @return The DxD identity matrix.
    */
   public static <D extends Num> Matrix<D, D> eye(D dim) {
@@ -492,7 +500,7 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Entrypoint to the MatBuilder class for creation
+   * Entrypoint to the {@link MatBuilder} class for creation
    * of custom matrices with the given dimensions and contents.
    *
    * @param rows The number of rows of the desired matrix.
@@ -505,9 +513,8 @@ public class Matrix<R extends Num, C extends Num> {
     return new MatBuilder<>(Objects.requireNonNull(rows), Objects.requireNonNull(cols));
   }
 
-  
   /** 
-   * Checks if another Matrix is identical to this one within a specified tolerance.
+   * Checks if another {@link Matrix} is identical to this one within a specified tolerance.
    *
    * <p>This will check if each element is in tolerance of the corresponding element
    * from the other Matrix or if the elements have the same symbolic meaning. For two
@@ -519,9 +526,9 @@ public class Matrix<R extends Num, C extends Num> {
    * will return false if an element is uncountable. This should only be used when
    * uncountable elements need to compared.
    * 
-   * @param other     The Matrix to check against this one.
+   * @param other     The {@link Matrix} to check against this one.
    * @param tolerance The tolerance to check equality with.
-   * @return true if this Matrix is identical to the one supplied.
+   * @return true if this matrix is identical to the one supplied.
    */
   public boolean isIdentical(Matrix<?, ?> other, double tolerance) {
     return MatrixFeatures_DDRM.isIdentical(this.m_storage.getDDRM(),
@@ -529,21 +536,30 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /** 
-   * Checks if another Matrix is equal to this one within a specified tolerance.
+   * Checks if another {@link Matrix} is equal to this one within a specified tolerance.
    * 
    * <p>This will check if each element is in tolerance of the corresponding element
-   * from the other Matrix.
+   * from the other {@link Matrix}.
    * 
-   * @param other     The Matrix to check against this one.
+   * <p>tol &ge; |a<sub>ij</sub> - b<sub>ij</sub>|
+   * 
+   * @param other     The {@link Matrix} to check against this one.
    * @param tolerance The tolerance to check equality with.
-   * @return true if this Matrix is equal to the one supplied.
+   * @return true if this matrix is equal to the one supplied.
    */
   public boolean equals(Matrix<?, ?> other, double tolerance) {
     return MatrixFeatures_DDRM.isEquals(this.m_storage.getDDRM(),
         other.m_storage.getDDRM(), tolerance);
   }
 
-  
+  /** 
+   * Checks if an object is equal to this {@link Matrix}.
+   * 
+   * <p>a<sub>ij</sub> == b<sub>ij</sub>
+   * 
+   * @param o The Object to check against this {@link Matrix}.
+   * @return true if the object supplied is a Matrix and is equal to "this" Matrix.
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
