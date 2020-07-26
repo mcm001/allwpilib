@@ -149,8 +149,8 @@ public class LinearQuadraticRegulator<S extends Num, I extends Num,
   ) {
     m_K = k;
 
-    m_r = new Matrix<>(new SimpleMatrix(states.getNum(), 1));
-    m_u = new Matrix<>(new SimpleMatrix(inputs.getNum(), 1));
+    m_r = new Matrix<>(states, Nat.N1());
+    m_u = new Matrix<>(inputs, Nat.N1());
 
     reset();
   }

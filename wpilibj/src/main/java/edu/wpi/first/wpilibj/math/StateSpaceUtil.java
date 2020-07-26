@@ -44,7 +44,7 @@ public final class StateSpaceUtil {
   public static <S extends Num> Matrix<S, S> makeCovarianceMatrix(
           Nat<S> states, Matrix<S, N1> stdDevs
   ) {
-    var result = new Matrix<S, S>(new SimpleMatrix(states.getNum(), states.getNum()));
+    var result = new Matrix<S, S>(states, states);
     for (int i = 0; i < states.getNum(); i++) {
       result.set(i, i, Math.pow(stdDevs.get(i, 0), 2));
     }
@@ -86,14 +86,14 @@ public final class StateSpaceUtil {
    * @return State excursion or control effort cost matrix.
    */
   public static <S extends Num> Matrix<S, S> makeCostMatrix(Matrix<S, N1> costs) {
-    var result = new SimpleMatrix(costs.getNumRows(), costs.getNumRows());
+    Matrix<S, S> result = new Matrix<>(new SimpleMatrix(costs.getNumRows(), costs.getNumRows()));
     result.fill(0.0);
 
     for (int i = 0; i < costs.getNumRows(); i++) {
       result.set(i, i, 1.0 / (Math.pow(costs.get(i, 0), 2)));
     }
 
-    return new Matrix<>(result);
+    return result;
   }
 
   /**

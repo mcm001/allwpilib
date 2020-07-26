@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.SimpleMatrixUtils;
 import edu.wpi.first.wpiutil.math.VecBuilder;
@@ -130,7 +129,7 @@ public class StateSpaceUtilTest {
     // We now have pos = vel = 1 and accel = 0, which should give us:
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + 1.0 * x0.get(1, 0),
           x0.get(1, 0));
-    assertTrue(x1Truth.equals(x1Discrete, 1e-4));
+    assertTrue(x1Truth.isEqual(x1Discrete, 1E-4));
   }
 
   @SuppressWarnings("LocalVariableName")
@@ -149,21 +148,21 @@ public class StateSpaceUtilTest {
     var x1Truth = VecBuilder.fill(x0.get(0, 0) + x0.get(1, 0) + 0.5 * u.get(0, 0), x0.get(0, 0)
           + u.get(0, 0));
 
-    assertTrue(x1Truth.equals(x1Discrete, 1e-4));
+    assertTrue(x1Truth.isEqual(x1Discrete, 1E-4));
   }
 
   @Test
   public void testMatrixExp() {
-    Matrix<N2, N2> wrappedMatrix = MatrixUtils.eye(Nat.N2());
+    Matrix<N2, N2> wrappedMatrix = Matrix.eye(Nat.N2());
     var wrappedResult = wrappedMatrix.exp();
 
-    assertTrue(wrappedResult.equals(
+    assertTrue(wrappedResult.isEqual(
         Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1E-9));
 
     var matrix = Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 2, 3, 4);
     wrappedResult = matrix.times(0.01).exp();
 
-    assertTrue(wrappedResult.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912,
+    assertTrue(wrappedResult.isEqual(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912,
               0.03076368, 1.04111993), 1E-8));
   }
 

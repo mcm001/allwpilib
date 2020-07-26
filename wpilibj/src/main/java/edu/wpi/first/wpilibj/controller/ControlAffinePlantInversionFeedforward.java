@@ -12,7 +12,6 @@ import java.util.function.Function;
 
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -84,7 +83,7 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
     this.m_inputs = inputs;
 
     this.m_B = NumericalJacobian.numericalJacobianU(states, inputs,
-            m_f, MatrixUtils.zeros(states), MatrixUtils.zeros(inputs));
+            m_f, Matrix.zeros(states), Matrix.zeros(inputs));
 
     m_r = new Matrix<>(states, Nat.N1());
     m_uff = new Matrix<>(inputs, Nat.N1());

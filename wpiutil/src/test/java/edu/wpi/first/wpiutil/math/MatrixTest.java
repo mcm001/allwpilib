@@ -8,8 +8,6 @@
 package edu.wpi.first.wpiutil.math;
 
 import org.ejml.data.SingularMatrixException;
-import org.ejml.dense.row.MatrixFeatures_DDRM;
-import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -47,7 +45,7 @@ public class MatrixTest {
     
     assertTrue(Matrix.mat(Nat.N2(), Nat.N4())
         .fill(12.5, 5.55, 7.8, 14.3,
-            22.13, 9.82, 13.28, 23.53).equals(
+            22.13, 9.82, 13.28, 23.53).isEqual(
             result2,
               1E-9
     ));
@@ -103,12 +101,12 @@ public class MatrixTest {
 
     var inv = mat.inv();
 
-    assertTrue(Matrix.eye(Nat.N3()).equals(
+    assertTrue(Matrix.eye(Nat.N3()).isEqual(
         mat.times(inv),
         1E-9
     ));
 
-    assertTrue(Matrix.eye(Nat.N3()).equals(
+    assertTrue(Matrix.eye(Nat.N3()).isEqual(
         inv.times(mat),
         1E-9
     ));
@@ -135,7 +133,7 @@ public class MatrixTest {
 
     assertEquals(Matrix.mat(Nat.N2(), Nat.N2()).fill(2.0, 4.0, 6.0, 8.0),  mat.times(2.0));
 
-    assertTrue(Matrix.mat(Nat.N2(), Nat.N2()).fill(0.5, 1.0, 1.5, 2.0).equals(
+    assertTrue(Matrix.mat(Nat.N2(), Nat.N2()).fill(0.5, 1.0, 1.5, 2.0).isEqual(
         mat.div(2.0),
         1E-3
     ));
@@ -165,11 +163,11 @@ public class MatrixTest {
     var matrix = Matrix.eye(Nat.N2());
     var result = matrix.exp();
 
-    assertTrue(result.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1E-9));
+    assertTrue(result.isEqual(Matrix.mat(Nat.N2(), Nat.N2()).fill(Math.E, 0, 0, Math.E), 1E-9));
 
     matrix = Matrix.mat(Nat.N2(), Nat.N2()).fill(1, 2, 3, 4);
     result = matrix.times(0.01).exp();
 
-    assertTrue(result.equals(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912, 0.03076368, 1.04111993), 1E-8));
+    assertTrue(result.isEqual(Matrix.mat(Nat.N2(), Nat.N2()).fill(1.01035625, 0.02050912, 0.03076368, 1.04111993), 1E-8));
   }
 }

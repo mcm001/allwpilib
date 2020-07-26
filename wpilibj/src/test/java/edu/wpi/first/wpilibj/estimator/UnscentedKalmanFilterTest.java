@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -126,7 +125,7 @@ public class UnscentedKalmanFilterTest {
     List<Double> inputVr = new ArrayList<>();
 
     List<Double> timeData = new ArrayList<>();
-    List<Matrix> rdots = new ArrayList<>();
+    List<Matrix<?, ?>> rdots = new ArrayList<>();
 
     UnscentedKalmanFilter<N6, N2, N4> observer = new UnscentedKalmanFilter<>(
           Nat.N6(), Nat.N4(),
@@ -144,10 +143,10 @@ public class UnscentedKalmanFilterTest {
     );
 
     Matrix<N6, N1> nextR;
-    Matrix<N2, N1> u = MatrixUtils.zeros(Nat.N2(), Nat.N1());
+    Matrix<N2, N1> u = Matrix.zeros(Nat.N2(), Nat.N1());
 
     var B = NumericalJacobian.numericalJacobianU(Nat.N6(), Nat.N2(),
-          UnscentedKalmanFilterTest::getDynamics, MatrixUtils.zeros(Nat.N6(), Nat.N1()), u);
+          UnscentedKalmanFilterTest::getDynamics, Matrix.zeros(Nat.N6(), Nat.N1()), u);
 
     observer.setXhat(VecBuilder.fill(2.75, 22.521, 1.0, 0.0, 0.0, 0.0)); // TODO not hard code this
 
@@ -180,7 +179,7 @@ public class UnscentedKalmanFilterTest {
       nextR.set(5, 0, vr);
 
       Matrix<N4, N1> localY =
-            getLocalMeasurementModel(trueXhat, MatrixUtils.zeros(Nat.N2(), Nat.N1()));
+            getLocalMeasurementModel(trueXhat, Matrix.zeros(Nat.N2(), Nat.N1()));
       var noiseStdDev = VecBuilder.fill(0.001, 0.001, 0.5, 0.5);
 
       observer.correct(u,
@@ -188,7 +187,7 @@ public class UnscentedKalmanFilterTest {
                   noiseStdDev)));
 
       var rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, MatrixUtils.zeros(Nat.N2(), Nat.N1())))));
+      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, Matrix.zeros(Nat.N2(), Nat.N1())))));
 
       rdots.add(rdot);
 
@@ -395,7 +394,7 @@ public class UnscentedKalmanFilterTest {
   }
 
   void assertMatEqual(Matrix<?, ?> first, Matrix<?, ?> second) {
-    first.equals(second, 1e-5);
+    first.isEqual(second, 1E-5);
   }
 
 }

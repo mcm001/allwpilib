@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpilibj.system.RungeKutta;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.Pair;
@@ -287,7 +286,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
     var Py = transRet.getSecond().plus(R);
 
     // Compute cross covariance of the state and the measurements
-    Matrix<S, R> Pxy = MatrixUtils.zeros(m_states, rows);
+    Matrix<S, R> Pxy = Matrix.zeros(m_states, rows);
     for (int i = 0; i < m_pts.getNumSigmas(); i++) {
       var temp =
             m_sigmasF.extractColumnVector(i).minus(m_xHat)

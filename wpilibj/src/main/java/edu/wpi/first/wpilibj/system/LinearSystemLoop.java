@@ -280,7 +280,7 @@ public class LinearSystemLoop<S extends Num, I extends Num,
     m_controller.reset();
     m_feedforward.reset(initialReference);
     m_observer.reset();
-    m_nextR = new Matrix<>(new SimpleMatrix(m_nextR.getNumRows(), 1));
+    m_nextR.fill(0.0);
   }
 
   /**

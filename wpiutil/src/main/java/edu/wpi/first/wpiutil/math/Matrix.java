@@ -541,7 +541,20 @@ public class Matrix<R extends Num, C extends Num> {
    * @return A vector of size N filled with zeros.
    */
   public static <N extends Num> Matrix<N, N1> zeros(Nat<N> nums) {
-    return new Matrix<>(new SimpleMatrix(Objects.requireNonNull(nums).getNum(), 1));
+    return new Matrix<>(Objects.requireNonNull(nums), Nat.N1());
+  }
+
+  /**
+   * Creates a new matrix of zeros.
+   *
+   * @param rows The number of rows in the matrix.
+   * @param cols The number of columns in the matrix.
+   * @param <R> The number of rows in the matrix as a generic.
+   * @param <C> The number of columns in the matrix as a generic.
+   * @return An RxC matrix filled with zeros.
+   */
+  public static <R extends Num, C extends Num> Matrix<R, C> zeros(Nat<R> rows, Nat<C> cols) {
+    return new Matrix<>(Objects.requireNonNull(rows), Objects.requireNonNull(cols));
   }
 
   /**
@@ -625,7 +638,7 @@ public class Matrix<R extends Num, C extends Num> {
    * @param tolerance The tolerance to check equality with.
    * @return true if this matrix is equal to the one supplied.
    */
-  public boolean equals(Matrix<?, ?> other, double tolerance) {
+  public boolean isEqual(Matrix<?, ?> other, double tolerance) {
     return MatrixFeatures_DDRM.isEquals(this.m_storage.getDDRM(),
         other.m_storage.getDDRM(), tolerance);
   }

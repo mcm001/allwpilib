@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.system.NumericalJacobian;
 import edu.wpi.first.wpilibj.system.RungeKutta;
 import edu.wpi.first.wpiutil.math.Drake;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
@@ -84,9 +83,9 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     this.m_contR = StateSpaceUtil.makeCovarianceMatrix(outputs, measurementStdDevs);
 
     final var contA = NumericalJacobian
-          .numericalJacobianX(states, states, f, m_xHat, MatrixUtils.zeros(inputs));
+          .numericalJacobianX(states, states, f, m_xHat, Matrix.zeros(inputs));
     final var C = NumericalJacobian
-          .numericalJacobianX(outputs, states, h, m_xHat, MatrixUtils.zeros(inputs));
+          .numericalJacobianX(outputs, states, h, m_xHat, Matrix.zeros(inputs));
 
     final var discPair = Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
@@ -100,7 +99,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
       m_initP = new Matrix<>(Drake.discreteAlgebraicRiccatiEquation(
             discA.transpose(), C.transpose(), discQ, m_discR));
     } else {
-      m_initP = MatrixUtils.zeros(states, states);
+      m_initP = Matrix.zeros(states, states);
     }
 
     m_P = m_initP;
@@ -184,7 +183,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
 
   @Override
   public void reset() {
-    m_xHat = MatrixUtils.zeros(m_states);
+    m_xHat = Matrix.zeros(m_states);
     m_P = m_initP;
   }
 
@@ -281,6 +280,6 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     final Matrix<S, Rows> K = S.transpose().solve(C.times(m_P.transpose())).transpose();
 
     m_xHat = m_xHat.plus(K.times(y.minus(h.apply(m_xHat, u))));
-    m_P = MatrixUtils.eye(m_states).minus(K.times(C)).times(m_P);
+    m_P = Matrix.eye(m_states).minus(K.times(C)).times(m_P);
   }
 }

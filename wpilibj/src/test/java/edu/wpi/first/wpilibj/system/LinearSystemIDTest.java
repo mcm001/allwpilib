@@ -23,16 +23,16 @@ class LinearSystemIDTest {
     var model = LinearSystemId.createDrivetrainVelocitySystem(
             DCMotor.getNEO(4), 70, 0.05, 0.4, 6.0, 6
     );
-    assertTrue(model.getA().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getA().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(-10.14132, 3.06598, 3.06598, -10.14132), 0.001));
 
-    assertTrue(model.getB().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getB().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(4.2590, -1.28762, -1.2876, 4.2590), 0.001));
 
-    assertTrue(model.getC().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getC().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(1.0, 0.0, 0.0, 1.0), 0.001));
 
-    assertTrue(model.getD().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getD().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(0.0, 0.0, 0.0, 0.0), 0.001));
   }
 
@@ -40,32 +40,32 @@ class LinearSystemIDTest {
   public void testElevatorSystem() {
 
     var model = LinearSystemId.createElevatorSystem(DCMotor.getNEO(2), 5, 0.05, 12);
-    assertTrue(model.getA().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getA().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(0, 1, 0, -99.05473), 0.001));
 
-    assertTrue(model.getB().equals(Matrix.mat(Nat.N2(),
+    assertTrue(model.getB().isEqual(Matrix.mat(Nat.N2(),
             Nat.N1()).fill(0, 20.8), 0.001));
 
-    assertTrue(model.getC().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getC().isEqual(Matrix.mat(Nat.N1(),
             Nat.N2()).fill(1, 0), 0.001));
 
-    assertTrue(model.getD().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getD().isEqual(Matrix.mat(Nat.N1(),
             Nat.N1()).fill(0), 0.001));
   }
 
   @Test
   public void testFlywheelSystem() {
     var model = LinearSystemId.createFlywheelSystem(DCMotor.getNEO(2), 0.00032, 1.0);
-    assertTrue(model.getA().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getA().isEqual(Matrix.mat(Nat.N1(),
             Nat.N1()).fill(-26.87032), 0.001));
 
-    assertTrue(model.getB().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getB().isEqual(Matrix.mat(Nat.N1(),
             Nat.N1()).fill(1354.166667), 0.001));
 
-    assertTrue(model.getC().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getC().isEqual(Matrix.mat(Nat.N1(),
             Nat.N1()).fill(1), 0.001));
 
-    assertTrue(model.getD().equals(Matrix.mat(Nat.N1(),
+    assertTrue(model.getD().isEqual(Matrix.mat(Nat.N1(),
             Nat.N1()).fill(0), 0.001));
   }
 
