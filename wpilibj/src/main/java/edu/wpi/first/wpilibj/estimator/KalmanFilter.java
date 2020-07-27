@@ -123,7 +123,7 @@ public class KalmanFilter<S extends Num, I extends Num,
 
   @Override
   public void reset() {
-    m_xHat = Matrix.zeros(m_states);
+    m_xHat = Matrix.zeros(m_states, Nat.N1());
   }
 
   /**

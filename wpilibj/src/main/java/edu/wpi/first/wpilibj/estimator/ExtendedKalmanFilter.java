@@ -83,9 +83,9 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     this.m_contR = StateSpaceUtil.makeCovarianceMatrix(outputs, measurementStdDevs);
 
     final var contA = NumericalJacobian
-          .numericalJacobianX(states, states, f, m_xHat, Matrix.zeros(inputs));
+          .numericalJacobianX(states, states, f, m_xHat, Matrix.zeros(inputs, Nat.N1()));
     final var C = NumericalJacobian
-          .numericalJacobianX(outputs, states, h, m_xHat, Matrix.zeros(inputs));
+          .numericalJacobianX(outputs, states, h, m_xHat, Matrix.zeros(inputs, Nat.N1()));
 
     final var discPair = Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
@@ -183,7 +183,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
 
   @Override
   public void reset() {
-    m_xHat = Matrix.zeros(m_states);
+    m_xHat = Matrix.zeros(m_states, Nat.N1());
     m_P = m_initP;
   }
 

@@ -534,23 +534,12 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Creates a new vector of zeros.
-   *
-   * @param nums The size of the desired vector.
-   * @param <N> The size of the desired vector as a generic.
-   * @return A vector of size N filled with zeros.
-   */
-  public static <N extends Num> Matrix<N, N1> zeros(Nat<N> nums) {
-    return new Matrix<>(Objects.requireNonNull(nums), Nat.N1());
-  }
-
-  /**
    * Creates a new matrix of zeros.
    *
-   * @param rows The number of rows in the matrix.
-   * @param cols The number of columns in the matrix.
-   * @param <R> The number of rows in the matrix as a generic.
-   * @param <C> The number of columns in the matrix as a generic.
+   * @param rows The number of rows in the zero matrix.
+   * @param cols The number of columns in the zero matrix.
+   * @param <R> The number of rows in the zero matrix as a generic.
+   * @param <C> The number of columns in the zero matrix as a generic.
    * @return An RxC matrix filled with zeros.
    */
   public static <R extends Num, C extends Num> Matrix<R, C> zeros(Nat<R> rows, Nat<C> cols) {
