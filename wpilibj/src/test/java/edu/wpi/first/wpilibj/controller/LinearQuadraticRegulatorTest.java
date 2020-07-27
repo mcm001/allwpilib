@@ -57,9 +57,9 @@ public class LinearQuadraticRegulatorTest {
   public void testLQROnElevator() {
 
     var qElms = new Matrix<>(Nat.N2(), Nat.N1());
-    qElms.setColumn(0, Matrix.mat(Nat.N2(), Nat.N1()).fill(0.02, 0.4));
+    qElms.setColumn(0, VecBuilder.fill(0.02, 0.4));
     var rElms = new Matrix<>(Nat.N1(), Nat.N1());
-    rElms.setColumn(0, Matrix.mat(Nat.N1(), Nat.N1()).fill(12.0));
+    rElms.setColumn(0, VecBuilder.fill(12.0));
     var dt = 0.00505;
 
     var controller = new LinearQuadraticRegulator<>(

@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,7 +79,7 @@ class LinearSystemIDTest {
     var model = LinearSystemId.identifyPositionSystem(kv, ka);
 
     assertEquals(model.getA(), Matrix.mat(Nat.N2(), Nat.N2()).fill(0, 1, 0, -kv / ka));
-    assertEquals(model.getB(), Matrix.mat(Nat.N2(), Nat.N1()).fill(0, 1 / ka));
+    assertEquals(model.getB(), VecBuilder.fill(0, 1 / ka));
   }
 
   @Test
@@ -90,7 +91,7 @@ class LinearSystemIDTest {
     var ka = 0.5;
     var model = LinearSystemId.identifyVelocitySystem(kv, ka);
 
-    assertEquals(model.getA(), Matrix.mat(Nat.N1(), Nat.N1()).fill(-kv / ka));
-    assertEquals(model.getB(), Matrix.mat(Nat.N1(), Nat.N1()).fill(1 / ka));
+    assertEquals(model.getA(), VecBuilder.fill(-kv / ka));
+    assertEquals(model.getB(), VecBuilder.fill(1 / ka));
   }
 }

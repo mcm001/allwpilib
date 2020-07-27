@@ -32,7 +32,7 @@ public class StateSpaceUtilTest {
   @Test
   public void testCostArray() {
     var mat = StateSpaceUtil.makeCostMatrix(
-          Matrix.mat(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+          VecBuilder.fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -48,7 +48,7 @@ public class StateSpaceUtilTest {
   @Test
   public void testCovArray() {
     var mat = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(),
-          Matrix.mat(Nat.N3(), Nat.N1()).fill(1.0, 2.0, 3.0));
+          VecBuilder.fill(1.0, 2.0, 3.0));
 
     assertEquals(1.0, mat.get(0, 0), 1e-3);
     assertEquals(0.0, mat.get(0, 1), 1e-3);
@@ -65,7 +65,7 @@ public class StateSpaceUtilTest {
   @SuppressWarnings("LocalVariableName")
   public void testIsStabilizable() {
     Matrix<N2, N2> A;
-    Matrix<N2, N1> B = Matrix.mat(Nat.N2(), Nat.N1()).fill(0, 1);
+    Matrix<N2, N1> B = VecBuilder.fill(0, 1);
 
     // First eigenvalue is uncontrollable and unstable.
     // Second eigenvalue is controllable and stable.

@@ -349,7 +349,7 @@ public class UnscentedKalmanFilterTest {
                   -0.9, -0.9774596669241481, -0.9077459666924148,
               1.0, 1.0, 1.0, 1.0, 1.077459666924148, 1.0, 1.0, 1.0, 0.9225403330758519
           ),
-          Matrix.mat(Nat.N9(), Nat.N1()).fill(
+          VecBuilder.fill(
               -132.33333333,
               16.66666667,
               16.66666667,
@@ -360,7 +360,7 @@ public class UnscentedKalmanFilterTest {
               16.66666667,
               16.66666667
           ),
-          Matrix.mat(Nat.N9(), Nat.N1()).fill(
+          VecBuilder.fill(
               -129.34333333,
               16.66666667,
               16.66666667,
@@ -374,7 +374,7 @@ public class UnscentedKalmanFilterTest {
     );
 
     assertMatEqual(
-          Matrix.mat(Nat.N4(), Nat.N1()).fill(-0.9, 1, -0.9, 1),
+          VecBuilder.fill(-0.9, 1, -0.9, 1),
           ret.getFirst()
     );
 

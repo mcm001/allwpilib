@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,7 +21,7 @@ public class RungeKuttaTest {
   @SuppressWarnings({"ParameterName", "LocalVariableName"})
   public void testExponential() {
 
-    Matrix<N1, N1> y0 = Matrix.mat(Nat.N1(), Nat.N1()).fill(0.0);
+    Matrix<N1, N1> y0 = VecBuilder.fill(0.0);
 
     //noinspection SuspiciousNameCombination
     var y1 = RungeKutta.rungeKutta((Matrix<N1, N1> x) -> {

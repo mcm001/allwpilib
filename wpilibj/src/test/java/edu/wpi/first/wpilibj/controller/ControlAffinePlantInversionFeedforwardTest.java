@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 
@@ -28,15 +29,15 @@ class ControlAffinePlantInversionFeedforwardTest {
                     0.02);
 
     assertEquals(48.0, feedforward.calculate(
-         Matrix.mat(Nat.N2(), Nat.N1()).fill(2, 2),
-         Matrix.mat(Nat.N2(), Nat.N1()).fill(3, 3)).get(0, 0),
+         VecBuilder.fill(2, 2),
+         VecBuilder.fill(3, 3)).get(0, 0),
          1e-6);
   }
 
   @SuppressWarnings("LocalVariableName")
   @Test
   void testCalculateState() {
-    Matrix<N2, N1> B = Matrix.mat(Nat.N2(), Nat.N1()).fill(0, 1);
+    Matrix<N2, N1> B = VecBuilder.fill(0, 1);
 
     ControlAffinePlantInversionFeedforward<N2, N1, N1> feedforward =
             new ControlAffinePlantInversionFeedforward<N2, N1, N1>(
@@ -47,8 +48,8 @@ class ControlAffinePlantInversionFeedforwardTest {
                     0.02);
 
     assertEquals(48.0, feedforward.calculate(
-            Matrix.mat(Nat.N2(), Nat.N1()).fill(2, 2),
-            Matrix.mat(Nat.N2(), Nat.N1()).fill(3, 3)).get(0, 0),
+            VecBuilder.fill(2, 2),
+            VecBuilder.fill(3, 3)).get(0, 0),
             1e-6);
   }
 
@@ -57,7 +58,7 @@ class ControlAffinePlantInversionFeedforwardTest {
     var result = new Matrix<>(Nat.N2(), Nat.N1());
 
     result = Matrix.mat(Nat.N2(), Nat.N2()).fill(1.000, 0, 0, 1.000).times(x)
-            .plus(Matrix.mat(Nat.N2(), Nat.N1()).fill(0, 1).times(u));
+            .plus(VecBuilder.fill(0, 1).times(u));
 
     return result;
   }

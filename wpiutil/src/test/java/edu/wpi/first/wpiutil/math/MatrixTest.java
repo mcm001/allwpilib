@@ -82,14 +82,14 @@ public class MatrixTest {
 
     var solve1 = mat1.solve(vec1);
 
-    assertEquals(Matrix.mat(Nat.N2(), Nat.N1()).fill(0.0, 0.5), solve1);
+    assertEquals(VecBuilder.fill(0.0, 0.5), solve1);
 
     var mat2 = Matrix.mat(Nat.N3(), Nat.N2()).fill(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
     var vec2 = VecBuilder.fill(1.0, 2.0, 3.0);
 
     var solve2 = mat2.solve(vec2);
 
-    assertEquals(Matrix.mat(Nat.N2(), Nat.N1()).fill(0.0, 0.5), solve2);
+    assertEquals(VecBuilder.fill(0.0, 0.5), solve2);
   }
 
   @Test

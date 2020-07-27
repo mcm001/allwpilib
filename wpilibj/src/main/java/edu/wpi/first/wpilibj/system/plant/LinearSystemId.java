@@ -36,7 +36,7 @@ public final class LinearSystemId {
                     0, -Math.pow(G, 2) * motor.m_KtNMPerAmp
                             / (motor.m_rOhms * radiusMeters * radiusMeters * massKg
                             * motor.m_KvRadPerSecPerVolt)),
-            Matrix.mat(Nat.N2(), Nat.N1()).fill(
+            VecBuilder.fill(
                     0, G * motor.m_KtNMPerAmp / (motor.m_rOhms * radiusMeters * massKg)),
             Matrix.mat(Nat.N1(), Nat.N2()).fill(1, 0),
             Matrix.zeros(Nat.N1(), Nat.N1()));
@@ -122,7 +122,7 @@ public final class LinearSystemId {
         Matrix.mat(Nat.N2(), Nat.N2()).fill(0, 1,
                     0, -Math.pow(G, 2) * motor.m_KtNMPerAmp
                             / (motor.m_KvRadPerSecPerVolt * motor.m_rOhms * jKgSquaredMeters)),
-            Matrix.mat(Nat.N2(), Nat.N1()).fill(0, G * motor.m_KtNMPerAmp
+            VecBuilder.fill(0, G * motor.m_KtNMPerAmp
                     / (motor.m_rOhms * jKgSquaredMeters)),
             Matrix.mat(Nat.N1(), Nat.N2()).fill(1, 0),
             Matrix.zeros(Nat.N1(), Nat.N1()));
@@ -161,7 +161,7 @@ public final class LinearSystemId {
   public static LinearSystem<N2, N1, N1> identifyPositionSystem(double kV, double kA) {
     return new LinearSystem<>(
         Matrix.mat(Nat.N2(), Nat.N2()).fill(0.0, 1.0, 0.0, -kV / kA),
-            Matrix.mat(Nat.N2(), Nat.N1()).fill(0.0, 1.0 / kA),
+            VecBuilder.fill(0.0, 1.0 / kA),
             Matrix.mat(Nat.N1(), Nat.N2()).fill(1.0, 0.0),
             VecBuilder.fill(0.0));
   }
