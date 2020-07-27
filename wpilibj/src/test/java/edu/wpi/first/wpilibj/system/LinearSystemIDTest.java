@@ -44,30 +44,24 @@ class LinearSystemIDTest {
     assertTrue(model.getA().isEqual(Matrix.mat(Nat.N2(),
             Nat.N2()).fill(0, 1, 0, -99.05473), 0.001));
 
-    assertTrue(model.getB().isEqual(Matrix.mat(Nat.N2(),
-            Nat.N1()).fill(0, 20.8), 0.001));
+    assertTrue(model.getB().isEqual(VecBuilder.fill(0, 20.8), 0.001));
 
     assertTrue(model.getC().isEqual(Matrix.mat(Nat.N1(),
             Nat.N2()).fill(1, 0), 0.001));
 
-    assertTrue(model.getD().isEqual(Matrix.mat(Nat.N1(),
-            Nat.N1()).fill(0), 0.001));
+    assertTrue(model.getD().isEqual(VecBuilder.fill(0), 0.001));
   }
 
   @Test
   public void testFlywheelSystem() {
     var model = LinearSystemId.createFlywheelSystem(DCMotor.getNEO(2), 0.00032, 1.0);
-    assertTrue(model.getA().isEqual(Matrix.mat(Nat.N1(),
-            Nat.N1()).fill(-26.87032), 0.001));
+    assertTrue(model.getA().isEqual(VecBuilder.fill(-26.87032), 0.001));
 
-    assertTrue(model.getB().isEqual(Matrix.mat(Nat.N1(),
-            Nat.N1()).fill(1354.166667), 0.001));
+    assertTrue(model.getB().isEqual(VecBuilder.fill(1354.166667), 0.001));
 
-    assertTrue(model.getC().isEqual(Matrix.mat(Nat.N1(),
-            Nat.N1()).fill(1), 0.001));
+    assertTrue(model.getC().isEqual(VecBuilder.fill(1), 0.001));
 
-    assertTrue(model.getD().isEqual(Matrix.mat(Nat.N1(),
-            Nat.N1()).fill(0), 0.001));
+    assertTrue(model.getD().isEqual(VecBuilder.fill(0), 0.001));
   }
 
   @Test
