@@ -83,9 +83,9 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
     this.m_contR = StateSpaceUtil.makeCovarianceMatrix(outputs, measurementStdDevs);
 
     final var contA = NumericalJacobian
-          .numericalJacobianX(states, states, f, m_xHat, Matrix.zeros(inputs, Nat.N1()));
+          .numericalJacobianX(states, states, f, m_xHat, new Matrix<>(inputs, Nat.N1()));
     final var C = NumericalJacobian
-          .numericalJacobianX(outputs, states, h, m_xHat, Matrix.zeros(inputs, Nat.N1()));
+          .numericalJacobianX(outputs, states, h, m_xHat, new Matrix<>(inputs, Nat.N1()));
 
     final var discPair = Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds);
     final var discA = discPair.getFirst();
@@ -99,7 +99,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
       m_initP = new Matrix<>(Drake.discreteAlgebraicRiccatiEquation(
             discA.transpose(), C.transpose(), discQ, m_discR));
     } else {
-      m_initP = Matrix.zeros(states, states);
+      m_initP = new Matrix<>(states, states);
     }
 
     m_P = m_initP;
@@ -183,7 +183,7 @@ public class ExtendedKalmanFilter<S extends Num, I extends Num, O extends Num>
 
   @Override
   public void reset() {
-    m_xHat = Matrix.zeros(m_states, Nat.N1());
+    m_xHat = new Matrix<>(m_states, Nat.N1());
     m_P = m_initP;
   }
 

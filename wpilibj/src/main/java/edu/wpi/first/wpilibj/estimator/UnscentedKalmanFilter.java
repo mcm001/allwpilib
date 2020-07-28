@@ -286,7 +286,7 @@ public class UnscentedKalmanFilter<S extends Num, I extends Num,
     var Py = transRet.getSecond().plus(R);
 
     // Compute cross covariance of the state and the measurements
-    Matrix<S, R> Pxy = Matrix.zeros(m_states, rows);
+    Matrix<S, R> Pxy = new Matrix<>(m_states, rows);
     for (int i = 0; i < m_pts.getNumSigmas(); i++) {
       var temp =
             m_sigmasF.extractColumnVector(i).minus(m_xHat)

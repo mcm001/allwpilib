@@ -534,19 +534,6 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Creates a new matrix of zeros.
-   *
-   * @param rows The number of rows in the zero matrix.
-   * @param cols The number of columns in the zero matrix.
-   * @param <R> The number of rows in the zero matrix as a generic.
-   * @param <C> The number of columns in the zero matrix as a generic.
-   * @return An RxC matrix filled with zeros.
-   */
-  public static <R extends Num, C extends Num> Matrix<R, C> zeros(Nat<R> rows, Nat<C> cols) {
-    return new Matrix<>(Objects.requireNonNull(rows), Objects.requireNonNull(cols));
-  }
-
-  /**
    * Creates the identity matrix of the given dimension.
    *
    * @param dim The dimension of the desired matrix.

@@ -128,10 +128,10 @@ public class ExtendedKalmanFilterTest {
           new TrajectoryConfig(8.8, 0.1)
     );
 
-    Matrix<N5, N1> r = Matrix.zeros(Nat.N5(), Nat.N1());
+    Matrix<N5, N1> r = new Matrix<>(Nat.N5(), Nat.N1());
 
-    Matrix<N5, N1> nextR = Matrix.zeros(Nat.N5(), Nat.N1());
-    Matrix<N2, N1> u = Matrix.zeros(Nat.N2(), Nat.N1());
+    Matrix<N5, N1> nextR = new Matrix<>(Nat.N5(), Nat.N1());
+    Matrix<N2, N1> u = new Matrix<>(Nat.N2(), Nat.N1());
 
     List<Double> trajXs = new ArrayList<>();
     List<Double> trajYs = new ArrayList<>();
@@ -140,7 +140,7 @@ public class ExtendedKalmanFilterTest {
     List<Double> observerYs = new ArrayList<>();
 
     var B = NumericalJacobian.numericalJacobianU(Nat.N5(), Nat.N2(),
-          ExtendedKalmanFilterTest::getDynamics, Matrix.zeros(Nat.N5(), Nat.N1()), u);
+          ExtendedKalmanFilterTest::getDynamics, new Matrix<>(Nat.N5(), Nat.N1()), u);
 
     observer.setXhat(VecBuilder.fill(
           trajectory.getInitialPose().getTranslation().getX(),
@@ -169,7 +169,7 @@ public class ExtendedKalmanFilterTest {
             localY.plus(StateSpaceUtil.makeWhiteNoiseVector(whiteNoiseStdDevs)));
 
       Matrix<N5, N1> rdot = nextR.minus(r).div(dtSeconds);
-      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, Matrix.zeros(Nat.N2(), Nat.N1())))));
+      u = new Matrix<>(B.solve(rdot.minus(getDynamics(r, new Matrix<>(Nat.N2(), Nat.N1())))));
 
       observer.predict(u, dtSeconds);
 

@@ -39,7 +39,7 @@ public final class LinearSystemId {
             VecBuilder.fill(
                     0, G * motor.m_KtNMPerAmp / (motor.m_rOhms * radiusMeters * massKg)),
             Matrix.mat(Nat.N1(), Nat.N2()).fill(1, 0),
-            Matrix.zeros(Nat.N1(), Nat.N1()));
+            new Matrix<>(Nat.N1(), Nat.N1()));
   }
 
   /**
@@ -61,7 +61,7 @@ public final class LinearSystemId {
             VecBuilder.fill(G * motor.m_KtNMPerAmp
                     / (motor.m_rOhms * jKgMetersSquared)),
             Matrix.eye(Nat.N1()),
-            Matrix.zeros(Nat.N1(), Nat.N1()));
+            new Matrix<>(Nat.N1(), Nat.N1()));
   }
 
   /**
@@ -125,7 +125,7 @@ public final class LinearSystemId {
             VecBuilder.fill(0, G * motor.m_KtNMPerAmp
                     / (motor.m_rOhms * jKgSquaredMeters)),
             Matrix.mat(Nat.N1(), Nat.N2()).fill(1, 0),
-            Matrix.zeros(Nat.N1(), Nat.N1()));
+            new Matrix<>(Nat.N1(), Nat.N1()));
   }
 
   /**

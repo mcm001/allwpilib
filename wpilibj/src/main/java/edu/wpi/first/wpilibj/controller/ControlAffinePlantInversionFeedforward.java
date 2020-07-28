@@ -83,7 +83,7 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
     this.m_inputs = inputs;
 
     this.m_B = NumericalJacobian.numericalJacobianU(states, inputs,
-            m_f, Matrix.zeros(states, Nat.N1()), Matrix.zeros(inputs, Nat.N1()));
+            m_f, new Matrix<>(states, Nat.N1()), new Matrix<>(inputs, Nat.N1()));
 
     m_r = new Matrix<>(states, Nat.N1());
     m_uff = new Matrix<>(inputs, Nat.N1());
@@ -208,7 +208,7 @@ public class ControlAffinePlantInversionFeedforward<S extends Num, I extends Num
   public Matrix<I, N1> calculate(Matrix<S, N1> r, Matrix<S, N1> nextR) {
     var rDot = (nextR.minus(r)).div(m_dt);
 
-    m_uff = m_B.solve(rDot.minus(m_f.apply(r, Matrix.zeros(m_inputs, Nat.N1()))));
+    m_uff = m_B.solve(rDot.minus(m_f.apply(r, new Matrix<>(m_inputs, Nat.N1()))));
 
     m_r = nextR;
     return m_uff;
