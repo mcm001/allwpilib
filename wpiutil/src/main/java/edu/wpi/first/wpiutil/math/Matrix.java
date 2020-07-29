@@ -220,7 +220,7 @@ public class Matrix<R extends Num, C extends Num> {
    * <p>c<sub>i,j</sub> = a<sub>i,j</sub>*b<sub>i,j</sub>
    * 
    *
-   * @param b The other matrix to preform element multiplication on.
+   * @param b The other {@link Matrix} to preform element multiplication on.
    * @return The element by element multiplication of "this" and b.
    */
   public final Matrix<R, C> elementTimes(Matrix<R, C> b) {
@@ -320,8 +320,7 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Returns the solution x to the equation Ax = b, where A is the matrix
-   * "this".
+   * Returns the solution x to the equation Ax = b, where A "this" matrix.
    * 
    * <p>The matrix equation could also be written as x = A<sup>-1</sup>b. Where the
    * pseudo inverse is used if A is not square.
@@ -338,7 +337,7 @@ public class Matrix<R extends Num, C extends Num> {
    * This method only works for square matrices, and will
    * otherwise throw an {@link MatrixDimensionException}.
    *
-   * @return the exponential of A.
+   * @return The exponential of A.
    */
   public final Matrix<R, C> exp() {
     if (this.getNumRows() != this.getNumCols()) {
@@ -401,11 +400,11 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Returns a matrix which is the result of an element by element power of "this" and b:
+   * Returns a matrix which is the result of an element by element power of "this" and b.
    * 
    * <p>c<sub>i,j</sub> = a<sub>i,j</sub> ^ b
    *
-   * @param b Scalar
+   * @param b Scalar.
    * @return The element by element power of "this" and b.
    */
   @SuppressWarnings("ParameterName")
@@ -492,12 +491,13 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Decompose "this" matrix using Cholesky Decomposition. If the input matrix is zeros, it 
+   * Decompose "this" matrix using Cholesky Decomposition. If the "this" matrix is zeros, it 
    * will return the zero matrix.
    *
-   * @param lowerTriangular if we want to decompose to the lower triangular Cholesky matrix.
+   * @param lowerTriangular Whether or not we want to decompose to the lower triangular
+   *                        Cholesky matrix.
    * @return The decomposed matrix.
-   * @throws RuntimeException if the matrix could not be decomposed (ie. is not positive
+   * @throws RuntimeException if the matrix could not be decomposed(ie. is not positive
    *                          semidefinite).
    */
   @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
@@ -527,7 +527,7 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Returns the row major data of this matrix as a double array.
    *
-   * @return he row major data of this matrix as a double array.
+   * @return The row major data of this matrix as a double array.
    */
   public double[] getData() {
     return m_storage.getDDRM().getData();
@@ -536,7 +536,7 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Creates the identity matrix of the given dimension.
    *
-   * @param dim The dimension of the desired matrix.
+   * @param dim The dimension of the desired matrix as a {@link Nat}.
    * @param <D> The dimension of the desired matrix as a generic.
    * @return The DxD identity matrix.
    */
@@ -547,7 +547,7 @@ public class Matrix<R extends Num, C extends Num> {
   /**
    * Creates the identity matrix of the given dimension.
    *
-   * @param dim The dimension of the desired matrix.
+   * @param dim The dimension of the desired matrix as a {@link Num}.
    * @param <D> The dimension of the desired matrix as a generic.
    * @return The DxD identity matrix.
    */
@@ -570,7 +570,7 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Essentially reassigns dimensions of a {@link Matrix} to allow for operations with
+   * Reassigns dimensions of a {@link Matrix} to allow for operations with
    * other matrices that have wildcard dimensions.
    * 
    * @param mat The {@link Matrix} to remove the dimensions from.
@@ -581,16 +581,16 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /** 
-   * Checks if another {@link Matrix} is identical to this one within a specified tolerance.
+   * Checks if another {@link Matrix} is identical to "this" one within a specified tolerance.
    *
    * <p>This will check if each element is in tolerance of the corresponding element
-   * from the other Matrix or if the elements have the same symbolic meaning. For two
+   * from the other {@link Matrix} or if the elements have the same symbolic meaning. For two
    * elements to have the same symbolic meaning they both must be either Double.NaN,
    * Double.POSITIVE_INFINITY, or Double.NEGATIVE_INFINITY.
    * 
-   * <p>NOTE:It is recommend to use {@link Matrix#equals(Matrix, double)} over this
-   * when checking if two matrices are equal as {@link Matrix#equals(Matrix, double)}
-   * will return false if an element is uncountable. This should only be used when
+   * <p>NOTE:It is recommend to use {@link Matrix#isEqual(Matrix, double)} over this
+   * method when checking if two matrices are equal as {@link Matrix#isEqual(Matrix, double)}
+   * will return false if an element is uncountable. This method should only be used when
    * uncountable elements need to compared.
    * 
    * @param other     The {@link Matrix} to check against this one.
@@ -603,7 +603,7 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /** 
-   * Checks if another {@link Matrix} is equal to this one within a specified tolerance.
+   * Checks if another {@link Matrix} is equal to "this" within a specified tolerance.
    * 
    * <p>This will check if each element is in tolerance of the corresponding element
    * from the other {@link Matrix}.
@@ -630,7 +630,7 @@ public class Matrix<R extends Num, C extends Num> {
    * <p>a<sub>ij</sub> == b<sub>ij</sub>
    * 
    * @param o The Object to check against this {@link Matrix}.
-   * @return true if the object supplied is a Matrix and is equal to "this" Matrix.
+   * @return true if the object supplied is a {@link Matrix} and is equal to this matrix.
    */
   @Override
   public boolean equals(Object o) {

@@ -33,6 +33,7 @@ import edu.wpi.first.wpiutil.math.numbers.N6;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class UnscentedKalmanFilterTest {
@@ -373,28 +374,23 @@ public class UnscentedKalmanFilterTest {
           )
     );
 
-    assertMatEqual(
-          VecBuilder.fill(-0.9, 1, -0.9, 1),
-          ret.getFirst()
-    );
+    assertTrue(
+          VecBuilder.fill(-0.9, 1, -0.9, 1).isEqual(
+          ret.getFirst(), 1E-5
+    ));
 
-    assertMatEqual(
-          Matrix.mat(Nat.N4(), Nat.N4()).fill(
-                2.02000002e-01, 2.00000500e-02, -2.69044710e-29,
-                -4.59511477e-29,
-                2.00000500e-02, 2.00001000e-01, -2.98781068e-29,
-                -5.12759588e-29,
-                -2.73372625e-29, -3.09882635e-29, 2.02000002e-01,
-                2.00000500e-02,
-                -4.67065917e-29, -5.10705197e-29, 2.00000500e-02,
-                2.00001000e-01
-          ),
-          ret.getSecond()
-    );
+    assertTrue(
+            Matrix.mat(Nat.N4(), Nat.N4()).fill(
+                  2.02000002e-01, 2.00000500e-02, -2.69044710e-29,
+                  -4.59511477e-29,
+                  2.00000500e-02, 2.00001000e-01, -2.98781068e-29,
+                  -5.12759588e-29,
+                  -2.73372625e-29, -3.09882635e-29, 2.02000002e-01,
+                  2.00000500e-02,
+                  -4.67065917e-29, -5.10705197e-29, 2.00000500e-02,
+                  2.00001000e-01
+            ).isEqual(
+            ret.getSecond(), 1E-5
+    ));
   }
-
-  void assertMatEqual(Matrix<?, ?> first, Matrix<?, ?> second) {
-    first.isEqual(second, 1E-5);
-  }
-
 }
