@@ -121,7 +121,7 @@ public class MecanumDrivePoseEstimator {
     m_visionCorrect = (u, y) -> m_observer.correct(u, y,
             MatrixUtils.eye(Nat.N3()), MatrixUtils.zeros(Nat.N3(), Nat.N3()), visionDiscR);
 
-    m_observer.setXhat(StateSpaceUtil.poseToVector(initialPoseMeters));
+    m_observer.setXhat(StateSpaceUtil.poseTo3dVector(initialPoseMeters));
     m_gyroOffset = initialPoseMeters.getRotation().minus(gyroAngle);
     m_previousAngle = initialPoseMeters.getRotation();
   }
@@ -171,7 +171,7 @@ public class MecanumDrivePoseEstimator {
     m_latencyCompensator.applyPastGlobalMeasurement(
             Nat.N3(),
             m_observer, m_nominalDt,
-            StateSpaceUtil.poseToVector(visionRobotPoseMeters),
+            StateSpaceUtil.poseTo3dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
     );

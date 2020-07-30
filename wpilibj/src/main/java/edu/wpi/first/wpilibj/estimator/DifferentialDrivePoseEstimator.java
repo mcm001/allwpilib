@@ -204,7 +204,7 @@ public class DifferentialDrivePoseEstimator {
     m_latencyCompensator.applyPastGlobalMeasurement(
             Nat.N3(),
             m_observer, m_nominalDt,
-            StateSpaceUtil.poseToVector(visionRobotPoseMeters),
+            StateSpaceUtil.poseTo3dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
     );

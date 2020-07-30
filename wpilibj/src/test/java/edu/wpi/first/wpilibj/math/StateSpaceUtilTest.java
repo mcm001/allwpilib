@@ -206,7 +206,7 @@ public class StateSpaceUtilTest {
   @Test
   public void testPoseToVector() {
     Pose2d pose = new Pose2d(1, 2, new Rotation2d(3));
-    var vector = StateSpaceUtil.poseToVector(pose);
+    var vector = StateSpaceUtil.poseTo3dVector(pose);
     assertEquals(pose.getTranslation().getX(), vector.get(0, 0), 1e-6);
     assertEquals(pose.getTranslation().getY(), vector.get(1, 0), 1e-6);
     assertEquals(pose.getRotation().getRadians(), vector.get(2, 0), 1e-6);

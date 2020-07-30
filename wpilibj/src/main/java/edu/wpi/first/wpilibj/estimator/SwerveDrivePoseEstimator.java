@@ -25,6 +25,7 @@ import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N3;
+import edu.wpi.first.wpiutil.math.numbers.N4;
 
 /**
  * This class wraps a {@link KalmanFilter KalmanFilter} to fuse latency-compensated vision
@@ -50,10 +51,10 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
  * or <strong> y = [[theta]]^T </strong> from the gyro.
  */
 public class SwerveDrivePoseEstimator {
-  private final KalmanFilter<N3, N3, N1> m_observer;
+  private final KalmanFilter<N4, N4, N1> m_observer;
   private final SwerveDriveKinematics m_kinematics;
-  private final BiConsumer<Matrix<N3, N1>, Matrix<N3, N1>> m_visionCorrect;
-  private final KalmanFilterLatencyCompensator<N3, N3, N1> m_latencyCompensator;
+  private final BiConsumer<Matrix<N4, N1>, Matrix<N4, N1>> m_visionCorrect;
+  private final KalmanFilterLatencyCompensator<N4, N4, N1> m_latencyCompensator;
 
   private final double m_nominalDt; // Seconds
   private double m_prevTimeSeconds = -1.0;
@@ -105,24 +106,30 @@ public class SwerveDrivePoseEstimator {
   ) {
     m_nominalDt = nominalDtSeconds;
 
-    LinearSystem<N3, N3, N1> observerSystem =
+    LinearSystem<N4, N4, N1> observerSystem =
         new LinearSystem<>(
-            MatrixUtils.zeros(Nat.N3(), Nat.N3()), // A
-            MatrixUtils.eye(Nat.N3()), // B
-            VecBuilder.fill(0, 0, 1).transpose(), // C
-            MatrixUtils.zeros(Nat.N1(), Nat.N3()) // D
-        );
-    m_observer = new KalmanFilter<>(Nat.N3(), Nat.N1(), observerSystem, stateStdDevs,
-            localMeasurementStdDevs, nominalDtSeconds);
+        MatrixUtils.zeros(Nat.N4(), Nat.N4()), // A
+        MatrixUtils.eye(Nat.N4()), // B
+        VecBuilder.fill(0, 0, 1, 1).transpose(), // C
+        MatrixUtils.zeros(Nat.N1(), Nat.N4()) // D
+      );
+    m_observer = new KalmanFilter<>(Nat.N4(), Nat.N1(), observerSystem,
+      VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
+        Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0))),
+      localMeasurementStdDevs, nominalDtSeconds);
     m_kinematics = kinematics;
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
-    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(), visionMeasurementStdDevs);
+    var cosVisionMeasurementStdDev = VecBuilder.fill(
+      visionMeasurementStdDevs.get(0, 0), visionMeasurementStdDevs.get(1, 0),
+      Math.cos(visionMeasurementStdDevs.get(2, 0)), Math.sin(visionMeasurementStdDevs.get(2, 0)));
+
+    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), cosVisionMeasurementStdDev);
     var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
     m_visionCorrect = (u, y) -> m_observer.correct(u, y,
-            MatrixUtils.eye(Nat.N3()), MatrixUtils.zeros(Nat.N3(), Nat.N3()), visionDiscR);
+            MatrixUtils.eye(Nat.N4()), MatrixUtils.zeros(Nat.N4(), Nat.N4()), visionDiscR);
 
-    m_observer.setXhat(StateSpaceUtil.poseToVector(initialPoseMeters));
+    m_observer.setXhat(StateSpaceUtil.poseTo4dVector(initialPoseMeters));
     m_gyroOffset = initialPoseMeters.getRotation().minus(gyroAngle);
     m_previousAngle = initialPoseMeters.getRotation();
   }
@@ -175,9 +182,9 @@ public class SwerveDrivePoseEstimator {
    */
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastGlobalMeasurement(
-            Nat.N3(),
+            Nat.N4(),
             m_observer, m_nominalDt,
-            StateSpaceUtil.poseToVector(visionRobotPoseMeters),
+            StateSpaceUtil.poseTo4dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
     );
@@ -224,10 +231,11 @@ public class SwerveDrivePoseEstimator {
             chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond
     ).rotateBy(angle);
 
-    var u = new MatBuilder<>(Nat.N3(), Nat.N1()).fill(
+    var u = VecBuilder.fill(
             fieldRelativeVelocities.getX(),
             fieldRelativeVelocities.getY(),
-            omega
+            Math.cos(omega),
+            Math.sin(omega)
     );
     m_previousAngle = angle;
 
