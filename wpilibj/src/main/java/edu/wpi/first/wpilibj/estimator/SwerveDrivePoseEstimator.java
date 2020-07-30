@@ -157,7 +157,7 @@ public class SwerveDrivePoseEstimator {
    */
   public Pose2d getEstimatedPosition() {
     return new Pose2d(
-            m_observer.getXhat(0), m_observer.getXhat(1), new Rotation2d(m_observer.getXhat(2))
+            m_observer.getXhat(0), m_observer.getXhat(1), new Rotation2d(m_observer.getXhat(2), m_observer.getXhat(3))
     );
   }
 
