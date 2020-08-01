@@ -21,6 +21,9 @@ import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpiutil.math.VecBuilder;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,9 +47,12 @@ public class SwerveDrivePoseEstimatorTest {
     );
 
     var traj = TrajectoryGenerator.generateTrajectory(
-            List.of(new Pose2d(), new Pose2d(20, 20, Rotation2d.fromDegrees(0)),
-                    new Pose2d(23, 23, Rotation2d.fromDegrees(173)), new Pose2d(54, 54,
-                            new Rotation2d())),
+            List.of(new Pose2d(),
+                    new Pose2d(20, 20, Rotation2d.fromDegrees(0)),
+                    new Pose2d(10, 10, Rotation2d.fromDegrees(180)),
+                    new Pose2d(30, 30, Rotation2d.fromDegrees(0)),
+                    new Pose2d(20, 20, Rotation2d.fromDegrees(180)),
+                    new Pose2d(10, 10, Rotation2d.fromDegrees(0))),
             new TrajectoryConfig(0.5, 2));
 
     var rand = new Random(4915);
@@ -57,6 +63,17 @@ public class SwerveDrivePoseEstimatorTest {
     List<Double> observerYs = new ArrayList<>();
     List<Double> visionXs = new ArrayList<>();
     List<Double> visionYs = new ArrayList<>();
+    List<Double> trajCosine = new ArrayList<>();
+    List<Double> observerCosine = new ArrayList<>();
+    List<Double> trajSine = new ArrayList<>();
+    List<Double> observerSine = new ArrayList<>();
+    List<Double> time = new ArrayList<>();
+    List<Double> visionCosine = new ArrayList<>();
+    List<Double> visionSine = new ArrayList<>();
+    List<Double> visionTime = new ArrayList<>();
+    List<Double> visionTheta = new ArrayList<>();
+    List<Double> trajTheta = new ArrayList<>();
+    List<Double> observerTheta = new ArrayList<>();
 
     final double dt = 0.02;
     double t = 0.0;
@@ -69,6 +86,7 @@ public class SwerveDrivePoseEstimatorTest {
     double errorSum = 0;
     while (t <= traj.getTotalTimeSeconds()) {
       var groundtruthState = traj.sample(t);
+      time.add(t);
 
       if (lastVisionUpdateTime + visionUpdateRate < t) {
         if (lastVisionPose != null) {
@@ -76,16 +94,20 @@ public class SwerveDrivePoseEstimatorTest {
         }
         lastVisionPose = new Pose2d(
                 new Translation2d(
-                    groundtruthState.poseMeters.getTranslation().getX() + rand.nextGaussian() * 0.1,
-                    groundtruthState.poseMeters.getTranslation().getY() + rand.nextGaussian() * 0.1
+                        groundtruthState.poseMeters.getTranslation().getX() + rand.nextGaussian() * 0.1,
+                        groundtruthState.poseMeters.getTranslation().getY() + rand.nextGaussian() * 0.1
                 ),
                 new Rotation2d(
-                    rand.nextGaussian() * 0.01).plus(groundtruthState.poseMeters.getRotation())
+                        rand.nextGaussian() * 0.1).plus(groundtruthState.poseMeters.getRotation())
         );
         lastVisionUpdateTime = t;
 
         visionXs.add(lastVisionPose.getTranslation().getX());
         visionYs.add(lastVisionPose.getTranslation().getY());
+        visionTheta.add(lastVisionPose.getRotation().getDegrees());
+        visionCosine.add(lastVisionPose.getRotation().getCos());
+        visionSine.add(lastVisionPose.getRotation().getSin());
+        visionTime.add(t);
       }
 
       var moduleStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(
@@ -113,10 +135,62 @@ public class SwerveDrivePoseEstimatorTest {
 
       trajXs.add(groundtruthState.poseMeters.getTranslation().getX());
       trajYs.add(groundtruthState.poseMeters.getTranslation().getY());
+      trajTheta.add(groundtruthState.poseMeters.getRotation().getDegrees());
+      trajCosine.add(groundtruthState.poseMeters.getRotation().getCos());
+      trajSine.add(groundtruthState.poseMeters.getRotation().getSin());
       observerXs.add(xHat.getTranslation().getX());
       observerYs.add(xHat.getTranslation().getY());
-
+      observerTheta.add(xHat.getRotation().getDegrees());
+      observerCosine.add(xHat.getRotation().getCos());
+      observerSine.add(xHat.getRotation().getSin());
       t += dt;
+    }
+
+    List<XYChart> charts = new ArrayList<XYChart>();
+
+    var chartBuilder = new XYChartBuilder();
+    chartBuilder.title = "The Magic of Sensor Fusion";
+    var chart = chartBuilder.build();
+
+    chart.addSeries("Vision", visionXs, visionYs);
+    chart.addSeries("Trajectory", trajXs, trajYs);
+    chart.addSeries("xHat", observerXs, observerYs);
+    charts.add(chart);
+
+    var chartBuilder1 = new XYChartBuilder();
+    chartBuilder1.title = "Cosine";
+    var chart1 = chartBuilder1.build();
+
+    chart1.addSeries("Vision", visionTime, visionCosine);
+    chart1.addSeries("Trajectory", time, trajCosine);
+    chart1.addSeries("xHat", time, observerCosine);
+    charts.add(chart1);
+
+    var chartBuilder2 = new XYChartBuilder();
+    chartBuilder2.title = "Sine";
+    var chart2 = chartBuilder2.build();
+
+    chart2.addSeries("Vision", visionTime, visionSine);
+    chart2.addSeries("Trajectory", time, trajSine);
+    chart2.addSeries("xHat", time, observerSine);
+
+    charts.add(chart2);
+
+    var chartBuilder3 = new XYChartBuilder();
+    chartBuilder3.title = "Degrees";
+    var chart3 = chartBuilder3.build();
+
+    chart3.addSeries("Vision", visionTime, visionTheta);
+    chart3.addSeries("Trajectory", time, trajTheta);
+    chart3.addSeries("xHat", time, observerTheta);
+    charts.add(chart3);
+
+
+
+    new SwingWrapper<>(charts).displayChartMatrix();
+    try {
+      Thread.sleep(1000000000);
+    } catch (InterruptedException e) {
     }
 
     assertEquals(

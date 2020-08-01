@@ -17,13 +17,12 @@ import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
-import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.MatrixUtils;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.N2;
 import edu.wpi.first.wpiutil.math.numbers.N3;
 import edu.wpi.first.wpiutil.math.numbers.N4;
 
@@ -51,10 +50,10 @@ import edu.wpi.first.wpiutil.math.numbers.N4;
  * or <strong> y = [[theta]]^T </strong> from the gyro.
  */
 public class SwerveDrivePoseEstimator {
-  private final KalmanFilter<N4, N4, N1> m_observer;
+  private final UnscentedKalmanFilter<N4, N3, N2> m_observer;
   private final SwerveDriveKinematics m_kinematics;
-  private final BiConsumer<Matrix<N4, N1>, Matrix<N4, N1>> m_visionCorrect;
-  private final KalmanFilterLatencyCompensator<N4, N4, N1> m_latencyCompensator;
+  private final BiConsumer<Matrix<N3, N1>, Matrix<N4, N1>> m_visionCorrect;
+  private final KalmanFilterLatencyCompensator<N4, N3, N2> m_latencyCompensator;
 
   private final double m_nominalDt; // Seconds
   private double m_prevTimeSeconds = -1.0;
@@ -106,17 +105,15 @@ public class SwerveDrivePoseEstimator {
   ) {
     m_nominalDt = nominalDtSeconds;
 
-    LinearSystem<N4, N4, N1> observerSystem =
-        new LinearSystem<>(
-        MatrixUtils.zeros(Nat.N4(), Nat.N4()), // A
-        MatrixUtils.eye(Nat.N4()), // B
-        VecBuilder.fill(0, 0, 1, 1).transpose(), // C
-        MatrixUtils.zeros(Nat.N1(), Nat.N4()) // D
-      );
-    m_observer = new KalmanFilter<>(Nat.N4(), Nat.N1(), observerSystem,
-      VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
-        Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0))),
-      localMeasurementStdDevs, nominalDtSeconds);
+    m_observer = new UnscentedKalmanFilter<>(
+        Nat.N4(), Nat.N2(),
+        this::f,
+        (x, u) -> VecBuilder.fill(x.get(2, 0), x.get(3, 0)),
+        VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
+            Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0))),
+        VecBuilder.fill(Math.cos(localMeasurementStdDevs.get(0, 0)), Math.sin(localMeasurementStdDevs.get(0, 0))),
+        m_nominalDt
+    );
     m_kinematics = kinematics;
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
@@ -126,12 +123,31 @@ public class SwerveDrivePoseEstimator {
 
     var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), cosVisionMeasurementStdDev);
     var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
-    m_visionCorrect = (u, y) -> m_observer.correct(u, y,
-            MatrixUtils.eye(Nat.N4()), MatrixUtils.zeros(Nat.N4(), Nat.N4()), visionDiscR);
 
-    m_observer.setXhat(StateSpaceUtil.poseTo4dVector(initialPoseMeters));
+    m_visionCorrect = (u, y) -> m_observer.correct(
+        Nat.N4(), u, y,
+        (x, u_) -> x,
+        visionDiscR
+    );
+
     m_gyroOffset = initialPoseMeters.getRotation().minus(gyroAngle);
     m_previousAngle = initialPoseMeters.getRotation();
+    m_observer.setXhat(StateSpaceUtil.poseTo4dVector(initialPoseMeters));
+  }
+
+  @SuppressWarnings({"ParameterName", "MethodName"})
+  private Matrix<N4, N1> f(Matrix<N4, N1> x, Matrix<N3, N1> u) {
+    // Apply a rotation matrix. Note that we do *not* add x--Runge-Kutta does that for us.
+    var toFieldRotation = new MatBuilder<>(Nat.N4(), Nat.N4()).fill(
+      x.get(2, 0), -x.get(3, 0), 0, 0,
+      x.get(3, 0), x.get(2, 0), 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    );
+
+    return toFieldRotation.times(VecBuilder.fill(
+            u.get(0, 0), u.get(1, 0), -x.get(3, 0) * u.get(2, 0), x.get(2, 0) * u.get(2, 0)
+    ));
   }
 
   /**
@@ -148,6 +164,7 @@ public class SwerveDrivePoseEstimator {
   public void resetPosition(Pose2d poseMeters, Rotation2d gyroAngle) {
     m_previousAngle = poseMeters.getRotation();
     m_gyroOffset = getEstimatedPosition().getRotation().minus(gyroAngle);
+    m_observer.setXhat(StateSpaceUtil.poseTo4dVector(poseMeters));
   }
 
   /**
@@ -166,7 +183,7 @@ public class SwerveDrivePoseEstimator {
    * odometry pose estimate while still accounting for measurement noise.
    *
    * <p>This method can be called as infrequently as you want, as long as you are
-   * calling {@link DifferentialDrivePoseEstimator#update} every loop.
+   * calling {@link SwerveDrivePoseEstimator#update} every loop.
    *
    * @param visionRobotPoseMeters The pose of the robot as measured by the vision
    *                              camera.
@@ -229,17 +246,16 @@ public class SwerveDrivePoseEstimator {
     var chassisSpeeds = m_kinematics.toChassisSpeeds(wheelStates);
     var fieldRelativeVelocities = new Translation2d(
             chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond
-    ).rotateBy(angle);
+    );
 
     var u = VecBuilder.fill(
             fieldRelativeVelocities.getX(),
             fieldRelativeVelocities.getY(),
-            Math.cos(omega),
-            Math.sin(omega)
+            omega
     );
     m_previousAngle = angle;
 
-    var localY = VecBuilder.fill(angle.getRadians());
+    var localY = VecBuilder.fill(angle.getCos(), angle.getSin());
     m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
     m_observer.predict(u, dt);
     m_observer.correct(u, localY);
