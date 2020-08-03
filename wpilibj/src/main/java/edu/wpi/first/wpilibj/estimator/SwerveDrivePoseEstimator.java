@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
-import edu.wpi.first.wpiutil.math.MatBuilder;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
@@ -27,30 +26,31 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
 import edu.wpi.first.wpiutil.math.numbers.N4;
 
 /**
- * This class wraps a {@link KalmanFilter KalmanFilter} to fuse latency-compensated vision
- * measurements with swerve drive encoder velocity measurements. It will correct for noisy
- * measurements and encoder drift. It is intended to be an easy but more accurate drop-in for
- * {@link edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics}.
+ * This class wraps an {@link ExtendedKalmanFilter KalmanFExtendedKalmanFilterilter} to fuse
+ * latency-compensated vision measurements with swerve drive encoder velocity measurements.
+ * It will correct for noisy measurements and encoder drift. It is intended to be an easy
+ * but more accurate drop-in for {@link edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry}.
  *
  * <p>{@link SwerveDrivePoseEstimator#update} should be called every robot loop (if
- * your loops are faster or slower than the default, then you should change the nominal
- * delta time using the secondary constructor.
+ * your loops are faster or slower than the default of 0.02s, then you should change
+ * the nominal delta time using the secondary constructor: 
+ * {@link SwerveDrivePoseEstimator#updateWithTime}.
  *
  * <p>{@link SwerveDrivePoseEstimator#addVisionMeasurement} can be called as
- * infrequently as you want; if you never call it,then this class will behave mostly like regular
+ * infrequently as you want; if you never call it, then this class will behave mostly like regular
  * encoder odometry.
  *
  * <p>Our state-space system is:
  *
- * <p><strong> x = [[x, y, theta]]^T </strong> in the field-coordinate system.
+ * <p><strong> x = [[x, y, cos(theta), sin(theta)]]^T </strong> in the field-coordinate system.
  *
  * <p><strong> u = [[vx, vy, omega]]^T </strong> in the field-coordinate system.
  *
- * <p><strong> y = [[x, y, theta]]^T </strong> in field coords from vision,
- * or <strong> y = [[theta]]^T </strong> from the gyro.
+ * <p><strong> y = [[x, y, cos(theta), sin(theta)]]^T </strong> in field coords from vision,
+ * or <strong> y = [[cos(theta), sin(theta)]]^T </strong> from the gyro.
  */
 public class SwerveDrivePoseEstimator {
-  private final UnscentedKalmanFilter<N4, N3, N2> m_observer;
+  private final ExtendedKalmanFilter<N4, N3, N2> m_observer;
   private final SwerveDriveKinematics m_kinematics;
   private final BiConsumer<Matrix<N3, N1>, Matrix<N4, N1>> m_visionCorrect;
   private final KalmanFilterLatencyCompensator<N4, N3, N2> m_latencyCompensator;
@@ -84,7 +84,7 @@ public class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Constructs a SwerveDrivePose estimator.
+   * Constructs a SwerveDrivePoseEstimator.
    *
    * @param gyroAngle                The current gyro angle.
    * @param initialPoseMeters        The starting pose estimate.
@@ -105,23 +105,25 @@ public class SwerveDrivePoseEstimator {
   ) {
     m_nominalDt = nominalDtSeconds;
 
-    m_observer = new UnscentedKalmanFilter<>(
-        Nat.N4(), Nat.N2(),
+    m_observer = new ExtendedKalmanFilter<>(
+        Nat.N4(), Nat.N3(), Nat.N2(),
         this::f,
         (x, u) -> VecBuilder.fill(x.get(2, 0), x.get(3, 0)),
         VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
             Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0))),
-        VecBuilder.fill(Math.cos(localMeasurementStdDevs.get(0, 0)), Math.sin(localMeasurementStdDevs.get(0, 0))),
+        VecBuilder.fill(Math.cos(localMeasurementStdDevs.get(0, 0)),
+                Math.sin(localMeasurementStdDevs.get(0, 0))),
         m_nominalDt
     );
     m_kinematics = kinematics;
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
-    var cosVisionMeasurementStdDev = VecBuilder.fill(
-      visionMeasurementStdDevs.get(0, 0), visionMeasurementStdDevs.get(1, 0),
-      Math.cos(visionMeasurementStdDevs.get(2, 0)), Math.sin(visionMeasurementStdDevs.get(2, 0)));
+    var fullVisionMeasurementStdDev = VecBuilder.fill(
+            visionMeasurementStdDevs.get(0, 0), visionMeasurementStdDevs.get(1, 0),
+            Math.cos(visionMeasurementStdDevs.get(2, 0)),
+            Math.sin(visionMeasurementStdDevs.get(2, 0)));
 
-    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), cosVisionMeasurementStdDev);
+    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), fullVisionMeasurementStdDev);
     var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
 
     m_visionCorrect = (u, y) -> m_observer.correct(
@@ -137,17 +139,9 @@ public class SwerveDrivePoseEstimator {
 
   @SuppressWarnings({"ParameterName", "MethodName"})
   private Matrix<N4, N1> f(Matrix<N4, N1> x, Matrix<N3, N1> u) {
-    // Apply a rotation matrix. Note that we do *not* add x--Runge-Kutta does that for us.
-    var toFieldRotation = new MatBuilder<>(Nat.N4(), Nat.N4()).fill(
-      x.get(2, 0), -x.get(3, 0), 0, 0,
-      x.get(3, 0), x.get(2, 0), 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    );
-
-    return toFieldRotation.times(VecBuilder.fill(
+    return VecBuilder.fill(
             u.get(0, 0), u.get(1, 0), -x.get(3, 0) * u.get(2, 0), x.get(2, 0) * u.get(2, 0)
-    ));
+    );
   }
 
   /**
@@ -155,7 +149,7 @@ public class SwerveDrivePoseEstimator {
    *
    * <p>You NEED to reset your encoders (to zero) when calling this method.
    *
-   * <p>The gyroscope angle does not need to be reset here on the user's robot code.
+   * <p>The gyroscope angle does not need to be reset in the user's robot code.
    * The library automatically takes care of offsetting the gyro angle.
    *
    * @param poseMeters The position on the field that your robot is at.
@@ -174,7 +168,9 @@ public class SwerveDrivePoseEstimator {
    */
   public Pose2d getEstimatedPosition() {
     return new Pose2d(
-            m_observer.getXhat(0), m_observer.getXhat(1), new Rotation2d(m_observer.getXhat(2), m_observer.getXhat(3))
+            m_observer.getXhat(0),
+            m_observer.getXhat(1),
+            new Rotation2d(m_observer.getXhat(2), m_observer.getXhat(3))
     );
   }
 
@@ -194,8 +190,8 @@ public class SwerveDrivePoseEstimator {
    *                              (i.e. the epoch of this timestamp is the same epoch as
    *                              {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp
    *                              Timer.getFPGATimestamp}.) This means that you should
-   *                              use Timer.getFPGATimestamp as your time source in
-   *                              this case.
+   *                              use Timer.getFPGATimestamp as your time source or
+   *                              sync the epochs.
    */
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastGlobalMeasurement(
@@ -209,10 +205,11 @@ public class SwerveDrivePoseEstimator {
 
   /**
    * Updates the the Extended Kalman Filter using only wheel encoder information.
-   * Note that this should be called every loop.
+   * This should be called every loop, and the correct loop period must be passed
+   * into the constructor of this class.
    *
    * @param gyroAngle   The current gyro angle.
-   * @param wheelStates Velocities and rotations of the swerve modules.
+   * @param wheelStates The current velocities and rotations of the swerve modules.
    * @return The estimated pose of the robot in meters.
    */
   public Pose2d update(
@@ -223,13 +220,13 @@ public class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Updates the the Kalman Filter using only wheel encoder information.
-   * Note that this should be called every loop (and the correct loop period must
-   * be passed into the constructor of this class.)
+   * Updates the the Extended Kalman Filter using only wheel encoder information.
+   * This should be called every loop, and the correct loop period must be passed
+   * into the constructor of this class.
    *
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @param gyroAngle          The current gyroscope angle.
-   * @param wheelStates        Velocities and rotations of the swerve modules.
+   * @param wheelStates        The current velocities and rotations of the swerve modules.
    * @return The estimated pose of the robot in meters.
    */
   @SuppressWarnings("LocalVariableName")
@@ -246,7 +243,7 @@ public class SwerveDrivePoseEstimator {
     var chassisSpeeds = m_kinematics.toChassisSpeeds(wheelStates);
     var fieldRelativeVelocities = new Translation2d(
             chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond
-    );
+    ).rotateBy(angle);
 
     var u = VecBuilder.fill(
             fieldRelativeVelocities.getX(),
