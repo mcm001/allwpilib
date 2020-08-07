@@ -7,11 +7,12 @@
 
 #pragma once
 
+#include <units/time.h>
+
 #include <algorithm>
 #include <functional>
 
 #include <Eigen/Core>
-#include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/system/Discretization.h"

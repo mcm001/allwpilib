@@ -6,13 +6,13 @@
 /*----------------------------------------------------------------------------*/
 
 #include <gtest/gtest.h>
+#include <units/moment_of_inertia.h>
 
 #include <array>
 #include <cmath>
 
 #include <Eigen/Core>
 #include <Eigen/QR>
-#include <units/moment_of_inertia.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/ExtendedKalmanFilter.h"

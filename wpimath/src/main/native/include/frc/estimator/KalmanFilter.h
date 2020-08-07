@@ -7,18 +7,18 @@
 
 #pragma once
 
-#include "math/MathShared.h"
+#include <drake/math/discrete_algebraic_riccati_equation.h>
+#include <units/time.h>
 
 #include <array>
 #include <cmath>
 
 #include <Eigen/Core>
-#include <drake/math/discrete_algebraic_riccati_equation.h>
-#include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/system/Discretization.h"
 #include "frc/system/LinearSystem.h"
+#include "math/MathShared.h"
 
 namespace frc {
 namespace detail {

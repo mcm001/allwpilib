@@ -9,11 +9,10 @@
 #include <frc/system/plant/DCMotor.h>
 #include <frc/system/plant/LinearSystemId.h>
 #include <gtest/gtest.h>
-
-#include <iostream>
-
 #include <units/length.h>
 #include <units/mass.h>
+
+#include <iostream>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/system/plant/LinearSystemId.h"

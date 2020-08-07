@@ -113,7 +113,7 @@ public class KalmanFilter<S extends Num, I extends Num,
         m_P = new Matrix<>(new SimpleMatrix(states.getNum(), states.getNum()));
       }
     } else {
-      MathSharedStore.reportError("The system passed to the Kalman Filter is not observable!", 
+      MathSharedStore.reportError("The system passed to the Kalman Filter is not observable!",
           Thread.currentThread().getStackTrace());
       throw new IllegalArgumentException(
         "The system passed to the Kalman Filter is not observable!");

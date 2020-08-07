@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include <Eigen/Core>
 #include <units/time.h>
+
+#include <Eigen/Core>
 #include <unsupported/Eigen/MatrixFunctions>
 
 namespace frc {

@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include <Eigen/Core>
 #include <units/time.h>
 #include <units/voltage.h>
+
+#include <Eigen/Core>
 
 #include "frc/controller/LinearPlantInversionFeedforward.h"
 #include "frc/controller/LinearQuadraticRegulator.h"

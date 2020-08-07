@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include <units/time.h>
+
 #include <array>
 #include <functional>
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/MerweScaledSigmaPoints.h"

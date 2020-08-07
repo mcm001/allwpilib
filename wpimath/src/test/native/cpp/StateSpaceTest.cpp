@@ -6,12 +6,12 @@
 /*----------------------------------------------------------------------------*/
 
 #include <gtest/gtest.h>
+#include <units/time.h>
 
 #include <cmath>
 #include <random>
 
 #include <Eigen/Core>
-#include <units/time.h>
 
 #include "frc/controller/LinearPlantInversionFeedforward.h"
 #include "frc/controller/LinearQuadraticRegulator.h"

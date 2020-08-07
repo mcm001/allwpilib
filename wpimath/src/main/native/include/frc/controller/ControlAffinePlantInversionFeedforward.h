@@ -7,11 +7,12 @@
 
 #pragma once
 
+#include <units/time.h>
+
 #include <array>
 #include <functional>
 
 #include <Eigen/Core>
-#include <units/time.h>
 
 #include "frc/system/NumericalJacobian.h"
 

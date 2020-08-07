@@ -6,11 +6,11 @@
 /*----------------------------------------------------------------------------*/
 
 #include <gtest/gtest.h>
+#include <units/time.h>
 
 #include <cmath>
 
 #include <Eigen/Core>
-#include <units/time.h>
 
 #include "frc/controller/LinearQuadraticRegulator.h"
 #include "frc/system/LinearSystem.h"

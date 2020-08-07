@@ -6,13 +6,13 @@
 /*----------------------------------------------------------------------------*/
 
 #include <gtest/gtest.h>
+#include <units/moment_of_inertia.h>
+#include <units/time.h>
 
 #include <array>
 #include <cmath>
 
 #include <Eigen/Core>
-#include <units/moment_of_inertia.h>
-#include <units/time.h>
 
 #include "frc/estimator/KalmanFilter.h"
 #include "frc/system/plant/DCMotor.h"

@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include <drake/math/discrete_algebraic_riccati_equation.h>
+#include <units/time.h>
+
 #include <array>
 
 #include <Eigen/Core>
 #include <Eigen/QR>
-#include <drake/math/discrete_algebraic_riccati_equation.h>
-#include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/system/Discretization.h"
