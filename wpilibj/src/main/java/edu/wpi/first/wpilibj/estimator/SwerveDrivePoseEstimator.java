@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.math.Discretization;
 import edu.wpi.first.wpilibj.math.StateSpaceUtil;
 import edu.wpi.first.wpiutil.math.Matrix;
 import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.Pair;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
@@ -26,15 +27,16 @@ import edu.wpi.first.wpiutil.math.numbers.N3;
 import edu.wpi.first.wpiutil.math.numbers.N4;
 
 /**
- * This class wraps an {@link ExtendedKalmanFilter KalmanFExtendedKalmanFilterilter} to fuse
+ * This class wraps an {@link ExtendedKalmanFilter ExtendedKalmanFilter} to fuse
  * latency-compensated vision measurements with swerve drive encoder velocity measurements.
  * It will correct for noisy measurements and encoder drift. It is intended to be an easy
  * but more accurate drop-in for {@link edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry}.
  *
- * <p>{@link SwerveDrivePoseEstimator#update} should be called every robot loop (if
+ * <p>{@link SwerveDrivePoseEstimator#update} should be called every robot loop. If
  * your loops are faster or slower than the default of 0.02s, then you should change
  * the nominal delta time using the secondary constructor: 
- * {@link SwerveDrivePoseEstimator#updateWithTime}.
+ * {@link SwerveDrivePoseEstimator#SwerveDrivePoseEstimator(Rotation2d, Pose2d,
+ * SwerveDriveKinematics, Matrix, Matrix, Matrix, double)}.
  *
  * <p>{@link SwerveDrivePoseEstimator#addVisionMeasurement} can be called as
  * infrequently as you want; if you never call it, then this class will behave mostly like regular
@@ -108,7 +110,7 @@ public class SwerveDrivePoseEstimator {
     m_observer = new ExtendedKalmanFilter<>(
         Nat.N4(), Nat.N3(), Nat.N2(),
         this::f,
-        (x, u) -> VecBuilder.fill(x.get(2, 0), x.get(3, 0)),
+        (x, u) -> x.block(Nat.N2(), Nat.N1(), new Pair<>(2, 0)),
         VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
             Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0))),
         VecBuilder.fill(Math.cos(localMeasurementStdDevs.get(0, 0)),
