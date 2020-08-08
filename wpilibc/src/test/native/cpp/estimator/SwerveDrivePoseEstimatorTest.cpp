@@ -24,16 +24,20 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       frc::Rotation2d(),
       frc::Pose2d(),
       kinematics,
-      frc::MakeMatrix<3, 1>(0.01, 0.01, 0.01),
-      frc::MakeMatrix<1, 1>(0.01),
+      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1),
+      frc::MakeMatrix<1, 1>(0.05),
       frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
 
   frc::SwerveDriveOdometry<4> odometry{kinematics, frc::Rotation2d()};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
-                  frc::Pose2d(54_m, 54_m, frc::Rotation2d())},
-      frc::TrajectoryConfig(10_mps, 5.0_mps_sq));
+      std::vector{frc::Pose2d(), 
+                  frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
+                  frc::Pose2d(10_m, 10_m, frc::Rotation2d(180_deg)),
+                  frc::Pose2d(30_m, 30_m, frc::Rotation2d()),
+                  frc::Pose2d(20_m, 20_m, frc::Rotation2d(180_deg)),
+                  frc::Pose2d(10_m, 10_m, frc::Rotation2d())},
+      frc::TrajectoryConfig(5.0_mps, 2.0_mps_sq));
 
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0, 1.0);
@@ -60,9 +64,9 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 1_m,
-                                 distribution(generator) * 1_m),
-              frc::Rotation2d(distribution(generator) * 0.01 * 1_rad));
+              frc::Translation2d(distribution(generator) * 0.1_m,
+                                 distribution(generator) * 0.1_m),
+              frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
       visionPoses.push_back(lastVisionPose);
       lastVisionUpdateTime = t;
     }
@@ -74,7 +78,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
     auto xhat = estimator.UpdateWithTime(
         t,
         groundTruthState.pose.Rotation() +
-            frc::Rotation2d(distribution(generator) * 0.001_rad),
+            frc::Rotation2d(distribution(generator) * 0.05_rad),
         moduleStates[0], moduleStates[1], moduleStates[2], moduleStates[3]);
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())

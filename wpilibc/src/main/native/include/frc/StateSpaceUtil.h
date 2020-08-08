@@ -243,7 +243,16 @@ bool IsStabilizable(const Eigen::Matrix<double, States, States>& A,
  *
  * @return The vector.
  */
-Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose);
+Eigen::Matrix<double, 3, 1> PoseTo3dVector(const Pose2d& pose);
+
+/**
+ * Converts a Pose2d into a vector of [x, y, cos(theta), sin(theta)].
+ *
+ * @param pose The pose that is being represented.
+ *
+ * @return The vector.
+ */
+Eigen::Matrix<double, 4, 1> PoseTo4dVector(const Pose2d& pose);
 
 /**
  * Clamps input vector between system's minimum and maximum allowable input.

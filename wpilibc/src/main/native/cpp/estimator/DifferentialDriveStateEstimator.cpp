@@ -47,7 +47,7 @@ DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
 void DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement(
     const Pose2d& visionRobotPose, units::second_t timestamp) {
   m_latencyCompensator.ApplyPastMeasurement<3>(&m_observer, m_nominalDt,
-                                               PoseToVector(visionRobotPose),
+                                               PoseTo3dVector(visionRobotPose),
                                                m_globalCorrect, timestamp);
 }
 
