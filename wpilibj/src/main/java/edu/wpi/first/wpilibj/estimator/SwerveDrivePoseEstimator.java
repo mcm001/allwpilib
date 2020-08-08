@@ -210,15 +210,15 @@ public class SwerveDrivePoseEstimator {
    * This should be called every loop, and the correct loop period must be passed
    * into the constructor of this class.
    *
-   * @param gyroAngle   The current gyro angle.
-   * @param wheelStates The current velocities and rotations of the swerve modules.
+   * @param gyroAngle    The current gyro angle.
+   * @param moduleStates The current velocities and rotations of the swerve modules.
    * @return The estimated pose of the robot in meters.
    */
   public Pose2d update(
           Rotation2d gyroAngle,
-          SwerveModuleState... wheelStates
+          SwerveModuleState... moduleStates
   ) {
-    return updateWithTime(Timer.getFPGATimestamp(), gyroAngle, wheelStates);
+    return updateWithTime(Timer.getFPGATimestamp(), gyroAngle, moduleStates);
   }
 
   /**
@@ -228,13 +228,13 @@ public class SwerveDrivePoseEstimator {
    *
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @param gyroAngle          The current gyroscope angle.
-   * @param wheelStates        The current velocities and rotations of the swerve modules.
+   * @param moduleStates       The current velocities and rotations of the swerve modules.
    * @return The estimated pose of the robot in meters.
    */
   @SuppressWarnings("LocalVariableName")
   public Pose2d updateWithTime(
           double currentTimeSeconds,
-          Rotation2d gyroAngle, SwerveModuleState... wheelStates
+          Rotation2d gyroAngle, SwerveModuleState... moduleStates
   ) {
     double dt = m_prevTimeSeconds >= 0 ? currentTimeSeconds - m_prevTimeSeconds : m_nominalDt;
     m_prevTimeSeconds = currentTimeSeconds;
@@ -242,7 +242,7 @@ public class SwerveDrivePoseEstimator {
     var angle = gyroAngle.plus(m_gyroOffset);
     var omega = angle.minus(m_previousAngle).getRadians() / dt;
 
-    var chassisSpeeds = m_kinematics.toChassisSpeeds(wheelStates);
+    var chassisSpeeds = m_kinematics.toChassisSpeeds(moduleStates);
     var fieldRelativeVelocities = new Translation2d(
             chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond
     ).rotateBy(angle);

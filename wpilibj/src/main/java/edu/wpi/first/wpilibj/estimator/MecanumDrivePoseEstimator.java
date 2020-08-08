@@ -229,7 +229,7 @@ public class MecanumDrivePoseEstimator {
    * @param wheelSpeeds        The current speeds of the mecanum drive wheels.
    * @return The estimated pose of the robot in meters.
    */
-  @SuppressWarnings("checkstyle:LocalVariableName")
+  @SuppressWarnings("LocalVariableName")
   public Pose2d updateWithTime(double currentTimeSeconds, Rotation2d gyroAngle,
                                MecanumDriveWheelSpeeds wheelSpeeds) {
     double dt = m_prevTimeSeconds >= 0 ? currentTimeSeconds - m_prevTimeSeconds : m_nominalDt;
