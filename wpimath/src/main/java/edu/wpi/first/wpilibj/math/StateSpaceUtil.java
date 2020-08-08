@@ -164,7 +164,7 @@ public final class StateSpaceUtil {
    */
   public static <I extends Num> Matrix<I, N1> normalizeInputVector(Matrix<I, N1> u,
                                                                       double maxMagnitude) {
-    double maxValue = u.maxAbsInternal();
+    double maxValue = u.maxAbs();
     boolean isCapped = maxValue > maxMagnitude;
 
     if (isCapped) {

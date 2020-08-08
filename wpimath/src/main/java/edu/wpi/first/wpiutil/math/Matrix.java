@@ -66,7 +66,21 @@ public class Matrix<R extends Num, C extends Num> {
    * @param other The {@link Matrix} to copy the storage of.
    */
   public Matrix(Matrix<R, C> other) {
-    this.m_storage = Objects.requireNonNull(other).m_storage;
+    this.m_storage = Objects.requireNonNull(other).m_storage.copy();
+  }
+
+  /**
+   * Gets the underlying {@link SimpleMatrix} that this {@link Matrix} wraps.
+   * 
+   * <p>NOTE:The use of this method is heavily discouraged as this removes any
+   * guarantee of type safety. This should only be called if the {@link SimpleMatrix}
+   * API is absolutely necessary due to the desired function not being accessible through
+   * the {@link Matrix} wrapper.
+   * 
+   * @return The underlying {@link SimpleMatrix} storage.
+   */
+  public SimpleMatrix getStorage() {
+    return m_storage;
   }
 
   /**
@@ -158,7 +172,7 @@ public class Matrix<R extends Num, C extends Num> {
    *
    * @return The largest element of this matrix.
    */
-  public final double maxInternal() {
+  public final double max() {
     return CommonOps_DDRM.elementMax(this.m_storage.getDDRM());
   }
 
@@ -167,7 +181,7 @@ public class Matrix<R extends Num, C extends Num> {
    *
    * @return The absolute value of the element with the largest absolute value.
    */
-  public final double maxAbsInternal() {
+  public final double maxAbs() {
     return CommonOps_DDRM.elementMaxAbs(this.m_storage.getDDRM());
   }
 
@@ -322,7 +336,7 @@ public class Matrix<R extends Num, C extends Num> {
   }
 
   /**
-   * Returns the solution x to the equation Ax = b, where A "this" matrix.
+   * Returns the solution x to the equation Ax = b, where A is "this" matrix.
    *
    * <p>The matrix equation could also be written as x = A<sup>-1</sup>b. Where the
    * pseudo inverse is used if A is not square.
@@ -659,13 +673,5 @@ public class Matrix<R extends Num, C extends Num> {
   @Override
   public int hashCode() {
     return Objects.hash(m_storage);
-  }
-
-  /**
-   * Get the underlying {@link SimpleMatrix} that this Matrix wraps. As this removes any guarantee
-   * of type safety use of this method is heavily discouraged.
-   */
-  public SimpleMatrix getStorage() {
-    return m_storage;
   }
 }
