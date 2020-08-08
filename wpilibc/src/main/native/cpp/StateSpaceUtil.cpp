@@ -17,7 +17,6 @@ Eigen::Matrix<double, 3, 1> PoseTo3dVector(const Pose2d& pose) {
 Eigen::Matrix<double, 4, 1> PoseTo4dVector(const Pose2d& pose) {
   return frc::MakeMatrix<4, 1>(pose.Translation().X().to<double>(),
                                pose.Translation().Y().to<double>(),
-                               pose.Rotation().Cos(),
-                               pose.Rotation().Sin());
+                               pose.Rotation().Cos(), pose.Rotation().Sin());
 }
 }  // namespace frc

@@ -246,7 +246,7 @@ bool IsStabilizable(const Eigen::Matrix<double, States, States>& A,
 Eigen::Matrix<double, 3, 1> PoseTo3dVector(const Pose2d& pose);
 
 /**
- * Converts a Pose2d into a vector of [x, y, cos(theta), sin(theta)].
+ * Converts a Pose2d into a vector of [x, y, std::cos(theta), std::sin(theta)].
  *
  * @param pose The pose that is being represented.
  *

@@ -34,7 +34,7 @@ import edu.wpi.first.wpiutil.math.numbers.N4;
  *
  * <p>{@link SwerveDrivePoseEstimator#update} should be called every robot loop. If
  * your loops are faster or slower than the default of 0.02s, then you should change
- * the nominal delta time using the secondary constructor: 
+ * the nominal delta time using the secondary constructor:
  * {@link SwerveDrivePoseEstimator#SwerveDrivePoseEstimator(Rotation2d, Pose2d,
  * SwerveDriveKinematics, Matrix, Matrix, Matrix, double)}.
  *

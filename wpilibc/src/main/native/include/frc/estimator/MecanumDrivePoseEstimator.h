@@ -25,25 +25,29 @@ template <int N>
 using Vector = Eigen::Matrix<double, N, 1>;
 
 /**
- * This class wraps an ExtendedKalmanFilter to fuse latency-compensated vision measurements
- * with mecanum drive encoder velocity measurements. It will correct for noisy measurements
- * and encoder drift. It is intended to be an easy but more accurate drop-in for
- * MecanumDriveOdometry.
+ * This class wraps an ExtendedKalmanFilter to fuse latency-compensated vision
+ * measurements with mecanum drive encoder velocity measurements. It will
+ * correct for noisy measurements and encoder drift. It is intended to be an
+ * easy but more accurate drop-in for MecanumDriveOdometry.
  *
- * Update() should be called every robot loop. If your loops are faster or slower than the default
- * of 0.02s, then you should change the nominal delta time by specifying it in the constructor.
+ * Update() should be called every robot loop. If your loops are faster or
+ * slower than the default of 0.02s, then you should change the nominal delta
+ * time by specifying it in the constructor.
  *
- * AddVisionMeasurement() can be called as infrequently as you want; if you never call it, then
- * this class will behave mostly like regular encoder odometry.
+ * AddVisionMeasurement() can be called as infrequently as you want; if you
+ * never call it, then this class will behave mostly like regular encoder
+ * odometry.
  *
  * Our state-space system is:
  *
- * <strong> x = [[x, y, cos(theta), sin(theta)]]^T </strong> in the field-coordinate system.
+ * <strong> x = [[x, y, std::cos(theta), std::sin(theta)]]^T </strong> in the
+ * field-coordinate system.
  *
  * <strong> u = [[vx, vy, omega]]^T </strong> in the field-coordinate system.
  *
- * <strong> y = [[x, y, cos(theta), sin(theta)]]^T </strong> in field coords from vision,
- * or <strong> y = [[cos(theta), sin(theta)]]^T </strong> from the gyro.
+ * <strong> y = [[x, y, std::cos(theta), std::sin(theta)]]^T </strong> in field
+ * coords from vision, or <strong> y = [[cos(theta), std::sin(theta)]]^T
+ * </strong> from the gyro.
  */
 class MecanumDrivePoseEstimator {
  public:
@@ -52,14 +56,16 @@ class MecanumDrivePoseEstimator {
    *
    * @param gyroAngle                The current gyro angle.
    * @param initialPoseMeters        The starting pose estimate.
-   * @param kinematics               A correctly-configured kinematics object for your drivetrain.
-   * @param stateStdDevs             Standard deviations of model states. Increase these numbers to
-   *                                 trust your wheel and gyro velocities less.
-   * @param localMeasurementStdDevs  Standard deviations of the gyro measurement. Increase this
-   *                                 number to trust gyro angle measurements less.
-   * @param visionMeasurementStdDevs Standard deviations of the encoder measurements. Increase
-   *                                 these numbers to trust vision less.
-   * @param nominalDt                The time in seconds between each robot loop.
+   * @param kinematics               A correctly-configured kinematics object
+   * for your drivetrain.
+   * @param stateStdDevs             Standard deviations of model states.
+   * Increase these numbers to trust your wheel and gyro velocities less.
+   * @param localMeasurementStdDevs  Standard deviations of the gyro
+   * measurement. Increase this number to trust gyro angle measurements less.
+   * @param visionMeasurementStdDevs Standard deviations of the encoder
+   * measurements. Increase these numbers to trust vision less.
+   * @param nominalDt                The time in seconds between each robot
+   * loop.
    */
   MecanumDrivePoseEstimator(const Rotation2d& gyroAngle,
                             const Pose2d& initialPose,
@@ -83,37 +89,37 @@ class MecanumDrivePoseEstimator {
   void ResetPosition(const Pose2d& pose, const Rotation2d& gyroAngle);
 
   /**
-   * Gets the pose of the robot at the current time as estimated by the Extended Kalman Filter.
+   * Gets the pose of the robot at the current time as estimated by the Extended
+   * Kalman Filter.
    *
    * @return The estimated robot pose in meters.
    */
   Pose2d GetEstimatedPosition() const;
 
   /**
-   * Add a vision measurement to the Extended Kalman Filter. This will correct the
-   * odometry pose estimate while still accounting for measurement noise.
+   * Add a vision measurement to the Extended Kalman Filter. This will correct
+   * the odometry pose estimate while still accounting for measurement noise.
    *
    * This method can be called as infrequently as you want, as long as you are
    * calling Update() every loop.
    *
    * @param visionRobotPose The pose of the robot as measured by the vision
    *                        camera.
-   * @param timestamp       The timestamp of the vision measurement in seconds. Note that if
-   *                        you don't use your own time source by calling
-   *                        UpdateWithTime() then you must use a timestamp with an epoch
-   *                        since FPGA startup (i.e. the epoch of this timestamp is
-   *                        the same epoch as Timer#GetFPGATimestamp.) This means
-   *                        that you should use Timer#GetFPGATimestamp as your time source
-   *                        or sync the epochs.
+   * @param timestamp       The timestamp of the vision measurement in seconds.
+   * Note that if you don't use your own time source by calling UpdateWithTime()
+   * then you must use a timestamp with an epoch since FPGA startup (i.e. the
+   * epoch of this timestamp is the same epoch as Timer#GetFPGATimestamp.) This
+   * means that you should use Timer#GetFPGATimestamp as your time source or
+   * sync the epochs.
    */
   void AddVisionMeasurement(const Pose2d& visionRobotPose,
                             units::second_t timestamp);
 
   /**
-   * Updates the the Extended Kalman Filter using only wheel encoder information.
-   * This should be called every loop, and the correct loop period must be passed
-   * into the constructor of this class.
-   * 
+   * Updates the the Extended Kalman Filter using only wheel encoder
+   * information. This should be called every loop, and the correct loop period
+   * must be passed into the constructor of this class.
+   *
    * @param gyroAngle   The current gyro angle.
    * @param wheelSpeeds The current speeds of the mecanum drive wheels.
    * @return The estimated pose of the robot in meters.
@@ -122,9 +128,9 @@ class MecanumDrivePoseEstimator {
                 const MecanumDriveWheelSpeeds& wheelSpeeds);
 
   /**
-   * Updates the the Extended Kalman Filter using only wheel encoder information.
-   * This should be called every loop, and the correct loop period must be passed
-   * into the constructor of this class.
+   * Updates the the Extended Kalman Filter using only wheel encoder
+   * information. This should be called every loop, and the correct loop period
+   * must be passed into the constructor of this class.
    *
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @param gyroAngle          The current gyroscope angle.

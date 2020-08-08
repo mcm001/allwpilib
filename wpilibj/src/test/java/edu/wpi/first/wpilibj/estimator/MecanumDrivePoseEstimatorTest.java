@@ -32,7 +32,7 @@ public class MecanumDrivePoseEstimatorTest {
     var kinematics = new MecanumDriveKinematics(
             new Translation2d(1, 1), new Translation2d(1, -1),
             new Translation2d(-1, -1), new Translation2d(-1, 1));
-    
+
     var estimator = new MecanumDrivePoseEstimator(
             new Rotation2d(), new Pose2d(), kinematics,
             VecBuilder.fill(0.01, 0.01, 0.01),
@@ -49,7 +49,7 @@ public class MecanumDrivePoseEstimatorTest {
                     new Pose2d(10, 10, Rotation2d.fromDegrees(0))),
             new TrajectoryConfig(0.5, 2)
     );
-    
+
     var rand = new Random(5190);
 
     List<Double> trajXs = new ArrayList<>();
@@ -100,7 +100,7 @@ public class MecanumDrivePoseEstimatorTest {
                 new Rotation2d(
                         rand.nextGaussian() * 0.1).plus(groundTruthState.poseMeters.getRotation())
         );
-        
+
         lastVisionUpdateTime = t;
 
         visionXs.add(lastVisionPose.getTranslation().getX());

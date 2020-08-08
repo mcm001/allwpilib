@@ -34,7 +34,7 @@ import edu.wpi.first.wpiutil.math.numbers.N4;
  *
  * <p>{@link MecanumDrivePoseEstimator#update} should be called every robot loop. If
  * your loops are faster or slower than the default of 0.02s, then you should change
- * the nominal delta time using the secondary constructor: 
+ * the nominal delta time using the secondary constructor:
  * {@link MecanumDrivePoseEstimator#MecanumDrivePoseEstimator(Rotation2d, Pose2d,
  * MecanumDriveKinematics, Matrix, Matrix, Matrix, double)}.
  *
@@ -210,7 +210,7 @@ public class MecanumDrivePoseEstimator {
    * Updates the the Extended Kalman Filter using only wheel encoder information.
    * This should be called every loop, and the correct loop period must be passed
    * into the constructor of this class.
-   * 
+   *
    * @param gyroAngle   The current gyro angle.
    * @param wheelSpeeds The current speeds of the mecanum drive wheels.
    * @return The estimated pose of the robot in meters.

@@ -31,8 +31,7 @@ TEST(SwerveDrivePoseEstimatorTest, TestAccuracy) {
   frc::SwerveDriveOdometry<4> odometry{kinematics, frc::Rotation2d()};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      std::vector{frc::Pose2d(), 
-                  frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
+      std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
                   frc::Pose2d(10_m, 10_m, frc::Rotation2d(180_deg)),
                   frc::Pose2d(30_m, 30_m, frc::Rotation2d()),
                   frc::Pose2d(20_m, 20_m, frc::Rotation2d(180_deg)),
