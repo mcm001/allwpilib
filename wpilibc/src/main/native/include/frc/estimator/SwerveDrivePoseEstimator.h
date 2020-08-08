@@ -61,15 +61,18 @@ class SwerveDrivePoseEstimator {
    * @param gyroAngle                The current gyro angle.
    * @param initialPoseMeters        The starting pose estimate.
    * @param kinematics               A correctly-configured kinematics object
-   * for your drivetrain.
+   *                                 for your drivetrain.
    * @param stateStdDevs             Standard deviations of model states.
-   * Increase these numbers to trust your wheel and gyro velocities less.
+   *                                 Increase these numbers to trust your
+   *                                 wheel and gyro velocities less.
    * @param localMeasurementStdDevs  Standard deviations of the gyro
-   * measurement. Increase this number to trust gyro angle measurements less.
+   *                                 measurement. Increase this number to
+   *                                 trust gyro angle measurements less.
    * @param visionMeasurementStdDevs Standard deviations of the encoder
-   * measurements. Increase these numbers to trust vision less.
+   *                                 measurements. Increase these numbers to
+   *                                 trust vision less.
    * @param nominalDt                The time in seconds between each robot
-   * loop.
+   *                                 loop.
    */
   SwerveDrivePoseEstimator(const Rotation2d& gyroAngle,
                            const Pose2d& initialPose,
@@ -158,11 +161,13 @@ class SwerveDrivePoseEstimator {
    * @param visionRobotPose The pose of the robot as measured by the vision
    *                        camera.
    * @param timestamp       The timestamp of the vision measurement in seconds.
-   * Note that if you don't use your own time source by calling UpdateWithTime()
-   * then you must use a timestamp with an epoch since FPGA startup (i.e. the
-   * epoch of this timestamp is the same epoch as Timer#GetFPGATimestamp.) This
-   * means that you should use Timer#GetFPGATimestamp as your time source or
-   * sync the epochs.
+   *                        Note that if you don't use your own time source by
+   *                        calling UpdateWithTime() then you must use a
+   *                        timestamp with an epoch since FPGA startup
+   *                        (i.e. the epoch of this timestamp is the same
+   *                        epoch as Timer#GetFPGATimestamp.) This means
+   *                        that you should use Timer#GetFPGATimestamp as your
+   *                        time source or sync the epochs.
    */
   void AddVisionMeasurement(const Pose2d& visionRobotPose,
                             units::second_t timestamp) {
@@ -178,7 +183,7 @@ class SwerveDrivePoseEstimator {
    *
    * @param gyroAngle    The current gyro angle.
    * @param moduleStates The current velocities and rotations of the swerve
-   * modules.
+   *                     modules.
    * @return The estimated pose of the robot in meters.
    */
   template <typename... ModuleState>
@@ -195,7 +200,7 @@ class SwerveDrivePoseEstimator {
    * @param currentTime  Time at which this method was called, in seconds.
    * @param gyroAngle    The current gyroscope angle.
    * @param moduleStates The current velocities and rotations of the swerve
-   * modules.
+   *                     modules.
    * @return The estimated pose of the robot in meters.
    */
   template <typename... ModuleState>
