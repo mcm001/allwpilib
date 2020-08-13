@@ -26,25 +26,25 @@
  * to control a flywheel.
  */
 class Robot : public frc::TimedRobot {
-  constexpr static int kMotorPort = 0;
-  constexpr static int kEncoderAChannel = 0;
-  constexpr static int kEncoderBChannel = 1;
-  constexpr static int kJoystickPort = 0;
-  constexpr static units::radians_per_second_t kSpinupRadPerSec = 500_rpm;
+  static constexpr int kMotorPort = 0;
+  static constexpr int kEncoderAChannel = 0;
+  static constexpr int kEncoderBChannel = 1;
+  static constexpr int kJoystickPort = 0;
+  static constexpr units::radians_per_second_t kSpinup = 500_rpm;
 
-  constexpr static units::kilogram_square_meter_t kFlywheelMomentOfInertia =
+  static constexpr units::kilogram_square_meter_t kFlywheelMomentOfInertia =
       0.00032_kg_sq_m;
 
-  constexpr static double kFlywheelGearing =
-      1.0;  // reduction between motors and encoder,
-  // as output over input. If the flywheel spins slower than the motors, this
-  // number should be greater than one.
+  // Reduction between motors and encoder, as output over input. If the flywheel
+  // spins slower than the motors, this number should be greater than one.
+  static constexpr double kFlywheelGearing = 1.0;
 
-  /*
-  The plant holds a state-space model of our flywheel. In this system the states
-  are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
-  [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
-   */
+  // The plant holds a state-space model of our flywheel. This system has the
+  // following properties:
+  //
+  // States: [velocity], in RPM.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [velocity], in RPM.
   frc::LinearSystem<1, 1, 1> m_flywheelPlant =
       frc::LinearSystemId::FlywheelSystem(
           frc::DCMotor::NEO(2), kFlywheelMomentOfInertia, kFlywheelGearing);
@@ -94,7 +94,7 @@ class Robot : public frc::TimedRobot {
 
  public:
   void RobotInit() {
-    // we go 2 pi radians per 4096 clicks.
+    // We go 2 pi radians per 4096 clicks.
     m_encoder.SetDistancePerPulse(2.0 * wpi::math::pi / 4096.0);
   }
 
@@ -106,10 +106,10 @@ class Robot : public frc::TimedRobot {
     // Sets the target speed of our flywheel. This is similar to setting the
     // setpoint of a PID controller.
     if (m_joystick.GetBumper(frc::GenericHID::kRightHand)) {
-      // we pressed the bumper, so let's set our next reference
-      m_loop.SetNextR(frc::MakeMatrix<1, 1>(kSpinupRadPerSec.to<double>()));
+      // We pressed the bumper, so let's set our next reference
+      m_loop.SetNextR(frc::MakeMatrix<1, 1>(kSpinup.to<double>()));
     } else {
-      // we released the bumper, so let's spin down
+      // We released the bumper, so let's spin down
       m_loop.SetNextR(frc::MakeMatrix<1, 1>(0.0));
     }
 
@@ -120,7 +120,7 @@ class Robot : public frc::TimedRobot {
     // predict the next state with out Kalman filter.
     m_loop.Predict(20_ms);
 
-    // send the new calculated voltage to the motors.
+    // Send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));

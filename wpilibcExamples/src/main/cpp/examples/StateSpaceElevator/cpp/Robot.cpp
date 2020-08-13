@@ -29,23 +29,24 @@
  * to control an elevator.
  */
 class Robot : public frc::TimedRobot {
-  constexpr static int kMotorPort = 0;
-  constexpr static int kEncoderAChannel = 0;
-  constexpr static int kEncoderBChannel = 1;
-  constexpr static int kJoystickPort = 0;
+  static constexpr int kMotorPort = 0;
+  static constexpr int kEncoderAChannel = 0;
+  static constexpr int kEncoderBChannel = 1;
+  static constexpr int kJoystickPort = 0;
 
-  constexpr static units::meter_t kRaisedPosition = 2_ft;
-  constexpr static units::meter_t kLoweredPosition = 0_ft;
+  static constexpr units::meter_t kRaisedPosition = 2_ft;
+  static constexpr units::meter_t kLoweredPosition = 0_ft;
 
-  constexpr static units::meter_t kDrumRadius = 0.75_in;
-  constexpr static units::kilogram_t kCarriageMass = 4.5_kg;
-  constexpr static double kGearRatio = 6.0;
+  static constexpr units::meter_t kDrumRadius = 0.75_in;
+  static constexpr units::kilogram_t kCarriageMass = 4.5_kg;
+  static constexpr double kGearRatio = 6.0;
 
-  /*
-  The plant holds a state-space model of our flywheel. In this system the states
-  are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
-  [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
-   */
+  // The plant holds a state-space model of our flywheel. This system has the
+  // following properties:
+  //
+  // States: [velocity], in RPM.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [velocity], in RPM.
   frc::LinearSystem<2, 1, 1> m_elevatorPlant =
       frc::LinearSystemId::ElevatorSystem(frc::DCMotor::NEO(2), kCarriageMass,
                                           kDrumRadius, kGearRatio);
@@ -108,7 +109,7 @@ class Robot : public frc::TimedRobot {
   }
 
   void TeleopInit() {
-    // reset our loop to make sure it's in a known state.
+    // Reset our loop to make sure it's in a known state.
     m_loop.Reset(
         frc::MakeMatrix<2, 1>(m_encoder.GetDistance(), m_encoder.GetRate()));
 
@@ -121,10 +122,10 @@ class Robot : public frc::TimedRobot {
     // setpoint of a PID controller.
     frc::TrapezoidProfile<units::meters>::State goal;
     if (m_joystick.GetBumper(frc::GenericHID::kRightHand)) {
-      // we pressed the bumper, so let's set our next reference
+      // We pressed the bumper, so let's set our next reference
       goal = {kRaisedPosition, 0_fps};
     } else {
-      // we released the bumper, so let's spin down
+      // We released the bumper, so let's spin down
       goal = {kLoweredPosition, 0_fps};
     }
     m_lastProfiledReference =
@@ -143,7 +144,7 @@ class Robot : public frc::TimedRobot {
     // predict the next state with out Kalman filter.
     m_loop.Predict(20_ms);
 
-    // send the new calculated voltage to the motors.
+    // Send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));

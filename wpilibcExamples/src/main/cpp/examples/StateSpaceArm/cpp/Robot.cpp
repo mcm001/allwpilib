@@ -28,27 +28,28 @@
  * to control an arm.
  */
 class Robot : public frc::TimedRobot {
-  constexpr static int kMotorPort = 0;
-  constexpr static int kEncoderAChannel = 0;
-  constexpr static int kEncoderBChannel = 1;
-  constexpr static int kJoystickPort = 0;
+  static constexpr int kMotorPort = 0;
+  static constexpr int kEncoderAChannel = 0;
+  static constexpr int kEncoderBChannel = 1;
+  static constexpr int kJoystickPort = 0;
 
-  constexpr static units::radian_t kRaisedPosition = 90_deg;
-  constexpr static units::radian_t kLoweredPosition = 0_deg;
+  static constexpr units::radian_t kRaisedPosition = 90_deg;
+  static constexpr units::radian_t kLoweredPosition = 0_deg;
 
-  constexpr static units::kilogram_square_meter_t kArmMOI =
-      1.2_kg_sq_m;  // Moment of inertia of the arm. Can be
-  // estimated with CAD. If finding this constant is difficult,
-  // LinearSystem.identifyPositionSystem may be better.
-  const double kArmGearing = 10.0;  // reduction between motors and encoder,
-  // as output over input. If the flywheel spins slower than the motors, this
-  // number should be greater than one.
+  // Moment of inertia of the arm. Can be estimated with CAD. If finding this
+  // constant is difficult, LinearSystem.identifyPositionSystem may be better.
+  static constexpr units::kilogram_square_meter_t kArmMOI = 1.2_kg_sq_m;
 
-  /*
-  The plant holds a state-space model of our flywheel. In this system the states
-  are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
-  [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
-   */
+  // Reduction between motors and encoder, as output over input. If the flywheel
+  // spins slower than the motors, this number should be greater than one.
+  static constexpr double kArmGearing = 10.0;
+
+  // The plant holds a state-space model of our flywheel. This system has the
+  // following properties:
+  //
+  // States: [velocity], in RPM.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [velocity], in RPM.
   frc::LinearSystem<2, 1, 1> m_armPlant =
       frc::LinearSystemId::SingleJointedArmSystem(frc::DCMotor::NEO(2), kArmMOI,
                                                   kArmGearing);
@@ -104,7 +105,7 @@ class Robot : public frc::TimedRobot {
 
  public:
   void RobotInit() {
-    // we go 2 pi radians per 4096 clicks.
+    // We go 2 pi radians per 4096 clicks.
     m_encoder.SetDistancePerPulse(2.0 * wpi::math::pi / 4096.0);
   }
 
@@ -122,10 +123,10 @@ class Robot : public frc::TimedRobot {
     // setpoint of a PID controller.
     frc::TrapezoidProfile<units::radians>::State goal;
     if (m_joystick.GetBumper(frc::GenericHID::kRightHand)) {
-      // we pressed the bumper, so let's set our next reference
+      // We pressed the bumper, so let's set our next reference
       goal = {kRaisedPosition, 0_rad_per_s};
     } else {
-      // we released the bumper, so let's spin down
+      // We released the bumper, so let's spin down
       goal = {kLoweredPosition, 0_rad_per_s};
     }
     m_lastProfiledReference =
@@ -144,7 +145,7 @@ class Robot : public frc::TimedRobot {
     // predict the next state with out Kalman filter.
     m_loop.Predict(20_ms);
 
-    // send the new calculated voltage to the motors.
+    // Send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
     m_motor.SetVoltage(units::volt_t(m_loop.U(0)));

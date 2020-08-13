@@ -34,18 +34,21 @@ public class Robot extends TimedRobot {
   private static final int kJoystickPort = 0;
   private static final double kSpinupRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(500.0);
 
-  private static final double flywheelKv = 0.023; // kv, volts per radian per second
-  private static final double flywheelKa = 0.001; // ka, volts per radian per second squared
+  // Volts per (radian per second)
+  private static final double kFlywheelKv = 0.023;
 
-  /*
-  The plant holds a state-space model of our flywheel. In this system the states are as follows:
-  States: [velocity], in RPM.
-  Inputs (what we can "put in"): [voltage], in volts.
-  Outputs (what we can measure): [velocity], in RPM.
-  The kV and kA constants are found using the FRC Characterization toolsuite.
-   */
+  // Volts per (radian per second squared)
+  private static final double kFlywheelKa = 0.001;
+
+  // The plant holds a state-space model of our flywheel. This system has the following properties:
+  //
+  // States: [velocity], in RPM.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [velocity], in RPM.
+  //
+  // The Kv and Ka constants are found using the FRC Characterization toolsuite.
   private final LinearSystem<N1, N1, N1> m_flywheelPlant = LinearSystemId.identifyVelocitySystem(
-        flywheelKv, flywheelKa);
+        kFlywheelKv, kFlywheelKa);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
   private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
@@ -76,19 +79,19 @@ public class Robot extends TimedRobot {
 
   private final SpeedController m_motor = new PWMVictorSPX(kMotorPort);
 
-  private final Joystick m_joystick = new Joystick(kJoystickPort); // A joystick to read the
-  // trigger from.
+  // A joystick to read the trigger from.
+  private final Joystick m_joystick = new Joystick(kJoystickPort);
 
   @Override
   public void robotInit() {
-    // we go 2 pi radians per 4096 clicks.
+    // We go 2 pi radians per 4096 clicks.
     m_encoder.setDistancePerPulse(
           2.0 * Math.PI / 4096.0);
   }
 
   @Override
   public void teleopInit() {
-    // reset our loop to make sure it's in a known state.
+    // Reset our loop to make sure it's in a known state.
     m_loop.reset(VecBuilder.fill(m_encoder.getRate()));
   }
 
@@ -98,10 +101,10 @@ public class Robot extends TimedRobot {
     // Sets the target speed of our flywheel. This is similar to setting the setpoint of a
     // PID controller.
     if (m_joystick.getTriggerPressed()) {
-      // we just pressed the trigger, so let's set our next reference
+      // We just pressed the trigger, so let's set our next reference
       m_loop.setNextR(VecBuilder.fill(kSpinupRadPerSec));
     } else if (m_joystick.getTriggerReleased()) {
-      // we just released the trigger, so let's spin down
+      // We just released the trigger, so let's spin down
       m_loop.setNextR(VecBuilder.fill(0.0));
     }
 
@@ -112,7 +115,7 @@ public class Robot extends TimedRobot {
     // state with out Kalman filter.
     m_loop.predict(0.020);
 
-    // send the new calculated voltage to the motors.
+    // Send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
     double nextVoltage = m_loop.getU(0);

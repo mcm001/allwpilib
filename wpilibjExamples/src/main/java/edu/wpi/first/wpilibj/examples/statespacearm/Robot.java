@@ -38,23 +38,23 @@ public class Robot extends TimedRobot {
   private static final double kRaisedPosition = Units.degreesToRadians(90.0);
   private static final double kLoweredPosition = Units.degreesToRadians(0.0);
 
-  private static final double kArmMOI = 1.2; // Moment of inertia of the arm, in kg * m^2. Can be
-  // estimated with CAD. If finding this constant is difficult, LinearSystem.identifyPositionSystem
-  // may be better.
-  private static final double kArmGearing = 10.0; // reduction between motors and encoder,
-  // as output over input. If the flywheel spins slower than the motors, this number should be
-  // greater than one.
+  // Moment of inertia of the arm, in kg * m^2. Can be estimated with CAD. If finding this constant
+  // is difficult, LinearSystem.identifyPositionSystem may be better.
+  private static final double kArmMOI = 1.2;
+
+  // Reduction between motors and encoder, as output over input. If the flywheel spins slower than
+  // the motors, this number should be greater than one.
+  private static final double kArmGearing = 10.0;
 
   private final TrapezoidProfile.Constraints m_constraints = new TrapezoidProfile.Constraints(
         Units.degreesToRadians(45), Units.degreesToRadians(90)); // Max arm speed and acceleration.
   private TrapezoidProfile.State m_lastProfiledReference = new TrapezoidProfile.State();
 
-  /*
-  The plant holds a state-space model of our flywheel. In this system the states are as follows:
-  States: [velocity], in RPM.
-  Inputs (what we can "put in"): [voltage], in volts.
-  Outputs (what we can measure): [velocity], in RPM.
-   */
+  // The plant holds a state-space model of our flywheel. This system has the following properties:
+  //
+  // States: [velocity], in RPM.
+  // Inputs (what we can "put in"): [voltage], in volts.
+  // Outputs (what we can measure): [velocity], in RPM.
   private final LinearSystem<N2, N1, N1> m_flywheelPlant =
       LinearSystemId.createSingleJointedArmSystem(
         DCMotor.getNEO(2),
@@ -102,8 +102,8 @@ public class Robot extends TimedRobot {
 
   private final SpeedController m_motor = new PWMVictorSPX(kMotorPort);
 
-  private final Joystick m_joystick = new Joystick(kJoystickPort); // A joystick to read the
-  // trigger from.
+  // A joystick to read the trigger from.
+  private final Joystick m_joystick = new Joystick(kJoystickPort);
 
   @Override
   public void robotInit() {
@@ -113,7 +113,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    // reset our loop to make sure it's in a known state.
+    // Reset our loop to make sure it's in a known state.
     m_loop.reset(VecBuilder.fill(m_encoder.getDistance(), m_encoder.getRate()));
 
     // Reset our last reference to the current state.
@@ -145,7 +145,7 @@ public class Robot extends TimedRobot {
     // state with out Kalman filter.
     m_loop.predict(0.020);
 
-    // send the new calculated voltage to the motors.
+    // Send the new calculated voltage to the motors.
     // voltage = duty cycle * battery voltage, so
     // duty cycle = voltage / battery voltage
     double nextVoltage = m_loop.getU(0);
