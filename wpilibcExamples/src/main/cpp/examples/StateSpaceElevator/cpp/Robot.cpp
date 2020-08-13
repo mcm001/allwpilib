@@ -29,34 +29,26 @@
  * to control an elevator.
  */
 class Robot : public frc::TimedRobot {
-  const int kMotorPort = 0;
-  const int kEncoderAChannel = 0;
-  const int kEncoderBChannel = 1;
-  const int kJoystickPort = 0;
+  constexpr static int kMotorPort = 0;
+  constexpr static int kEncoderAChannel = 0;
+  constexpr static int kEncoderBChannel = 1;
+  constexpr static int kJoystickPort = 0;
 
-  const units::meter_t kRaisedPosition = 2_ft;
-  const units::meter_t kLoweredPosition = 0_ft;
+  constexpr static units::meter_t kRaisedPosition = 2_ft;
+  constexpr static units::meter_t kLoweredPosition = 0_ft;
 
-  const units::meter_t kDrumRadius = 0.75_in;
+  constexpr static units::meter_t kDrumRadius = 0.75_in;
+  constexpr static units::kilogram_t kCarriageMass = 4.5_kg;
+  constexpr static double kGearRatio = 6.0;
 
   /*
   The plant holds a state-space model of our flywheel. In this system the states
   are as follows: States: [velocity], in RPM. Inputs (what we can "put in"):
   [voltage], in volts. Outputs (what we can measure): [velocity], in RPM.
    */
-  frc::LinearSystem<2, 1, 1> m_elevatorPlant = [this] {
-    auto motors = frc::DCMotor::NEO(2);
-
-    // carriage mass
-    auto m = 4.5_kg;
-
-    // reduction between motors and encoder,
-    // as output over input. If the elevator spins slower than the motors, this
-    // number should be greater than one.
-    auto G = 6.0;
-
-    return frc::LinearSystemId::ElevatorSystem(motors, m, kDrumRadius, G);
-  }();
+  frc::LinearSystem<2, 1, 1> m_elevatorPlant =
+      frc::LinearSystemId::ElevatorSystem(frc::DCMotor::NEO(2), kCarriageMass,
+                                          kDrumRadius, kGearRatio);
 
   // The observer fuses our encoder data and voltage inputs to reject noise.
   frc::KalmanFilter<2, 1, 1> m_observer{

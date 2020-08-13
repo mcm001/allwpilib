@@ -28,15 +28,15 @@
  * to control an arm.
  */
 class Robot : public frc::TimedRobot {
-  const int kMotorPort = 0;
-  const int kEncoderAChannel = 0;
-  const int kEncoderBChannel = 1;
-  const int kJoystickPort = 0;
+  constexpr static int kMotorPort = 0;
+  constexpr static int kEncoderAChannel = 0;
+  constexpr static int kEncoderBChannel = 1;
+  constexpr static int kJoystickPort = 0;
 
-  const units::radian_t kRaisedPosition = 90_deg;
-  const units::radian_t kLoweredPosition = 0_deg;
+  constexpr static units::radian_t kRaisedPosition = 90_deg;
+  constexpr static units::radian_t kLoweredPosition = 0_deg;
 
-  const units::kilogram_square_meter_t kArmMOI =
+  constexpr static units::kilogram_square_meter_t kArmMOI =
       1.2_kg_sq_m;  // Moment of inertia of the arm. Can be
   // estimated with CAD. If finding this constant is difficult,
   // LinearSystem.identifyPositionSystem may be better.

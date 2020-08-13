@@ -26,16 +26,17 @@
  * to control a flywheel.
  */
 class Robot : public frc::TimedRobot {
-  const int kMotorPort = 0;
-  const int kEncoderAChannel = 0;
-  const int kEncoderBChannel = 1;
-  const int kJoystickPort = 0;
-  const units::radians_per_second_t kSpinupRadPerSec = 500_rpm;
+  constexpr static int kMotorPort = 0;
+  constexpr static int kEncoderAChannel = 0;
+  constexpr static int kEncoderBChannel = 1;
+  constexpr static int kJoystickPort = 0;
+  constexpr static units::radians_per_second_t kSpinupRadPerSec = 500_rpm;
 
-  const units::kilogram_square_meter_t kFlywheelMomentOfInertia =
+  constexpr static units::kilogram_square_meter_t kFlywheelMomentOfInertia =
       0.00032_kg_sq_m;
 
-  const double kFlywheelGearing = 1.0;  // reduction between motors and encoder,
+  constexpr static double kFlywheelGearing =
+      1.0;  // reduction between motors and encoder,
   // as output over input. If the flywheel spins slower than the motors, this
   // number should be greater than one.
 
