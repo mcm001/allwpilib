@@ -52,7 +52,7 @@ public class SimElevator extends SimLinearSystem<N2, N1, N1> {
   }
 
   public double getElevatorVelocityMetersPerSecond() {
-    return m_trueXhat.get(0, 1);
+    return m_trueXhat.get(1, 0);
   }
 
   @Override

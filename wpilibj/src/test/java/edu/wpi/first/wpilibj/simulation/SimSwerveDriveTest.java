@@ -67,7 +67,7 @@ public class SimSwerveDriveTest {
       chassisSpeedList.add(m_sim.getSpeeds());
     }
 
-    assertEquals(m_sim.getModules().length, 0);
+    assertEquals(m_sim.getModules().length, 2);
 
     //    XYChart chart = new XYChartBuilder().build();
     //    chart.addSeries("vx, mps", chassisSpeedList.stream().map(it -> it.vxMetersPerSecond).collect(Collectors.toList()));

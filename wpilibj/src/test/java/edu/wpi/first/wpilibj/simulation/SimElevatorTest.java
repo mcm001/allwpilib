@@ -9,6 +9,7 @@ package edu.wpi.first.wpilibj.simulation;
 
 import edu.wpi.first.wpilibj.PWMVictorSPX;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
@@ -27,32 +28,37 @@ public class SimElevatorTest {
         0.75 * 25.4 / 1000.0,
         14.67);
 
-    var controller = new PIDController(10, 0, 0);
+//    var controller = new PIDController(10, 0, 0);
+    var controller = new LinearQuadraticRegulator<>(plant, VecBuilder.fill(0.01, 1.0),
+      VecBuilder.fill(12.0), 0.020);
 
-    var sim = new SimLinearSystem<>(plant, true, VecBuilder.fill(0.01));
+    var sim = new SimElevator(plant, true, VecBuilder.fill(0.01), DCMotor.getVex775Pro(4),
+      14.67, 0.75 * 25.4 / 1000.0);
 
     var motor = new PWMVictorSPX(0);
-    double simPos = 0.0;
+    var simPos = 0.0;
+    var simVel = 0.0;
 
     for (int i = 0; i < 100; i++) {
-      controller.setSetpoint(2.0);
 
-      double nextVoltage = controller.calculate(simPos);
+      double nextVoltage = controller.calculate(VecBuilder.fill(simPos, simVel), VecBuilder.fill(2.0, 0.0))
+        .get(0, 0);
 
-      double currentBatteryVoltage = RobotController.getBatteryVoltage();
-      motor.set(nextVoltage / currentBatteryVoltage);
+      motor.setVoltage(nextVoltage);
+      RoboRioSim.setVInVoltage(SimBattery.calculateLoadedBatteryVoltage(sim.getCurrentDrawAmps()));
 
       // ------ SimulationPeriodic() happens after user code -------
 
+      double currentBatteryVoltage = RobotController.getBatteryVoltage();
       var u = VecBuilder.fill(motor.get() * currentBatteryVoltage);
       sim.setInput(u);
       sim.update(0.020);
-      var y = sim.getOutput();
-      simPos = y.get(0, 0);
+      simPos = sim.getElevatorPositionMeters();
+      simVel = sim.getElevatorVelocityMetersPerSecond();
 
-      // System.out.println(motor.get() * 12.0 + ", " + simPos );
+       System.out.println(motor.get() * currentBatteryVoltage + ", " + simPos);
     }
 
-    assertEquals(controller.getSetpoint(), sim.getOutput(0), 0.2);
+    assertEquals(controller.getR(0), sim.getOutput(0), 0.2);
   }
 }
