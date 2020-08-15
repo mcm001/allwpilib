@@ -1,16 +1,24 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2020 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 #pragma once
 
-#include <units/time.h>
-
-#include <vector>
 #include <array>
+#include <utility>
+#include <vector>
+
+#include <units/time.h>
 #include <wpi/MathExtras.h>
 
 namespace frc {
 
 template <typename T>
 class TimeInterpolatableBuffer {
-public:
+ public:
   void addSample(units::second_t time, T sample) {
     // Add the new state into the vector.
     m_pastSnapshots.emplace_back(time, sample);
@@ -21,25 +29,23 @@ public:
     }
   }
 
-  void clear() {
-    m_pastSnapshots.clear();
-  }
+  void clear() { m_pastSnapshots.clear(); }
 
   /**
-   * Sample the buffer at the given time. If there are no elements in the buffer, calling this function results in undefined behavior.
+   * Sample the buffer at the given time. If there are no elements in the
+   * buffer, calling this function results in undefined behavior.
    */
   T getSample(units::second_t time) {
-
     // We will perform a binary search to find the index of the element in the
     // vector that has a timestamp that is equal to or greater than the vision
     // measurement timestamp.
 
-    if(m_pastSnapshots.size() < 2) return m_pastSnapshots[0].second;
+    if (m_pastSnapshots.size() < 2) return m_pastSnapshots[0].second;
 
     int low = 0;
     int high = m_pastSnapshots.size() - 1;
 
-    while(low != high) {
+    while (low != high) {
       int mid = (low + high) / 2.0;
       if (m_pastSnapshots[mid].first < time) {
         // This index and everything under it are less than the requested
@@ -58,24 +64,26 @@ public:
     std::pair<units::second_t, T> bottomBound = m_pastSnapshots[low];
     std::pair<units::second_t, T> topBound = m_pastSnapshots[high];
 
-    return wpi::Lerp(bottomBound.second, topBound.second, (time - bottomBound.first) / (topBound.first - bottomBound.first));
+    return wpi::Lerp(
+        bottomBound.second, topBound.second,
+        (time - bottomBound.first) / (topBound.first - bottomBound.first));
   }
 
  private:
   static constexpr uint32_t kMaxPastObserverStates = 300;
-  std::vector<std::pair<units::second_t, T>>
-      m_pastSnapshots;
+  std::vector<std::pair<units::second_t, T>> m_pastSnapshots;
 };
 
 /**
  * Perform linear interpolation between two values.
  * @param startValue The value to start at.
  * @param endValue The value to end at.
- * @param t How far between the two values to interpolate. This is clamped to [0, 1].
+ * @param t How far between the two values to interpolate. This is clamped to
+ * [0, 1].
  */
 template <typename T>
 const T Interpolate(const T& startValue, const T& endValue, double t) {
   return startValue + (endValue - startValue) * std::clamp(t, 0, 1);
 }
 
-}
+}  // namespace frc

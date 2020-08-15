@@ -26,7 +26,8 @@ DifferentialDriveVelocitySystemConstraint::MaxVelocity(
     const Pose2d& pose, units::curvature_t curvature,
     units::meters_per_second_t velocity) const {
   // Calculate wheel velocity states from current velocity and curvature
-  auto [vl, vr] = m_kinematics.ToWheelSpeeds({velocity, 0_mps, velocity * curvature});
+  auto [vl, vr] =
+      m_kinematics.ToWheelSpeeds({velocity, 0_mps, velocity * curvature});
 
   Eigen::Vector2d x;
   x << vl.to<double>(), vr.to<double>();

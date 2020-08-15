@@ -7,8 +7,8 @@
 
 #include "frc/trajectory/Trajectory.h"
 
-#include <wpi/json.h>
 #include <wpi/MathExtras.h>
+#include <wpi/json.h>
 
 #include "units/math.h"
 
