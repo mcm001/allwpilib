@@ -8,7 +8,7 @@
 #include <units/time.h>
 
 #include "frc/geometry/Rotation2d.h"
-#include "frc/util/interpolatable/TimeInterpolatableBuffer.h"
+#include "frc/interpolatable/TimeInterpolatableBuffer.h"
 #include "gtest/gtest.h"
 
 TEST(TimeInterpolatableBufferTest, TestInterpolation) {
