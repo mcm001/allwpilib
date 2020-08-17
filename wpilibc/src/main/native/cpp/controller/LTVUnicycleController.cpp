@@ -22,21 +22,9 @@ LTVUnicycleController::LTVUnicycleController(
 
 LTVUnicycleController::LTVUnicycleController(
     const std::array<double, 3>& Qelems, const double rho,
-    const std::array<double, 2>& Relems, units::second_t dt) {
-  Eigen::Matrix<double, 3, 3> A0;
-  A0 << 0, 0, 0, 0, 0, 1e-9, 0, 0, 0;
-  Eigen::Matrix<double, 3, 3> A1;
-  A1 << 0, 0, 0, 0, 0, 1, 0, 0, 0;
-  Eigen::Matrix<double, 3, 2> B;
-  B << 1, 0, 0, 0, 0, 1;
-
-  std::array<double, 3> QelemsScaled = Qelems;
-
-  std::transform(QelemsScaled.begin(), QelemsScaled.end(), QelemsScaled.begin(),
-                 [&rho](auto& c) { return c * rho; });
-
-  m_K0 = LinearQuadraticRegulator<3, 2>(A0, B, QelemsScaled, Relems, dt).K();
-  m_K1 = LinearQuadraticRegulator<3, 2>(A1, B, QelemsScaled, Relems, dt).K();
+    const std::array<double, 2>& Relems, units::second_t dt)
+    : m_dt(dt), m_Qelms(Qelems), m_rho(rho), m_Relems(Relems) {
+  m_B << 1, 0, 0, 0, 0, 1;
 }
 
 bool LTVUnicycleController::AtReference() const {
@@ -54,44 +42,30 @@ void LTVUnicycleController::SetTolerance(const Pose2d& poseTolerance) {
 }
 
 ChassisSpeeds LTVUnicycleController::Calculate(
-    const Pose2d& currentPose, const Pose2d& poseRef,
-    units::meters_per_second_t linearVelocityRef,
+    const Pose2d& currentPose, units::meters_per_second_t currentLinearVelocity,
+    const Pose2d& poseRef, units::meters_per_second_t linearVelocityRef,
     units::radians_per_second_t angularVelocityRef) {
-  Eigen::Matrix<double, 3, 1> x;
-  x(0, 0) = currentPose.Translation().X().to<double>();
-  x(1, 0) = currentPose.Translation().Y().to<double>();
-  x(2, 0) = currentPose.Rotation().Radians().to<double>();
-
-  Eigen::Matrix<double, 3, 1> r;
-  r(0, 0) = poseRef.Translation().X().to<double>();
-  r(1, 0) = poseRef.Translation().Y().to<double>();
-  r(2, 0) = poseRef.Rotation().Radians().to<double>();
-
   m_poseError = poseRef.RelativeTo(currentPose);
 
-  double kx = m_K0(0, 0);
-  double ky0 = m_K0(1, 1);
-  double ky1 = m_K1(1, 1);
-  double ktheta1 = m_K1(1, 2);
+  if (currentLinearVelocity == 0_mps) {
+    currentLinearVelocity = 1e-9_mps;
+  } else if (units::math::abs(currentLinearVelocity) < 1e-9_mps) {
+    currentLinearVelocity = 1e-9_mps * wpi::sgn(currentLinearVelocity);
+  }
 
-  double v = linearVelocityRef.to<double>();
-  double sqrtAbsV = std::sqrt(std::abs(v));
+  Eigen::Matrix<double, 3, 3> A;
+  A << 0, 0, 0, 0, 0, currentLinearVelocity.to<double>(), 0, 0, 0;
 
-  Eigen::Matrix<double, 2, 3> K;
-  K(0, 0) = kx;
-  K(0, 1) = 0;
-  K(0, 2) = 0;
-  K(1, 0) = 0;
-  K(1, 1) = (ky0 + (ky1 - ky0) * sqrtAbsV) * wpi::sgn(v);
-  K(1, 2) = ktheta1 * sqrtAbsV;
+  Eigen::Matrix<double, 2, 3> K =
+      LinearQuadraticRegulator<3, 2>(A, m_B, m_Qelms, m_rho, m_Relems, m_dt)
+          .K();
 
-  Eigen::Matrix<double, 3, 3> inRobotFrame =
-      Eigen::Matrix<double, 3, 3>::Identity();
-  inRobotFrame(0, 0) = std::cos(x(2, 0));
-  inRobotFrame(0, 1) = std::sin(x(2, 0));
-  inRobotFrame(1, 0) = -std::sin(x(2, 0));
-  inRobotFrame(1, 1) = std::cos(x(2, 0));
-  auto u = K * inRobotFrame * (r - x);
+  Eigen::Matrix<double, 3, 1> error;
+  error(0, 0) = m_poseError.Translation().X().to<double>();
+  error(1, 0) = m_poseError.Translation().Y().to<double>();
+  error(2, 0) = m_poseError.Rotation().Radians().to<double>();
+
+  auto u = K * error;
 
   return ChassisSpeeds{
       linearVelocityRef + units::meters_per_second_t{u(0, 0)}, 0_mps,
@@ -99,7 +73,9 @@ ChassisSpeeds LTVUnicycleController::Calculate(
 }
 
 ChassisSpeeds LTVUnicycleController::Calculate(
-    const Pose2d& currentPose, const Trajectory::State& desiredState) {
-  return Calculate(currentPose, desiredState.pose, desiredState.velocity,
+    const Pose2d& currentPose, units::meters_per_second_t currentLinearVelocity,
+    const Trajectory::State& desiredState) {
+  return Calculate(currentPose, currentLinearVelocity, desiredState.pose,
+                   desiredState.velocity,
                    desiredState.velocity * desiredState.curvature);
 }

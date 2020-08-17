@@ -30,11 +30,17 @@ TEST(LTVUnicycleControllerTest, ReachesReference) {
 
   controller.SetTolerance(frc::Pose2d{0.01_m, 0.01_m, 0.001_rad});
 
+  auto kinematics = frc::DifferentialDriveKinematics(units::meter_t(1));
+  auto speeds = frc::DifferentialDriveWheelSpeeds();
+
   constexpr auto kDt = 0.02_s;
   auto totalTime = trajectory.TotalTime();
   for (size_t i = 0; i < (totalTime / kDt).to<double>(); ++i) {
     auto state = trajectory.Sample(kDt * i);
-    auto [vx, vy, omega] = controller.Calculate(robotPose, state);
+    auto [vx, vy, omega] = controller.Calculate(
+        robotPose, speeds.ToLinearChassisVelocity(), state);
+
+    speeds = kinematics.ToWheelSpeeds(frc::ChassisSpeeds{vx, vy, omega});
     static_cast<void>(vy);
 
     robotPose = robotPose.Exp(frc::Twist2d{vx * kDt, 0_m, omega * kDt});

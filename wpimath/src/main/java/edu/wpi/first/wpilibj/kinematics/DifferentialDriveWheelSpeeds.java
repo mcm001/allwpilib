@@ -60,6 +60,17 @@ public class DifferentialDriveWheelSpeeds {
     }
   }
 
+
+  /**
+   * Converts the left and right wheels speeds to a linear chassis velocity
+   * by averaging them.
+   *
+   * @return The linear chassis velocity in meters per second.
+   */
+  public double toLinearChassisVelocity() {
+    return (leftMetersPerSecond + rightMetersPerSecond) / 2.0;
+  }
+
   @Override
   public String toString() {
     return String.format("DifferentialDriveWheelSpeeds(Left: %.2f m/s, Right: %.2f m/s)",
