@@ -7,10 +7,12 @@
 
 #include <iostream>
 
-#include <units/angular_velocity.h>
 #include <units/angular_acceleration.h>
+#include <units/angular_velocity.h>
+
 #include "frc/Encoder.h"
 #include "frc/PWMVictorSPX.h"
+#include "frc/RobotController.h"
 #include "frc/controller/PIDController.h"
 #include "frc/controller/SimpleMotorFeedforward.h"
 #include "frc/simulation/EncoderSim.h"
@@ -23,14 +25,14 @@
 #include "frc/simulation/SimLinearSystem.h"
 #include "frc/simulation/SimSingleJointedArm.h"
 #include "frc/system/plant/LinearSystemId.h"
-#include "frc/RobotController.h"
 #include "gtest/gtest.h"
 
 TEST(StateSpaceSimTest, TestSimFlywheel) {
   auto plant = frc::LinearSystemId::IdentifyVelocitySystem(0.02, 0.01);
   frc::sim::SimFlywheel sim{plant, true, {0.01}, frc::DCMotor::NEO(2), 1.0};
   frc2::PIDController controller{0.2, 0.0, 0.0};
-  frc::SimpleMotorFeedforward<units::radian> feedforward{0_V, 0.02_V / 1_rad_per_s, 0.01_V / 1_rad_per_s_sq};
+  frc::SimpleMotorFeedforward<units::radian> feedforward{
+      0_V, 0.02_V / 1_rad_per_s, 0.01_V / 1_rad_per_s_sq};
   frc::Encoder encoder{0, 1};
   frc::sim::EncoderSim encoderSim{encoder};
   frc::PWMVictorSPX motor{0};
@@ -41,14 +43,11 @@ TEST(StateSpaceSimTest, TestSimFlywheel) {
     motor.SetVoltage(units::volt_t(voltageOut) +
                      feedforward.Calculate(200_rad / 1_s));
 
-
     // Then, SimulationPeriodic runs
     frc::sim::RoboRioSim::SetVInVoltage(
-        frc::sim::SimBattery::Calculate(
-            {sim.DrawnCurrent()})
-            .to<double>());
-    sim.SetInput(frc::MakeMatrix<1, 1>(motor.Get() *
-                                       frc::RobotController::GetInputVoltage()));
+        frc::sim::SimBattery::Calculate({sim.DrawnCurrent()}).to<double>());
+    sim.SetInput(frc::MakeMatrix<1, 1>(
+        motor.Get() * frc::RobotController::GetInputVoltage()));
     sim.Update(20_ms);
     encoderSim.SetRate(sim.Velocity().to<double>());
   }

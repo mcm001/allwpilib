@@ -51,7 +51,7 @@ public class DCMotor {
       * freeCurrentAmps);
     this.m_KtNMPerAmp = stallTorqueNewtonMeters / stallCurrentAmps;
   }
-  
+
   /**
    * Estimate the current being drawn by this motor.
    *

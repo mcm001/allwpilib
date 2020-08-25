@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <numeric>
+
 #include <units/current.h>
 #include <units/impedance.h>
 #include <units/voltage.h>
-#include <numeric>
 
 namespace frc {
 
@@ -33,7 +34,8 @@ class SimBattery {
   static units::volt_t Calculate(
       units::volt_t nominalVoltage, units::ohm_t resistance,
       std::initializer_list<units::ampere_t> currents) {
-    return nominalVoltage - std::accumulate(currents.begin(), currents.end(), 0_A) * resistance;
+    return nominalVoltage -
+           std::accumulate(currents.begin(), currents.end(), 0_A) * resistance;
   }
 
   /**

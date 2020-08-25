@@ -9,10 +9,9 @@
 
 #include <cmath>
 
+#include <units/math.h>
 #include <wpi/MathExtras.h>
 #include <wpi/math>
-
-#include <units/math.h>
 
 #include "frc/controller/LinearQuadraticRegulator.h"
 #include "frc/system/NumericalJacobian.h"
@@ -166,7 +165,8 @@ Vector<2> LTVDiffDriveController::Controller(
 
   Eigen::Matrix<double, 5, 1> error = r - x.block<5, 1>(0, 0);
   error(State::kHeading, 0) =
-      units::math::NormalizeAngle(units::radian_t(error(State::kHeading, 0))).to<double>();
+      units::math::NormalizeAngle(units::radian_t(error(State::kHeading, 0)))
+          .to<double>();
   return K * inRobotFrame * error;
 }
 
