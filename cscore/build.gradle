@@ -49,6 +49,7 @@ model {
                 if (it.targetPlatform.operatingSystem.linux) {
                     it.linker.args '-Wl,--version-script=' + file('src/main/native/LinuxSymbolScript.txt')
                 } else if (it.targetPlatform.operatingSystem.macOsX) {
+                    it.cppCompiler.args.add('-Wno-error=c11-extensions')
                     it.linker.args '-exported_symbols_list'
                     it.linker.args file('src/main/native/MacSymbolScript.txt').toString()
                 }
@@ -93,6 +94,7 @@ ext {
                     }
                 }
             }
+            it.cppCompiler.args.add('-Wno-error=c11-extensions')
         } else if (it.targetPlatform.operatingSystem.isLinux()) {
             it.sources {
                 cscoreLinuxCpp(CppSourceSet) {
@@ -173,6 +175,10 @@ model {
             "${key}"(NativeExecutableSpec) {
                 targetBuildTypes 'debug'
                 binaries.all {
+                    if (it.targetPlatform.operatingSystem.isMacOsX()) {
+                        it.cppCompiler.args.add('-Wno-error=c11-extensions')
+                    }
+
                     lib project: ':wpiutil', library: 'wpiutil', linkage: 'shared'
                     lib library: 'cscore', linkage: 'shared'
                 }
