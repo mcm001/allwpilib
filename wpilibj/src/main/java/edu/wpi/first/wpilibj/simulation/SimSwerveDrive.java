@@ -215,8 +215,10 @@ public class SimSwerveDrive {
       var r = m_driveWheelRadiusMeters;
       var m = m_driveMotor;
 
-      return G * m.m_KtNMPerAmp / (m.m_rOhms * r) * wheelVoltage - (G * G * m.m_KtNMPerAmp)
+      final var v = G * m.m_KtNMPerAmp / (m.m_rOhms * r) * wheelVoltage - (G * G * m.m_KtNMPerAmp)
           / (m.m_rOhms * r * r * m.m_KvRadPerSecPerVolt) * wheelVelocityMps;
+      System.out.println(v);
+      return v;
     }
 
     public Translation2d getModulePosition() {
