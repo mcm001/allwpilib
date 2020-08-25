@@ -32,11 +32,7 @@ class SimBattery {
   static units::volt_t Calculate(
       units::volt_t nominalVoltage, units::ohm_t resistance,
       std::initializer_list<units::ampere_t> currents) {
-    auto retval = nominalVoltage;
-    for (const units::ampere_t current : currents) {
-      retval -= current * resistance;
-    }
-    return retval;
+    return nominalVoltage - std::accumulate(currents.begin(), currents.end(), 0_A) * resistance;
   }
 
   /**
