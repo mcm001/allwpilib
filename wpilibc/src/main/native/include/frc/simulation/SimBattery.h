@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <numeric>
+
 #include <units/current.h>
 #include <units/impedance.h>
 #include <units/voltage.h>
