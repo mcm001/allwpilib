@@ -20,6 +20,8 @@ import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N6;
 import org.junit.jupiter.api.Test;
+import org.knowm.xchart.SwingWrapper;
+import org.knowm.xchart.XYChartBuilder;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
@@ -42,17 +44,18 @@ public class DifferentialDrivePoseEstimatorTest {
   public void testAccuracy() {
     var estimator = new DifferentialDrivePoseEstimator(new Rotation2d(), new Pose2d(),
             new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.02, 0.02),
-            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.02, 0.02, 0.01),
+            new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.1),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01));
 
     var traj = TrajectoryGenerator.generateTrajectory(
-            List.of(
-                    new Pose2d(),
+            List.of(new Pose2d(),
                     new Pose2d(20, 20, Rotation2d.fromDegrees(0)),
-                    new Pose2d(23, 23, Rotation2d.fromDegrees(173)),
-                    new Pose2d(54, 54, new Rotation2d())
-            ),
-            new TrajectoryConfig(0.5, 2));
+                    new Pose2d(10, 10, Rotation2d.fromDegrees(180)),
+                    new Pose2d(30, 30, Rotation2d.fromDegrees(0)),
+                    new Pose2d(20, 20, Rotation2d.fromDegrees(180)),
+                    new Pose2d(10, 10, Rotation2d.fromDegrees(0))),
+            new TrajectoryConfig(0.5, 2)
+    );
 
     var kinematics = new DifferentialDriveKinematics(1);
     var rand = new Random(4915);
@@ -88,7 +91,7 @@ public class DifferentialDrivePoseEstimatorTest {
 
       if (lastVisionUpdateTime + visionUpdateRate + rand.nextGaussian() * 0.4 < t) {
         if (lastVisionPose != null) {
-          estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
+          //estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
         var groundPose = groundtruthState.poseMeters;
         lastVisionPose = new Pose2d(
@@ -104,13 +107,13 @@ public class DifferentialDrivePoseEstimatorTest {
         visionYs.add(lastVisionPose.getTranslation().getY());
       }
 
-      input.leftMetersPerSecond += rand.nextGaussian() * 0.02;
-      input.rightMetersPerSecond += rand.nextGaussian() * 0.02;
+      input.leftMetersPerSecond += rand.nextGaussian() * 0.5;
+      input.rightMetersPerSecond += rand.nextGaussian() * 0.5;
 
       distanceLeft += input.leftMetersPerSecond * dt;
       distanceRight += input.rightMetersPerSecond * dt;
 
-      var rotNoise = new Rotation2d(rand.nextGaussian() * 0.01);
+      var rotNoise = new Rotation2d(rand.nextGaussian() * 0.1);
       var xHat = estimator.updateWithTime(
               t,
               groundtruthState.poseMeters.getRotation().plus(rotNoise),
@@ -133,31 +136,31 @@ public class DifferentialDrivePoseEstimatorTest {
       t += dt;
     }
 
-    assertEquals(
-            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.03,
-            "Incorrect mean error"
-    );
-    assertEquals(
-            0.0, maxError, 0.05,
-            "Incorrect max error"
-    );
+//    assertEquals(
+//            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.03,
+//            "Incorrect mean error"
+//    );
+//    assertEquals(
+//            0.0, maxError, 0.05,
+//            "Incorrect max error"
+//    );
 
-    //System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
-    //System.out.println("Max error (meters):  " + maxError);
+    System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
+    System.out.println("Max error (meters):  " + maxError);
 
-    //var chartBuilder = new XYChartBuilder();
-    //chartBuilder.title = "The Magic of Sensor Fusion";
-    //var chart = chartBuilder.build();
+    var chartBuilder = new XYChartBuilder();
+    chartBuilder.title = "The Magic of Sensor Fusion";
+    var chart = chartBuilder.build();
 
-    //chart.addSeries("Vision", visionXs, visionYs);
-    //chart.addSeries("Trajectory", trajXs, trajYs);
-    //chart.addSeries("xHat", observerXs, observerYs);
+    chart.addSeries("Vision", visionXs, visionYs);
+    chart.addSeries("Trajectory", trajXs, trajYs);
+    chart.addSeries("xHat", observerXs, observerYs);
 
-    //new SwingWrapper<>(chart).displayChart();
-    //try {
-    //  Thread.sleep(1000000000);
-    //} catch (InterruptedException e) {
-    //}
+    new SwingWrapper<>(chart).displayChart();
+    try {
+      Thread.sleep(1000000000);
+    } catch (InterruptedException e) {
+    }
   }
 
   @Test void test() {

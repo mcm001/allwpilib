@@ -64,6 +64,9 @@ public class DifferentialDrivePoseEstimator {
   private final BiConsumer<Matrix<N3, N1>, Matrix<N4, N1>> m_visionCorrect;
   private final KalmanFilterLatencyCompensator<N6, N3, N4> m_latencyCompensator;
 
+  private final Matrix<N5, N1> m_stateStdDevs;
+  private final Matrix<N3, N1> m_localMeasurementStdDevs;
+
   private final double m_nominalDt; // Seconds
   private double m_prevTimeSeconds = -1.0;
 
@@ -120,33 +123,28 @@ public class DifferentialDrivePoseEstimator {
   ) {
     m_nominalDt = nominalDtSeconds;
 
-    var cosStateStdDevs = VecBuilder.fill(stateStdDevs.get(0, 0), stateStdDevs.get(1, 0),
-        Math.cos(stateStdDevs.get(2, 0)), Math.sin(stateStdDevs.get(2, 0)),
-        stateStdDevs.get(3,0), stateStdDevs.get(4, 0));
-    var cosMeasurementStdDevs = VecBuilder.fill(localMeasurementStdDevs.get(0, 0),
-        localMeasurementStdDevs.get(1, 0), Math.cos(localMeasurementStdDevs.get(2, 0)),
-        Math.sin(localMeasurementStdDevs.get(2, 0)));
+    m_stateStdDevs = stateStdDevs;
+    m_localMeasurementStdDevs = localMeasurementStdDevs;
 
     m_observer = new UnscentedKalmanFilter<>(
         Nat.N6(), Nat.N4(),
         this::f,
         this::localMeasurementModel,
-        cosStateStdDevs, cosMeasurementStdDevs,
+        makeQDiagonals(m_stateStdDevs, fillStateVector(initialPoseMeters, 0.0, 0.0)),
+        makeRDiagonals(m_localMeasurementStdDevs, fillStateVector(initialPoseMeters, 0.0, 0.0)),
         m_nominalDt
     );
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
-    var visionContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), VecBuilder.fill(
-        visionMeasurementStdDevs.get(0, 0),
-        visionMeasurementStdDevs.get(1, 0),
-        Math.cos(visionMeasurementStdDevs.get(2, 0)),
-        Math.sin(visionMeasurementStdDevs.get(2, 0))));
-    var visionDiscR = Discretization.discretizeR(visionContR, m_nominalDt);
-
     m_visionCorrect = (u, y) -> m_observer.correct(
         Nat.N4(), u, y,
         (x, u_) -> x.block(Nat.N4(), Nat.N1(), 0, 0),
-        visionDiscR
+        Discretization.discretizeR(
+                StateSpaceUtil.makeCovarianceMatrix(Nat.N4(),
+                        makeRDiagonals(visionMeasurementStdDevs, m_observer.getXhat())
+                ),
+                m_nominalDt
+        )
     );
 
     m_gyroOffset = initialPoseMeters.getRotation().minus(gyroAngle);
@@ -317,9 +315,11 @@ public class DifferentialDrivePoseEstimator {
     m_previousAngle = angle;
 
     var localY = VecBuilder.fill(distanceLeftMeters, distanceRightMeters, angle.getCos(), angle.getSin());
-    m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
-    m_observer.predict(u, dt);
-    m_observer.correct(u, localY);
+//     m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
+
+   m_observer.predict(u, StateSpaceUtil.makeCovarianceMatrix(Nat.N6(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat())), dt);
+
+   m_observer.correct(Nat.N4(), u, localY, this::localMeasurementModel, StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat())));
 
     return getEstimatedPosition();
   }
@@ -334,4 +334,22 @@ public class DifferentialDrivePoseEstimator {
             rightDist
     );
   }
+
+  private static Matrix<N6, N1> makeQDiagonals(Matrix<N5, N1> stdDevs, Matrix<N6, N1> x) {
+        return Matrix.mat(Nat.N6(), Nat.N1()).fill(
+          stdDevs.get(0, 0), stdDevs.get(1, 0),
+          stdDevs.get(2, 0) * x.get(2, 0),
+          stdDevs.get(2, 0) * x.get(3, 0),
+          stdDevs.get(3, 0), stdDevs.get(4, 0)
+        );
+      }
+    
+   private static Matrix<N4, N1> makeRDiagonals(Matrix<N3, N1> stdDevs, Matrix<N6, N1> x) {
+     return Matrix.mat(Nat.N4(), Nat.N1()).fill(
+        stdDevs.get(0, 0), stdDevs.get(1, 0),
+        stdDevs.get(2, 0) * x.get(2, 0),
+        stdDevs.get(2, 0) * x.get(3, 0)
+     );
+   }
+
 }

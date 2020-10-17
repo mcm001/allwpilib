@@ -219,11 +219,27 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
   @SuppressWarnings({"LocalVariableName", "ParameterName"})
   @Override
   public void predict(Matrix<Inputs, N1> u, double dtSeconds) {
+    predict(u, m_contQ, dtSeconds);
+  }
+
+  /**
+   * Project the model into the future with a new control input u.
+   * 
+   * <p>This is useful for when the process noise covariance matrix is time variant. 
+   * The the Q matrix provided in the constructor is used if it is not provided
+   * (the two-argument version of this function).
+   *
+   * @param u         New control input from controller.
+   * @param q         The continuous process noise covariance matrix.
+   * @param dtSeconds Timestep for prediction.
+   */
+  @SuppressWarnings({"LocalVariableName", "ParameterName"})
+  public void predict(Matrix<Inputs, N1> u, Matrix<States, States> q, double dtSeconds) {
     // Discretize Q before projecting mean and covariance forward
     Matrix<States, States> contA =
         NumericalJacobian.numericalJacobianX(m_states, m_states, m_f, m_xHat, u);
     var discQ =
-        Discretization.discretizeAQTaylor(contA, m_contQ, dtSeconds).getSecond();
+        Discretization.discretizeAQTaylor(contA, q, dtSeconds).getSecond();
 
     var sigmas = m_pts.sigmaPoints(m_xHat, m_P);
 
