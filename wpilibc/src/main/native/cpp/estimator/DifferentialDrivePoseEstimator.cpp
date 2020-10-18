@@ -28,16 +28,13 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
       frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurementStdDevs));
 
   // Create correction mechanism for vision measurements.
-
-  auto& h = [](const Eigen::Matrix<double, 6, 1>& x_, const Eigen::Matrix<double, 4, 1>& u_) {
-          return x_.block<4, 1>(0, 0);
-        };
-
   m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y) {
     m_observer.Correct<4>(
         u, y,
-        h,
-        DiscretizeR<4>(MakeCovMatrix<4>(MakeRDiagonals(visionMeasurementStdDevs, m_observer.Xhat())), m_nominalDt));
+        [](const Eigen::Matrix<double, 6, 1>& x_, const Eigen::Matrix<double, 3, 1>& u_) {
+          return x_.block<4, 1>(0, 0);
+        },
+        DiscretizeR<4>(MakeCovMatrix<4>(DifferentialDrivePoseEstimator::MakeRDiagonals(visionMeasurementStdDevs, m_observer.Xhat())), m_nominalDt));
   };
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
@@ -154,16 +151,16 @@ Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::FillStateVector(
       rightDistance.to<double>());
 }
 
-static Eigen::Matrix<double, 6, 1> MakeQDiagonals(
+std::array<double, 6> DifferentialDrivePoseEstimator::MakeQDiagonals(
     const Eigen::Matrix<double, 5, 1>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return frc::MakeMatrix<6, 1>(stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
-                               stdDevs(2) * x(3), stdDevs(3), stdDevs(4));
+  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
+                               stdDevs(2) * x(3), stdDevs(3), stdDevs(4)};
 }
 
-static Eigen::Matrix<double, 4, 1> MakeRDiagonals(
+std::array<double, 4> DifferentialDrivePoseEstimator::MakeRDiagonals(
     const Eigen::Matrix<double, 3, 1>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return frc::MakeMatrix<4, 1>(stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
-                               stdDevs(2) * x(3));
+  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
+                               stdDevs(2) * x(3)};
 }
