@@ -77,13 +77,13 @@ class SwerveDrivePoseEstimator {
   SwerveDrivePoseEstimator(const Rotation2d& gyroAngle,
                            const Pose2d& initialPose,
                            SwerveDriveKinematics<NumModules>& kinematics,
-                           const Vector<3>& stateStdDevs,
+                           const Eigen::Matrix<double, 3, 1>& stateStdDevs,
                            const Vector<1>& localMeasurementStdDevs,
-                           const Vector<3>& visionMeasurementStdDevs,
+                           const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
                            units::second_t nominalDt = 0.02_s)
       : m_observer(
             &SwerveDrivePoseEstimator::F,
-            [](const Vector<4>& x, const Vector<3>& u) {
+            [](const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) {
               return x.block<2, 1>(2, 0);
             },
             StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
@@ -106,9 +106,9 @@ class SwerveDrivePoseEstimator {
     m_visionDiscR = frc::DiscretizeR<4>(visionContR, m_nominalDt);
 
     // Create correction mechanism for vision measurements.
-    m_visionCorrect = [&](const Vector<3>& u, const Vector<4>& y) {
+    m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Vector<4>& y) {
       m_observer.Correct<4>(
-          u, y, [](const Vector<4>& x, const Vector<3>& u) { return x; },
+          u, y, [](const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) { return x; },
           m_visionDiscR);
     };
 
@@ -241,7 +241,7 @@ class SwerveDrivePoseEstimator {
   SwerveDriveKinematics<NumModules>& m_kinematics;
   KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
-  std::function<void(const Vector<3>& u, const Vector<4>& y)> m_visionCorrect;
+  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Vector<4>& y)> m_visionCorrect;
 
   Eigen::Matrix4d m_visionDiscR;
 
@@ -251,13 +251,13 @@ class SwerveDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static Vector<4> F(const Vector<4>& x, const Vector<3>& u) {
+  static Vector<4> F(const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) {
     return frc::MakeMatrix<4, 1>(u(0), u(1), -x(3) * u(2), x(2) * u(2));
   }
 
   template <int Dim>
   static std::array<double, Dim> StdDevMatrixToArray(
-      const Vector<Dim>& vector) {
+      const Eigen::Matrix<double, Dim, 1>& vector) {
     std::array<double, Dim> array;
     for (size_t i = 0; i < Dim; ++i) {
       array[i] = vector(i);

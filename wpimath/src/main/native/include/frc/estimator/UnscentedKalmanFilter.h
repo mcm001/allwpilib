@@ -113,11 +113,26 @@ class UnscentedKalmanFilter {
 
   /**
    * Project the model into the future with a new control input u.
+   * 
+   * <p>This is useful for when the process noise covariance matrix is time variant. 
+   * The the Q matrix provided in the constructor is used if it is not provided
+   * (the two-argument version of this function).
+   *
+   * @param u         New control input from controller.
+   * @param q         The continuous process noise covariance matrix.
+   * @param dtSeconds Timestep for prediction.
+   */
+  void Predict(const Eigen::Matrix<double, Inputs, 1>& u, units::second_t dt) {
+    Predict(u, m_contQ, dt);
+  }
+
+  /**
+   * Project the model into the future with a new control input u.
    *
    * @param u  New control input from controller.
    * @param dt Timestep for prediction.
    */
-  void Predict(const Eigen::Matrix<double, Inputs, 1>& u, units::second_t dt) {
+  void Predict(const Eigen::Matrix<double, Inputs, 1>& u, const Eigen::Matrix<double, States, States> q, units::second_t dt) {
     m_dt = dt;
 
     // Discretize Q before projecting mean and covariance forward
@@ -125,7 +140,7 @@ class UnscentedKalmanFilter {
         NumericalJacobianX<States, States, Inputs>(m_f, m_xHat, u);
     Eigen::Matrix<double, States, States> discA;
     Eigen::Matrix<double, States, States> discQ;
-    DiscretizeAQTaylor<States>(contA, m_contQ, dt, &discA, &discQ);
+    DiscretizeAQTaylor<States>(contA, q, dt, &discA, &discQ);
 
     Eigen::Matrix<double, States, 2 * States + 1> sigmas =
         m_pts.SigmaPoints(m_xHat, m_P);

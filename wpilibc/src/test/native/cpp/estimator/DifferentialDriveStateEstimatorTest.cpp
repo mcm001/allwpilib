@@ -145,10 +145,10 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
     }
     errorSum += error;
 
-    std::cout << groundTruthState.pose.Translation().X().to<double>() 
-      << "," << groundTruthState.pose.Translation().Y().to<double>() 
-      << "," << estimatedTranslation.X().to<double>() << ","
-      << estimatedTranslation.Y().to<double>() << "," << error << "\n";
+    std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
+              << groundTruthState.pose.Translation().Y().to<double>() << ","
+              << estimatedTranslation.X().to<double>() << ","
+              << estimatedTranslation.Y().to<double>() << "," << error << "\n";
 
     t += dt;
   }
@@ -157,5 +157,8 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
             0.2);
   EXPECT_LT(maxError, 0.4);
 
-  std::cout << "Sum over time: " << errorSum / (trajectory.TotalTime().to<double>() / dt.to<double>()) << " max error " << maxError << "\n"; 
+  std::cout << "Sum over time: "
+            << errorSum /
+                   (trajectory.TotalTime().to<double>() / dt.to<double>())
+            << " max error " << maxError << "\n";
 }

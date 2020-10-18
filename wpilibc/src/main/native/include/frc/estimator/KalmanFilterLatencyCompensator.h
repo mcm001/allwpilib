@@ -53,7 +53,8 @@ class KalmanFilterLatencyCompensator {
   void ApplyPastMeasurement(
       KalmanFilterType* observer, units::second_t nominalDt,
       Eigen::Matrix<double, Rows, 1> y,
-      std::function<void(const Eigen::Matrix<double, Inputs, 1>& u, const Eigen::Matrix<double, Rows, 1>& y)>
+      std::function<void(const Eigen::Matrix<double, Inputs, 1>& u,
+                         const Eigen::Matrix<double, Rows, 1>& y)>
           globalMeasurementCorrect,
       units::second_t timestamp) {
     if (m_pastObserverSnapshots.size() == 0) {

@@ -73,9 +73,9 @@ class MecanumDrivePoseEstimator {
   MecanumDrivePoseEstimator(const Rotation2d& gyroAngle,
                             const Pose2d& initialPose,
                             MecanumDriveKinematics kinematics,
-                            const Vector<3>& stateStdDevs,
+                            const Eigen::Matrix<double, 3, 1>& stateStdDevs,
                             const Vector<1>& localMeasurementStdDevs,
-                            const Vector<3>& visionMeasurementStdDevs,
+                            const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
                             units::second_t nominalDt = 0.02_s);
 
   /**
@@ -151,7 +151,7 @@ class MecanumDrivePoseEstimator {
   MecanumDriveKinematics m_kinematics;
   KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
-  std::function<void(const Vector<3>& u, const Vector<4>& y)> m_visionCorrect;
+  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Vector<4>& y)> m_visionCorrect;
 
   Eigen::Matrix4d m_visionDiscR;
 
@@ -161,11 +161,11 @@ class MecanumDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static Vector<4> F(const Vector<4>& x, const Vector<3>& u);
+  static Vector<4> F(const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u);
 
   template <int Dim>
   static std::array<double, Dim> StdDevMatrixToArray(
-      const Vector<Dim>& vector) {
+      const Eigen::Matrix<double, Dim, 1>& vector) {
     std::array<double, Dim> array;
     for (size_t i = 0; i < Dim; ++i) {
       array[i] = vector(i);
