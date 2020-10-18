@@ -21,9 +21,6 @@
 
 namespace frc {
 
-template <int N>
-using Vector = Eigen::Matrix<double, N, 1>;
-
 /**
  * This class wraps an ExtendedKalmanFilter to fuse latency-compensated
  * global measurements(ex. vision) with differential drive encoder measurements.
@@ -109,7 +106,7 @@ class DifferentialDriveStateEstimator {
    *
    * @return The robot state estimate.
    */
-  Vector<10> GetEstimatedState() const;
+  Eigen::Matrix<double, 10, 1> GetEstimatedState() const;
 
   /**
    * Gets the state of the robot at the current time as estimated by the
@@ -133,7 +130,7 @@ class DifferentialDriveStateEstimator {
    * @param controlInput  The control input.
    * @return The robot state estimate.
    */
-  Vector<10> Update(units::radian_t heading, units::meter_t leftPosition,
+  Eigen::Matrix<double, 10, 1> Update(units::radian_t heading, units::meter_t leftPosition,
                     units::meter_t rightPosition,
                     const Eigen::Matrix<double, 2, 1>& controlInput);
 
@@ -152,7 +149,7 @@ class DifferentialDriveStateEstimator {
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @return The robot state estimate.
    */
-  Vector<10> UpdateWithTime(units::radian_t heading,
+  Eigen::Matrix<double, 10, 1> UpdateWithTime(units::radian_t heading,
                             units::meter_t leftPosition,
                             units::meter_t rightPosition,
                             const Eigen::Matrix<double, 2, 1>& controlInput,
@@ -170,7 +167,7 @@ class DifferentialDriveStateEstimator {
    */
   void Reset();
 
-  Vector<10> Dynamics(const Eigen::Matrix<double, 10, 1>& x,
+  Eigen::Matrix<double, 10, 1> Dynamics(const Eigen::Matrix<double, 10, 1>& x,
                       const Eigen::Matrix<double, 2, 1>& u);
 
   static Eigen::Matrix<double, 3, 1> LocalMeasurementModel(const Eigen::Matrix<double, 10, 1>& x,

@@ -54,18 +54,18 @@ void DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement(
                                                m_globalCorrect, timestamp);
 }
 
-Vector<10> DifferentialDriveStateEstimator::GetEstimatedState() const {
+Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::GetEstimatedState() const {
   return m_observer.Xhat();
 }
 
 frc::Pose2d DifferentialDriveStateEstimator::GetEstimatedPosition() {
-  Vector<10> xHat = GetEstimatedState();
+  Eigen::Matrix<double, 10, 1> xHat = GetEstimatedState();
   return frc::Pose2d(
       units::meter_t(xHat(State::kX, 0)), units::meter_t(xHat(State::kY, 0)),
       frc::Rotation2d(units::radian_t(xHat(State::kHeading, 0))));
 }
 
-Vector<10> DifferentialDriveStateEstimator::Update(
+Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::Update(
     units::radian_t heading, units::meter_t leftPosition,
     units::meter_t rightPosition,
     const Eigen::Matrix<double, 2, 1>& controlInput) {
@@ -73,7 +73,7 @@ Vector<10> DifferentialDriveStateEstimator::Update(
                         frc2::Timer::GetFPGATimestamp());
 }
 
-Vector<10> DifferentialDriveStateEstimator::UpdateWithTime(
+Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::UpdateWithTime(
     units::radian_t heading, units::meter_t leftPosition,
     units::meter_t rightPosition,
     const Eigen::Matrix<double, 2, 1>& controlInput,
@@ -103,7 +103,7 @@ void DifferentialDriveStateEstimator::Reset(
 
 void DifferentialDriveStateEstimator::Reset() { m_observer.Reset(); }
 
-Vector<10> DifferentialDriveStateEstimator::Dynamics(
+Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::Dynamics(
     const Eigen::Matrix<double, 10, 1>& x,
     const Eigen::Matrix<double, 2, 1>& u) {
   Eigen::Matrix<double, 4, 2> B;

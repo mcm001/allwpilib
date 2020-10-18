@@ -24,9 +24,6 @@
 
 namespace frc {
 
-template <int N>
-using Vector = Eigen::Matrix<double, N, 1>;
-
 /**
  * This class wraps an ExtendedKalmanFilter to fuse latency-compensated vision
  * measurements with swerve drive encoder velocity measurements. It will correct
@@ -78,12 +75,12 @@ class SwerveDrivePoseEstimator {
                            const Pose2d& initialPose,
                            SwerveDriveKinematics<NumModules>& kinematics,
                            const Eigen::Matrix<double, 3, 1>& stateStdDevs,
-                           const Vector<1>& localMeasurementStdDevs,
+                           const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
                            const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
                            units::second_t nominalDt = 0.02_s)
       : m_observer(
             &SwerveDrivePoseEstimator::F,
-            [](const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) {
+            [](const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u) {
               return x.block<2, 1>(2, 0);
             },
             StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
@@ -106,9 +103,9 @@ class SwerveDrivePoseEstimator {
     m_visionDiscR = frc::DiscretizeR<4>(visionContR, m_nominalDt);
 
     // Create correction mechanism for vision measurements.
-    m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Vector<4>& y) {
+    m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y) {
       m_observer.Correct<4>(
-          u, y, [](const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) { return x; },
+          u, y, [](const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u) { return x; },
           m_visionDiscR);
     };
 
@@ -241,7 +238,7 @@ class SwerveDrivePoseEstimator {
   SwerveDriveKinematics<NumModules>& m_kinematics;
   KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
-  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Vector<4>& y)> m_visionCorrect;
+  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y)> m_visionCorrect;
 
   Eigen::Matrix4d m_visionDiscR;
 
@@ -251,7 +248,7 @@ class SwerveDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static Vector<4> F(const Vector<4>& x, const Eigen::Matrix<double, 3, 1>& u) {
+  static Eigen::Matrix<double, 4, 1> F(const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u) {
     return frc::MakeMatrix<4, 1>(u(0), u(1), -x(3) * u(2), x(2) * u(2));
   }
 
