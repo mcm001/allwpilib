@@ -15,7 +15,7 @@ using namespace frc;
 DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
     const Eigen::Matrix<double, 5, 1>& stateStdDevs, const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& visionMeasurmentStdDevs, units::second_t nominalDt)
+    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs, units::second_t nominalDt)
     : m_stateStdDevs(stateStdDevs), m_localMeasurementStdDevs(localMeasurementStdDevs), m_observer(
           &DifferentialDrivePoseEstimator::F,
           &DifferentialDrivePoseEstimator::LocalMeasurementModel,
@@ -25,17 +25,19 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
-      frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurmentStdDevs));
-  m_visionDiscR = frc::DiscretizeR<3>(visionContR, m_nominalDt);
+      frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurementStdDevs));
 
   // Create correction mechanism for vision measurements.
-  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 3, 1>& y) {
-    m_observer.Correct<3>(
+
+  auto& h = [](const Eigen::Matrix<double, 6, 1>& x_, const Eigen::Matrix<double, 4, 1>& u_) {
+          return x_.block<4, 1>(0, 0);
+        };
+
+  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y) {
+    m_observer.Correct<4>(
         u, y,
-        [](const Eigen::Matrix<double, 5, 1>& x, const Eigen::Matrix<double, 3, 1>&) {
-          return x.block<3, 1>(0, 0);
-        },
-        m_visionDiscR);
+        h,
+        DiscretizeR<4>(MakeCovMatrix<4>(MakeRDiagonals(visionMeasurementStdDevs, m_observer.Xhat())), m_nominalDt));
   };
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
@@ -58,8 +60,8 @@ Pose2d DifferentialDrivePoseEstimator::GetEstimatedPosition() const {
 
 void DifferentialDrivePoseEstimator::AddVisionMeasurement(
     const Pose2d& visionRobotPose, units::second_t timestamp) {
-  m_latencyCompensator.ApplyPastMeasurement<3>(&m_observer, m_nominalDt,
-                                               PoseTo3dVector(visionRobotPose),
+  m_latencyCompensator.ApplyPastMeasurement<4>(&m_observer, m_nominalDt,
+                                               PoseTo4dVector(visionRobotPose),
                                                m_visionCorrect, timestamp);
 }
 

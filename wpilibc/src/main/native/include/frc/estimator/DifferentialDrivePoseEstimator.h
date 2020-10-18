@@ -150,8 +150,6 @@ class DifferentialDrivePoseEstimator {
       m_latencyCompensator;
   std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y)> m_visionCorrect;
 
-  Eigen::Matrix<double, 3, 3> m_visionDiscR;
-
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
 
