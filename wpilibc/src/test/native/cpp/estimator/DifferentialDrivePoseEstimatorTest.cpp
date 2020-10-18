@@ -26,13 +26,17 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   frc::DifferentialDrivePoseEstimator estimator{
       frc::Rotation2d(), frc::Pose2d(),
       frc::MakeMatrix<5, 1>(0.01, 0.01, 0.01, 0.01, 0.01),
-      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1),
+      frc::MakeMatrix<3, 1>(0.5, 0.5, 0.5),
       frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
-                  frc::Pose2d(54_m, 54_m, frc::Rotation2d())},
-      frc::TrajectoryConfig(10_mps, 5.0_mps_sq));
+                  frc::Pose2d(10_m, 10_m, 180_deg),
+                  frc::Pose2d(30_m, 30_m, 0_deg),
+                  frc::Pose2d(20_m, 20_m, 180_deg),
+                  frc::Pose2d(10_m, 10_m, 0_deg),
+                  },
+      frc::TrajectoryConfig(0.5_mps, 2.0_mps_sq));
 
   frc::DifferentialDriveKinematics kinematics{1.0_m};
   frc::DifferentialDriveOdometry odometry{frc::Rotation2d()};
@@ -68,8 +72,8 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       lastVisionPose =
           groundTruthState.pose +
           frc::Transform2d(
-              frc::Translation2d(distribution(generator) * 0.1 * 1_m,
-                                 distribution(generator) * 0.1 * 1_m),
+              frc::Translation2d(distribution(generator) * 0.5 * 1_m,
+                                 distribution(generator) * 0.5 * 1_m),
               frc::Rotation2d(distribution(generator) * 0.1 * 1_rad));
 
       lastVisionUpdateRealTimestamp = frc2::Timer::GetFPGATimestamp();
@@ -103,8 +107,8 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
             << std::endl;
   std::cout << "max error " << maxError << std::endl;
 
-  //  EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() /
-  //  dt.to<double>()),
-  //            0.2);
-  //  EXPECT_NEAR(0.0, maxError, 0.4);
+   EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() /
+   dt.to<double>()),
+             0.2);
+   EXPECT_NEAR(0.0, maxError, 0.4);
 }
