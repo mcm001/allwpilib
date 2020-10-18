@@ -67,13 +67,13 @@ class MecanumDrivePoseEstimator {
    * @param nominalDt                The time in seconds between each robot
    *                                 loop.
    */
-  MecanumDrivePoseEstimator(const Rotation2d& gyroAngle,
-                            const Pose2d& initialPose,
-                            MecanumDriveKinematics kinematics,
-                            const Eigen::Matrix<double, 3, 1>& stateStdDevs,
-                            const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
-                            const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
-                            units::second_t nominalDt = 0.02_s);
+  MecanumDrivePoseEstimator(
+      const Rotation2d& gyroAngle, const Pose2d& initialPose,
+      MecanumDriveKinematics kinematics,
+      const Eigen::Matrix<double, 3, 1>& stateStdDevs,
+      const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
+      const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+      units::second_t nominalDt = 0.02_s);
 
   /**
    * Resets the robot's position on the field.
@@ -148,7 +148,9 @@ class MecanumDrivePoseEstimator {
   MecanumDriveKinematics m_kinematics;
   KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
-  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y)> m_visionCorrect;
+  std::function<void(const Eigen::Matrix<double, 3, 1>& u,
+                     const Eigen::Matrix<double, 4, 1>& y)>
+      m_visionCorrect;
 
   Eigen::Matrix4d m_visionDiscR;
 
@@ -158,7 +160,8 @@ class MecanumDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  static Eigen::Matrix<double, 4, 1> F(const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u);
+  static Eigen::Matrix<double, 4, 1> F(const Eigen::Matrix<double, 4, 1>& x,
+                                       const Eigen::Matrix<double, 3, 1>& u);
 
   template <int Dim>
   static std::array<double, Dim> StdDevMatrixToArray(

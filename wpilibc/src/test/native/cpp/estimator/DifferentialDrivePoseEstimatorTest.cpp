@@ -30,12 +30,14 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
       frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
-      std::vector{frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
-                  frc::Pose2d(10_m, 10_m, 180_deg),
-                  frc::Pose2d(30_m, 30_m, 0_deg),
-                  frc::Pose2d(20_m, 20_m, 180_deg),
-                  frc::Pose2d(10_m, 10_m, 0_deg),
-                  },
+      std::vector{
+          frc::Pose2d(),
+          frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
+          frc::Pose2d(10_m, 10_m, 180_deg),
+          frc::Pose2d(30_m, 30_m, 0_deg),
+          frc::Pose2d(20_m, 20_m, 180_deg),
+          frc::Pose2d(10_m, 10_m, 0_deg),
+      },
       frc::TrajectoryConfig(0.5_mps, 2.0_mps_sq));
 
   frc::DifferentialDriveKinematics kinematics{1.0_m};
@@ -107,8 +109,8 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
             << std::endl;
   std::cout << "max error " << maxError << std::endl;
 
-   EXPECT_NEAR(0.0, errorSum / (trajectory.TotalTime().to<double>() /
-   dt.to<double>()),
-             0.2);
-   EXPECT_NEAR(0.0, maxError, 0.4);
+  EXPECT_NEAR(
+      0.0, errorSum / (trajectory.TotalTime().to<double>() / dt.to<double>()),
+      0.2);
+  EXPECT_NEAR(0.0, maxError, 0.4);
 }

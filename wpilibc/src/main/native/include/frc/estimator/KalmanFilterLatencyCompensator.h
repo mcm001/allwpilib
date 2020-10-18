@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 #include <Eigen/Core>
 #include <units/time.h>

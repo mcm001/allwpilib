@@ -14,13 +14,18 @@ using namespace frc;
 
 DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
-    const Eigen::Matrix<double, 5, 1>& stateStdDevs, const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs, units::second_t nominalDt)
-    : m_stateStdDevs(stateStdDevs), m_localMeasurementStdDevs(localMeasurementStdDevs), m_observer(
+    const Eigen::Matrix<double, 5, 1>& stateStdDevs,
+    const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
+    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+    units::second_t nominalDt)
+    : m_stateStdDevs(stateStdDevs),
+      m_localMeasurementStdDevs(localMeasurementStdDevs),
+      m_observer(
           &DifferentialDrivePoseEstimator::F,
           &DifferentialDrivePoseEstimator::LocalMeasurementModel,
           MakeQDiagonals(stateStdDevs, FillStateVector(initialPose, 0_m, 0_m)),
-          MakeRDiagonals(localMeasurementStdDevs, FillStateVector(initialPose, 0_m, 0_m)),
+          MakeRDiagonals(localMeasurementStdDevs,
+                         FillStateVector(initialPose, 0_m, 0_m)),
           nominalDt),
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
@@ -28,13 +33,18 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
       frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurementStdDevs));
 
   // Create correction mechanism for vision measurements.
-  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y) {
+  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,
+                        const Eigen::Matrix<double, 4, 1>& y) {
     m_observer.Correct<4>(
         u, y,
-        [](const Eigen::Matrix<double, 6, 1>& x_, const Eigen::Matrix<double, 3, 1>& u_) {
+        [](const Eigen::Matrix<double, 6, 1>& x_,
+           const Eigen::Matrix<double, 3, 1>& u_) {
           return x_.block<4, 1>(0, 0);
         },
-        DiscretizeR<4>(MakeCovMatrix<4>(DifferentialDrivePoseEstimator::MakeRDiagonals(visionMeasurementStdDevs, m_observer.Xhat())), m_nominalDt));
+        DiscretizeR<4>(
+            MakeCovMatrix<4>(DifferentialDrivePoseEstimator::MakeRDiagonals(
+                visionMeasurementStdDevs, m_observer.Xhat())),
+            m_nominalDt));
   };
 
   m_gyroOffset = initialPose.Rotation() - gyroAngle;
@@ -86,19 +96,25 @@ Pose2d DifferentialDrivePoseEstimator::UpdateWithTime(
 
   m_previousAngle = angle;
 
-  Eigen::Matrix<double, 4, 1> localY = frc::MakeMatrix<4, 1>(leftDistance.to<double>(),
-                                      rightDistance.to<double>(),
-                                      angle.Cos(), angle.Sin());
+  Eigen::Matrix<double, 4, 1> localY = frc::MakeMatrix<4, 1>(
+      leftDistance.to<double>(), rightDistance.to<double>(), angle.Cos(),
+      angle.Sin());
 
   m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
-  m_observer.Predict(u, frc::MakeCovMatrix<6>(MakeQDiagonals(m_stateStdDevs, m_observer.Xhat())), dt);
-  m_observer.Correct<4>(u, localY, &LocalMeasurementModel, frc::MakeCovMatrix<4>(MakeRDiagonals(m_localMeasurementStdDevs, m_observer.Xhat())));
+  m_observer.Predict(
+      u,
+      frc::MakeCovMatrix<6>(MakeQDiagonals(m_stateStdDevs, m_observer.Xhat())),
+      dt);
+  m_observer.Correct<4>(u, localY, &LocalMeasurementModel,
+                        frc::MakeCovMatrix<4>(MakeRDiagonals(
+                            m_localMeasurementStdDevs, m_observer.Xhat())));
 
   return GetEstimatedPosition();
 }
 
-Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::F(const Eigen::Matrix<double, 6, 1>& x,
-                                            const Eigen::Matrix<double, 3, 1>& u) {
+Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::F(
+    const Eigen::Matrix<double, 6, 1>& x,
+    const Eigen::Matrix<double, 3, 1>& u) {
   // Apply a rotation matrix. Note that we do not add x because Runge-Kutta does
   // that for us.
   double cosTheta = x(2);
@@ -106,29 +122,31 @@ Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::F(const Eigen::Matri
 
   // We want vx and vy to be in the field frame, so we apply a rotation matrix.
   // to u_Field = u = [[vx_field, vy_field, omega]]^T
-  Eigen::Matrix<double, 2, 1> chassisVel_local = MakeMatrix<2, 1>((u(0, 0) + u(1, 0)) / 2.0, 0.0);
-  Eigen::Matrix<double, 2, 2> toFieldRotation = MakeMatrix<2, 2>(
-          cosTheta, -sinTheta,
-          sinTheta, cosTheta
-  );
-  Eigen::Matrix<double, 2, 1> chassisVel_field = toFieldRotation * chassisVel_local;
+  Eigen::Matrix<double, 2, 1> chassisVel_local =
+      MakeMatrix<2, 1>((u(0, 0) + u(1, 0)) / 2.0, 0.0);
+  Eigen::Matrix<double, 2, 2> toFieldRotation =
+      MakeMatrix<2, 2>(cosTheta, -sinTheta, sinTheta, cosTheta);
+  Eigen::Matrix<double, 2, 1> chassisVel_field =
+      toFieldRotation * chassisVel_local;
 
-  // dcos(theta)/dt = -sin(theta) * dtheta/dt = -sin(theta) * omega
+  // dcos(theta)/dt = -std::sin(theta) * dtheta/dt = -std::sin(theta) * omega
   double dcosTheta = -sinTheta * u(2, 0);
-  // dsin(theta)/dt = cos(theta) * omega
+  // dsin(theta)/dt = std::cos(theta) * omega
   double dsinTheta = cosTheta * u(2, 0);
 
-  // As x = [[x_field, y_field, cos(theta), sin(theta), dist_l, dist_r]]^T,
-  // we need to return x-dot = [[vx_field, vy_field, d/dt cos(theta), d/dt sin(theta), vel_left, vel_right]]^T
-  // Assuming  no wheel slip, vx = (v_left + v_right) / 2, and vy = 0;
+  // As x = [[x_field, y_field, std::cos(theta), std::sin(theta), dist_l,
+  // dist_r]]^T, we need to return x-dot = [[vx_field, vy_field, d/dt
+  // cos(theta), d/dt sin(theta), vel_left, vel_right]]^T Assuming  no wheel
+  // slip, vx = (v_left + v_right) / 2, and vy = 0;
 
-  return MakeMatrix<6, 1>(chassisVel_field(0), chassisVel_field(1),
-      dcosTheta, dsinTheta,
-      u(0), u(1));
+  return MakeMatrix<6, 1>(chassisVel_field(0), chassisVel_field(1), dcosTheta,
+                          dsinTheta, u(0), u(1));
 }
 
-Eigen::Matrix<double, 4, 1> DifferentialDrivePoseEstimator::LocalMeasurementModel(
-  const Eigen::Matrix<double, 6, 1>& x, const Eigen::Matrix<double, 3, 1>& u) {
+Eigen::Matrix<double, 4, 1>
+DifferentialDrivePoseEstimator::LocalMeasurementModel(
+    const Eigen::Matrix<double, 6, 1>& x,
+    const Eigen::Matrix<double, 3, 1>& u) {
   return frc::MakeMatrix<4, 1>(x(4), x(5), x(2), x(3));
 }
 
@@ -154,13 +172,12 @@ Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::FillStateVector(
 std::array<double, 6> DifferentialDrivePoseEstimator::MakeQDiagonals(
     const Eigen::Matrix<double, 5, 1>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
-                               stdDevs(2) * x(3), stdDevs(3), stdDevs(4)};
+  return {stdDevs(0),        stdDevs(1), stdDevs(2) * x(2),
+          stdDevs(2) * x(3), stdDevs(3), stdDevs(4)};
 }
 
 std::array<double, 4> DifferentialDrivePoseEstimator::MakeRDiagonals(
     const Eigen::Matrix<double, 3, 1>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2),
-                               stdDevs(2) * x(3)};
+  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2), stdDevs(2) * x(3)};
 }

@@ -38,9 +38,9 @@ namespace frc {
  * robot loop (if your robot loops are faster than the default then you should
  * use DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(const
  * LinearSystem<2, 2, 2>&, const Eigen::Matrix<double, 10, 1>&, const
- * Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 3, 1>&, const Eigen::Matrix<double,
- * 3, 1>&, const DifferentialDriveKinematics&, units::second_t) to change the
- * nominal delta time.)
+ * Eigen::Matrix<double, 10, 1>&, const Eigen::Matrix<double, 3, 1>&, const
+ * Eigen::Matrix<double, 3, 1>&, const DifferentialDriveKinematics&,
+ * units::second_t) to change the nominal delta time.)
  *
  * DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement can be
  * called as infrequently as you want.
@@ -130,9 +130,10 @@ class DifferentialDriveStateEstimator {
    * @param controlInput  The control input.
    * @return The robot state estimate.
    */
-  Eigen::Matrix<double, 10, 1> Update(units::radian_t heading, units::meter_t leftPosition,
-                    units::meter_t rightPosition,
-                    const Eigen::Matrix<double, 2, 1>& controlInput);
+  Eigen::Matrix<double, 10, 1> Update(
+      units::radian_t heading, units::meter_t leftPosition,
+      units::meter_t rightPosition,
+      const Eigen::Matrix<double, 2, 1>& controlInput);
 
   /**
    * Updates the the Extended Kalman Filter using wheel encoder information,
@@ -149,11 +150,11 @@ class DifferentialDriveStateEstimator {
    * @param currentTimeSeconds Time at which this method was called, in seconds.
    * @return The robot state estimate.
    */
-  Eigen::Matrix<double, 10, 1> UpdateWithTime(units::radian_t heading,
-                            units::meter_t leftPosition,
-                            units::meter_t rightPosition,
-                            const Eigen::Matrix<double, 2, 1>& controlInput,
-                            units::second_t currentTime);
+  Eigen::Matrix<double, 10, 1> UpdateWithTime(
+      units::radian_t heading, units::meter_t leftPosition,
+      units::meter_t rightPosition,
+      const Eigen::Matrix<double, 2, 1>& controlInput,
+      units::second_t currentTime);
 
   /**
    * Resets any internal state with a given initial state.
@@ -168,13 +169,15 @@ class DifferentialDriveStateEstimator {
   void Reset();
 
   Eigen::Matrix<double, 10, 1> Dynamics(const Eigen::Matrix<double, 10, 1>& x,
-                      const Eigen::Matrix<double, 2, 1>& u);
+                                        const Eigen::Matrix<double, 2, 1>& u);
 
-  static Eigen::Matrix<double, 3, 1> LocalMeasurementModel(const Eigen::Matrix<double, 10, 1>& x,
-                                         const Eigen::Matrix<double, 2, 1>& u);
+  static Eigen::Matrix<double, 3, 1> LocalMeasurementModel(
+      const Eigen::Matrix<double, 10, 1>& x,
+      const Eigen::Matrix<double, 2, 1>& u);
 
-  static Eigen::Matrix<double, 3, 1> GlobalMeasurementModel(const Eigen::Matrix<double, 10, 1>& x,
-                                          const Eigen::Matrix<double, 2, 1>& u);
+  static Eigen::Matrix<double, 3, 1> GlobalMeasurementModel(
+      const Eigen::Matrix<double, 10, 1>& x,
+      const Eigen::Matrix<double, 2, 1>& u);
 
  private:
   LinearSystem<2, 2, 2> m_plant;

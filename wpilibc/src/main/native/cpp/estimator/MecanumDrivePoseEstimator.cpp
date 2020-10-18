@@ -15,12 +15,15 @@ using namespace frc;
 
 frc::MecanumDrivePoseEstimator::MecanumDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
-    MecanumDriveKinematics kinematics, const Eigen::Matrix<double, 3, 1>& stateStdDevs,
+    MecanumDriveKinematics kinematics,
+    const Eigen::Matrix<double, 3, 1>& stateStdDevs,
     const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs, units::second_t nominalDt)
+    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+    units::second_t nominalDt)
     : m_observer(
           &MecanumDrivePoseEstimator::F,
-          [](const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u) {
+          [](const Eigen::Matrix<double, 4, 1>& x,
+             const Eigen::Matrix<double, 3, 1>& u) {
             return x.block<2, 1>(2, 0);
           },
           StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
@@ -43,9 +46,12 @@ frc::MecanumDrivePoseEstimator::MecanumDrivePoseEstimator(
   m_visionDiscR = frc::DiscretizeR<4>(visionContR, m_nominalDt);
 
   // Create vision correction mechanism.
-  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y) {
+  m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,
+                        const Eigen::Matrix<double, 4, 1>& y) {
     m_observer.Correct<4>(
-        u, y, [](const Eigen::Matrix<double, 4, 1>& x, const Eigen::Matrix<double, 3, 1>& u) { return x; },
+        u, y,
+        [](const Eigen::Matrix<double, 4, 1>& x,
+           const Eigen::Matrix<double, 3, 1>& u) { return x; },
         m_visionDiscR);
   };
 
@@ -116,7 +122,8 @@ Pose2d frc::MecanumDrivePoseEstimator::UpdateWithTime(
   return GetEstimatedPosition();
 }
 
-Eigen::Matrix<double, 4, 1> frc::MecanumDrivePoseEstimator::F(const Eigen::Matrix<double, 4, 1>& x,
-                                            const Eigen::Matrix<double, 3, 1>& u) {
+Eigen::Matrix<double, 4, 1> frc::MecanumDrivePoseEstimator::F(
+    const Eigen::Matrix<double, 4, 1>& x,
+    const Eigen::Matrix<double, 3, 1>& u) {
   return frc::MakeMatrix<4, 1>(u(0), u(1), -x(3) * u(2), x(2) * u(2));
 }

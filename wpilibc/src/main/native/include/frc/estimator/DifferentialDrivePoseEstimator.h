@@ -12,8 +12,8 @@
 #include <Eigen/Core>
 #include <units/time.h>
 
-#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/DifferentialDriveWheelSpeeds.h"
@@ -65,12 +65,12 @@ class DifferentialDrivePoseEstimator {
    *                                 vision less.
    * @param nominalDt                The period of the loop calling Update().
    */
-  DifferentialDrivePoseEstimator(const Rotation2d& gyroAngle,
-                                 const Pose2d& initialPose,
-                                 const Eigen::Matrix<double, 5, 1>& stateStdDevs,
-                                 const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-                                 const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
-                                 units::second_t nominalDt = 0.02_s);
+  DifferentialDrivePoseEstimator(
+      const Rotation2d& gyroAngle, const Pose2d& initialPose,
+      const Eigen::Matrix<double, 5, 1>& stateStdDevs,
+      const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
+      const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+      units::second_t nominalDt = 0.02_s);
 
   /**
    * Resets the robot's position on the field.
@@ -148,7 +148,9 @@ class DifferentialDrivePoseEstimator {
   UnscentedKalmanFilter<6, 3, 4> m_observer;
   KalmanFilterLatencyCompensator<6, 3, 4, UnscentedKalmanFilter<6, 3, 4>>
       m_latencyCompensator;
-  std::function<void(const Eigen::Matrix<double, 3, 1>& u, const Eigen::Matrix<double, 4, 1>& y)> m_visionCorrect;
+  std::function<void(const Eigen::Matrix<double, 3, 1>& u,
+                     const Eigen::Matrix<double, 4, 1>& y)>
+      m_visionCorrect;
 
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
@@ -163,11 +165,14 @@ class DifferentialDrivePoseEstimator {
   static std::array<double, Dim> StdDevMatrixToArray(
       const Eigen::Matrix<double, Dim, 1>& stdDevs);
 
-  static Eigen::Matrix<double, 4, 1> LocalMeasurementModel(const Eigen::Matrix<double, 6, 1>& x, const Eigen::Matrix<double, 3, 1>& u);
-  static Eigen::Matrix<double, 6, 1> F(const Eigen::Matrix<double, 6, 1>& x, const Eigen::Matrix<double, 3, 1>& u);
-  static Eigen::Matrix<double, 6, 1> FillStateVector(const Pose2d& pose,
-                                   units::meter_t leftDistance,
-                                   units::meter_t rightDistance);
+  static Eigen::Matrix<double, 4, 1> LocalMeasurementModel(
+      const Eigen::Matrix<double, 6, 1>& x,
+      const Eigen::Matrix<double, 3, 1>& u);
+  static Eigen::Matrix<double, 6, 1> F(const Eigen::Matrix<double, 6, 1>& x,
+                                       const Eigen::Matrix<double, 3, 1>& u);
+  static Eigen::Matrix<double, 6, 1> FillStateVector(
+      const Pose2d& pose, units::meter_t leftDistance,
+      units::meter_t rightDistance);
 
   static std::array<double, 6> MakeQDiagonals(
       const Eigen::Matrix<double, 5, 1>& stdDevs,

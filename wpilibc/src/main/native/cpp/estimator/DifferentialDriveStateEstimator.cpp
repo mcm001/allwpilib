@@ -54,7 +54,8 @@ void DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement(
                                                m_globalCorrect, timestamp);
 }
 
-Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::GetEstimatedState() const {
+Eigen::Matrix<double, 10, 1>
+DifferentialDriveStateEstimator::GetEstimatedState() const {
   return m_observer.Xhat();
 }
 
@@ -130,7 +131,8 @@ Eigen::Matrix<double, 10, 1> DifferentialDriveStateEstimator::Dynamics(
   return result;
 }
 
-Eigen::Matrix<double, 3, 1> DifferentialDriveStateEstimator::LocalMeasurementModel(
+Eigen::Matrix<double, 3, 1>
+DifferentialDriveStateEstimator::LocalMeasurementModel(
     const Eigen::Matrix<double, 10, 1>& x,
     const Eigen::Matrix<double, 2, 1>& u) {
   static_cast<void>(u);
@@ -141,7 +143,8 @@ Eigen::Matrix<double, 3, 1> DifferentialDriveStateEstimator::LocalMeasurementMod
   return y;
 }
 
-Eigen::Matrix<double, 3, 1> DifferentialDriveStateEstimator::GlobalMeasurementModel(
+Eigen::Matrix<double, 3, 1>
+DifferentialDriveStateEstimator::GlobalMeasurementModel(
     const Eigen::Matrix<double, 10, 1>& x,
     const Eigen::Matrix<double, 2, 1>& u) {
   static_cast<void>(u);
