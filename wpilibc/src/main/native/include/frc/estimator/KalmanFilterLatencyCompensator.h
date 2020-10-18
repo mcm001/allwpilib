@@ -11,6 +11,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include <Eigen/Core>
 #include <units/time.h>
@@ -69,8 +70,9 @@ class KalmanFilterLatencyCompensator {
 
     // This index starts at one because we use the previous state later on, and
     // we always want to have a "previous state".
+    int maxIdx = m_pastObserverSnapshots.size() - 1;
     int low = 1;
-    int high = m_pastObserverSnapshots.size() - 1;
+    int high = std::max(maxIdx, 1);
 
     while (low != high) {
       int mid = (low + high) / 2.0;
