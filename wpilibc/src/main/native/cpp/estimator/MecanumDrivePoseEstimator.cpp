@@ -110,8 +110,7 @@ Pose2d frc::MecanumDrivePoseEstimator::UpdateWithTime(
                                  omega.to<double>());
 
   auto localY =
-      frc::MakeMatrix<2, 1>(std::cos(angle.Radians().template to<double>()),
-                            std::sin(angle.Radians().template to<double>()));
+      frc::MakeMatrix<2, 1>(angle.Cos(), angle.Sin());
   m_previousAngle = angle;
 
   m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
