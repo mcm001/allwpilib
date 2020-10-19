@@ -15,6 +15,7 @@
 
 #include <Eigen/Core>
 #include <units/time.h>
+#include <units/math.h>
 
 namespace frc {
 
