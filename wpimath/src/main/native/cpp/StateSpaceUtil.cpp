@@ -21,15 +21,6 @@ Eigen::Matrix<double, 4, 1> PoseTo4dVector(const Pose2d& pose) {
                                pose.Rotation().Cos(), pose.Rotation().Sin());
 }
 
-template <int Dim>
-Eigen::Matrix<double, Dim, 1> ArrayToVector(const std::array<double, Dim>& array_) {
-  Eigen::Matrix<double, Dim, 1> result;
-  for(size_t i = 0; i < Dim; ++i) {
-    result(i) = array_[i];
-  }
-  return result;
-}
-
 template <>
 bool IsStabilizable<1, 1>(const Eigen::Matrix<double, 1, 1>& A,
                           const Eigen::Matrix<double, 1, 1>& B) {

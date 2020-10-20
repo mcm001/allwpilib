@@ -145,10 +145,10 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
     }
     errorSum += error;
 
-    std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
-              << groundTruthState.pose.Translation().Y().to<double>() << ","
-              << estimatedTranslation.X().to<double>() << ","
-              << estimatedTranslation.Y().to<double>() << "," << error << "\n";
+    // std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
+    //           << groundTruthState.pose.Translation().Y().to<double>() << ","
+    //           << estimatedTranslation.X().to<double>() << ","
+    //           << estimatedTranslation.Y().to<double>() << "," << error << "\n";
 
     t += dt;
   }

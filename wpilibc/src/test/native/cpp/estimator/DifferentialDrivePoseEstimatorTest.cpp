@@ -12,6 +12,8 @@
 #include <units/length.h>
 #include <units/time.h>
 
+#include <iostream>
+
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 #include "frc/geometry/Pose2d.h"
@@ -25,9 +27,9 @@
 TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
   frc::DifferentialDrivePoseEstimator estimator{
       frc::Rotation2d(), frc::Pose2d(),
-      frc::MakeMatrix<5, 1>(0.01, 0.01, 0.01, 0.01, 0.01),
-      frc::MakeMatrix<3, 1>(0.5, 0.5, 0.5),
-      frc::MakeMatrix<3, 1>(0.1, 0.1, 0.1)};
+      {0.01, 0.01, 0.01, 0.01, 0.01},
+      {0.5, 0.5, 0.5},
+      {0.1, 0.1, 0.1}};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{
@@ -35,10 +37,9 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
           frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
           frc::Pose2d(10_m, 10_m, 180_deg),
           frc::Pose2d(30_m, 30_m, 0_deg),
-          frc::Pose2d(20_m, 20_m, 180_deg),
-          frc::Pose2d(10_m, 10_m, 0_deg),
+          frc::Pose2d(20_m, 20_m, 180_deg)
       },
-      frc::TrajectoryConfig(0.5_mps, 2.0_mps_sq));
+      frc::TrajectoryConfig(2_mps, 3.0_mps_sq));
 
   frc::DifferentialDriveKinematics kinematics{1.0_m};
   frc::DifferentialDriveOdometry odometry{frc::Rotation2d()};

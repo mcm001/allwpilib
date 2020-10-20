@@ -7,7 +7,7 @@
 
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 
-#include "frc/StateSpaceUtil.h"
+#include <frc/StateSpaceUtil.h>
 #include "frc2/Timer.h"
 
 using namespace frc;
@@ -18,21 +18,19 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const std::array<double, 3>& localMeasurementStdDevs,
     const std::array<double, 3>& visionMeasurementStdDevs,
     units::second_t nominalDt)
-    : m_stateStdDevs(stateStdDevs),
-      m_localMeasurementStdDevs(localMeasurementStdDevs),
+    : m_stateStdDevs(frc::ArrayToVector<5>(stateStdDevs)),
+      m_localMeasurementStdDevs(frc::ArrayToVector<3>(localMeasurementStdDevs)),
       m_observer(
           &DifferentialDrivePoseEstimator::F,
           &DifferentialDrivePoseEstimator::LocalMeasurementModel,
-          MakeQDiagonals(ArrayToVector<5>(stateStdDevs), FillStateVector(initialPose, 0_m, 0_m)),
-          MakeRDiagonals(ArrayToVector<3>(localMeasurementStdDevs),
+          MakeQDiagonals(frc::ArrayToVector<5>(stateStdDevs), FillStateVector(initialPose, 0_m, 0_m)),
+          MakeRDiagonals(frc::ArrayToVector<3>(localMeasurementStdDevs),
                          FillStateVector(initialPose, 0_m, 0_m)),
           nominalDt),
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
-      frc::MakeCovMatrix(visionMeasurementStdDevs);
-
-  const auto& stuff = ArrayToVector<3>({0.0, 0.0, 0.0});
+      frc::MakeCovMatrix<3>(visionMeasurementStdDevs);
 
   // Create correction mechanism for vision measurements.
   m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,

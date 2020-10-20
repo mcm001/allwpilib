@@ -165,10 +165,6 @@ class DifferentialDrivePoseEstimator {
   static std::array<double, Dim> StdDevMatrixToArray(
       const Eigen::Matrix<double, Dim, 1>& stdDevs);
   
-  template <int Dim>
-  static Eigen::Matrix<double, Dim, 1> ArrayToVector(
-      const std::array<double, Dim>& array);
-
   static Eigen::Matrix<double, 4, 1> LocalMeasurementModel(
       const Eigen::Matrix<double, 6, 1>& x,
       const Eigen::Matrix<double, 3, 1>& u);

@@ -16,9 +16,9 @@ using namespace frc;
 frc::MecanumDrivePoseEstimator::MecanumDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
     MecanumDriveKinematics kinematics,
-    const Eigen::Matrix<double, 3, 1>& stateStdDevs,
-    const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+    const std::array<double, 3>& stateStdDevs,
+    const std::array<double, 1>& localMeasurementStdDevs,
+    const std::array<double, 3>& visionMeasurementStdDevs,
     units::second_t nominalDt)
     : m_observer(
           &MecanumDrivePoseEstimator::F,
@@ -27,20 +27,20 @@ frc::MecanumDrivePoseEstimator::MecanumDrivePoseEstimator(
             return x.block<2, 1>(2, 0);
           },
           StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
-              stateStdDevs(0), stateStdDevs(1), std::cos(stateStdDevs(2)),
-              std::sin(stateStdDevs(2)))),
+              stateStdDevs[0], stateStdDevs[1], std::cos(stateStdDevs[2]),
+              std::sin(stateStdDevs[2]))),
           StdDevMatrixToArray<2>(
-              frc::MakeMatrix<2, 1>(std::cos(localMeasurementStdDevs(0)),
-                                    std::sin(localMeasurementStdDevs(0)))),
+              frc::MakeMatrix<2, 1>(std::cos(localMeasurementStdDevs[0]),
+                                    std::sin(localMeasurementStdDevs[0]))),
           nominalDt),
       m_kinematics(kinematics),
       m_nominalDt(nominalDt) {
   // Construct R (covariances) matrix for vision measurements.
   Eigen::Matrix4d visionContR =
       frc::MakeCovMatrix<4>(StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
-          visionMeasurementStdDevs(0), visionMeasurementStdDevs(1),
-          std::cos(visionMeasurementStdDevs(2)),
-          std::sin(visionMeasurementStdDevs(2)))));
+          visionMeasurementStdDevs[0], visionMeasurementStdDevs[1],
+          std::cos(visionMeasurementStdDevs[2]),
+          std::sin(visionMeasurementStdDevs[2]))));
 
   // Create and store discrete covariance matrix for vision measurements.
   m_visionDiscR = frc::DiscretizeR<4>(visionContR, m_nominalDt);

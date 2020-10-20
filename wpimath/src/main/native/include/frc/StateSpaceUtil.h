@@ -295,7 +295,13 @@ Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose);
  * @return The vector.
  */
 template <int Dim>
-Eigen::Matrix<double, Dim, 1> ArrayToVector(const std::array<double, Dim>& array_);
+Eigen::Matrix<double, Dim, 1> ArrayToVector(const std::array<double, Dim>& array_) {
+  Eigen::Matrix<double, Dim, 1> result;
+  for(size_t i = 0; i < Dim; ++i) {
+    result(i) = array_[i];
+  }
+  return result;
+}
 
 /**
  * Clamps input vector between system's minimum and maximum allowable input.
