@@ -288,6 +288,16 @@ bool IsStabilizable<2, 1>(const Eigen::Matrix<double, 2, 2>& A,
 Eigen::Matrix<double, 3, 1> PoseToVector(const Pose2d& pose);
 
 /**
+ * Converts a vector into a Eigen::Matrix of size (Dim, 1).
+ * 
+ * @param array The array to fill the vector with.
+ * 
+ * @return The vector.
+ */
+template <int Dim>
+Eigen::Matrix<double, Dim, 1> ArrayToVector(const std::array<double, Dim>& array_);
+
+/**
  * Clamps input vector between system's minimum and maximum allowable input.
  *
  * @param u Input vector to clamp.

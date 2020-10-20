@@ -14,23 +14,25 @@ using namespace frc;
 
 DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const Rotation2d& gyroAngle, const Pose2d& initialPose,
-    const Eigen::Matrix<double, 5, 1>& stateStdDevs,
-    const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+    const std::array<double, 5>& stateStdDevs,
+    const std::array<double, 3>& localMeasurementStdDevs,
+    const std::array<double, 3>& visionMeasurementStdDevs,
     units::second_t nominalDt)
     : m_stateStdDevs(stateStdDevs),
       m_localMeasurementStdDevs(localMeasurementStdDevs),
       m_observer(
           &DifferentialDrivePoseEstimator::F,
           &DifferentialDrivePoseEstimator::LocalMeasurementModel,
-          MakeQDiagonals(stateStdDevs, FillStateVector(initialPose, 0_m, 0_m)),
-          MakeRDiagonals(localMeasurementStdDevs,
+          MakeQDiagonals(ArrayToVector<5>(stateStdDevs), FillStateVector(initialPose, 0_m, 0_m)),
+          MakeRDiagonals(ArrayToVector<3>(localMeasurementStdDevs),
                          FillStateVector(initialPose, 0_m, 0_m)),
           nominalDt),
       m_nominalDt(nominalDt) {
   // Create R (covariances) for vision measurements.
   Eigen::Matrix<double, 3, 3> visionContR =
-      frc::MakeCovMatrix(StdDevMatrixToArray<3>(visionMeasurementStdDevs));
+      frc::MakeCovMatrix(visionMeasurementStdDevs);
+
+  const auto& stuff = ArrayToVector<3>({0.0, 0.0, 0.0});
 
   // Create correction mechanism for vision measurements.
   m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,
@@ -43,7 +45,7 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
         },
         DiscretizeR<4>(
             MakeCovMatrix<4>(DifferentialDrivePoseEstimator::MakeRDiagonals(
-                visionMeasurementStdDevs, m_observer.Xhat())),
+                ArrayToVector<3>(visionMeasurementStdDevs), m_observer.Xhat())),
             m_nominalDt));
   };
 

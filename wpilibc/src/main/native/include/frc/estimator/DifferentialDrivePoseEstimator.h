@@ -67,9 +67,9 @@ class DifferentialDrivePoseEstimator {
    */
   DifferentialDrivePoseEstimator(
       const Rotation2d& gyroAngle, const Pose2d& initialPose,
-      const Eigen::Matrix<double, 5, 1>& stateStdDevs,
-      const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-      const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+      const std::array<double, 5>& stateStdDevs,
+      const std::array<double, 3>& localMeasurementStdDevs,
+      const std::array<double, 3>& visionMeasurementStdDevs,
       units::second_t nominalDt = 0.02_s);
 
   /**
@@ -164,6 +164,10 @@ class DifferentialDrivePoseEstimator {
   template <int Dim>
   static std::array<double, Dim> StdDevMatrixToArray(
       const Eigen::Matrix<double, Dim, 1>& stdDevs);
+  
+  template <int Dim>
+  static Eigen::Matrix<double, Dim, 1> ArrayToVector(
+      const std::array<double, Dim>& array);
 
   static Eigen::Matrix<double, 4, 1> LocalMeasurementModel(
       const Eigen::Matrix<double, 6, 1>& x,

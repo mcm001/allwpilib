@@ -47,7 +47,7 @@ namespace frc {
  *
  * Our state-space system is:
  *
- * <strong> x = [[x, y, theta, vel_l, vel_r, dist_l, dist_r, voltError_l,
+ * <strong> x = [[x, y, cos(theta), sin(theta), vel_l, vel_r, dist_l, dist_r, voltError_l,
  * voltError_r, angularVelError]]^T </strong> in the field coordinate system
  * (dist_* are wheel distances.)
  *
@@ -79,10 +79,10 @@ class DifferentialDriveStateEstimator {
    */
   DifferentialDriveStateEstimator(
       const LinearSystem<2, 2, 2>& plant,
-      const Eigen::Matrix<double, 10, 1>& initialState,
-      const Eigen::Matrix<double, 10, 1>& stateStdDevs,
-      const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-      const Eigen::Matrix<double, 3, 1>& globalMeasurementStdDevs,
+      const std::array<double, 10>& initialState,
+      const std::array<double, 10>& stateStdDevs,
+      const std::array<double, 3>& localMeasurementStdDevs,
+      const std::array<double, 3>& globalMeasurementStdDevs,
       const DifferentialDriveKinematics& kinematics,
       units::second_t nominalDt = 0.02_s);
 

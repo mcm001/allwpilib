@@ -14,24 +14,24 @@ using namespace frc;
 
 DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
     const LinearSystem<2, 2, 2>& plant,
-    const Eigen::Matrix<double, 10, 1>& initialState,
-    const Eigen::Matrix<double, 10, 1>& stateStdDevs,
-    const Eigen::Matrix<double, 3, 1>& localMeasurementStdDevs,
-    const Eigen::Matrix<double, 3, 1>& globalMeasurementStdDevs,
+    const std::array<double, 10>& initialState,
+    const std::array<double, 10>& stateStdDevs,
+    const std::array<double, 3>& localMeasurementStdDevs,
+    const std::array<double, 3>& globalMeasurementStdDevs,
     const DifferentialDriveKinematics& kinematics, units::second_t nominalDt)
     : m_plant(plant),
       m_rb(kinematics.trackWidth / 2.0),
       m_observer([this](auto& x, auto& u) { return Dynamics(x, u); },
                  &DifferentialDriveStateEstimator::LocalMeasurementModel,
-                 StdDevMatrixToArray<10>(stateStdDevs),
-                 StdDevMatrixToArray<3>(localMeasurementStdDevs), nominalDt),
+                 stateStdDevs,
+                 localMeasurementStdDevs, nominalDt),
       m_nominalDt(nominalDt) {
   m_localY.setZero();
   m_globalY.setZero();
 
   // Create R (covariances) for global measurements.
   Eigen::Matrix<double, 3, 3> globalContR =
-      frc::MakeCovMatrix(StdDevMatrixToArray<3>(globalMeasurementStdDevs));
+      frc::MakeCovMatrix(globalMeasurementStdDevs);
 
   Eigen::Matrix<double, 3, 3> globalDiscR =
       frc::DiscretizeR<3>(globalContR, m_nominalDt);
@@ -43,8 +43,8 @@ DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
         u, y, &DifferentialDriveStateEstimator::GlobalMeasurementModel,
         globalDiscR);
   };
-
-  Reset(initialState);
+  
+  Reset(ArrayToVector<10>(initialState));
 }
 
 void DifferentialDriveStateEstimator::ApplyPastGlobalMeasurement(

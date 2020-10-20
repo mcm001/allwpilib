@@ -47,11 +47,11 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
 
   frc::DifferentialDriveStateEstimator estimator{
       plant,
-      Eigen::Matrix<double, 10, 1>::Zero(),
-      frc::MakeMatrix<10, 1>(0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
-                             10.0, 2.0),
-      frc::MakeMatrix<3, 1>(0.0001, 0.005, 0.005),
-      frc::MakeMatrix<3, 1>(0.5, 0.5, 0.5),
+      {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+      {0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
+                             10.0, 2.0},
+      {0.0001, 0.005, 0.005},
+      {0.5, 0.5, 0.5},
       kinematics,
       dt};
 
