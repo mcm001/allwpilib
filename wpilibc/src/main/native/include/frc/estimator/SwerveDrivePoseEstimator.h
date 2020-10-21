@@ -15,7 +15,7 @@
 #include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
-#include "frc/estimator/ExtendedKalmanFilter.h"
+#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
@@ -25,7 +25,7 @@
 namespace frc {
 
 /**
- * This class wraps an ExtendedKalmanFilter to fuse latency-compensated vision
+ * This class wraps an UnscentedKalmanFilter to fuse latency-compensated vision
  * measurements with swerve drive encoder velocity measurements. It will correct
  * for noisy measurements and encoder drift. It is intended to be an easy but
  * more accurate drop-in for SwerveDriveOdometry.
@@ -74,34 +74,24 @@ class SwerveDrivePoseEstimator {
   SwerveDrivePoseEstimator(
       const Rotation2d& gyroAngle, const Pose2d& initialPose,
       SwerveDriveKinematics<NumModules>& kinematics,
-      const Eigen::Matrix<double, 3, 1>& stateStdDevs,
-      const Eigen::Matrix<double, 1, 1>& localMeasurementStdDevs,
-      const Eigen::Matrix<double, 3, 1>& visionMeasurementStdDevs,
+      const std::array<double, 3>& stateStdDevs,
+      const std::array<double, 1>& localMeasurementStdDevs,
+      const std::array<double, 3>& visionMeasurementStdDevs,
       units::second_t nominalDt = 0.02_s)
-      : m_observer(
+      : m_stateStdDevs(stateStdDevs),
+        m_localMeasurementStdDevs(localMeasurementStdDevs),
+        m_visionMeasurementStdDevs(visionMeasurementStdDevs),
+        m_observer(
             &SwerveDrivePoseEstimator::F,
             [](const Eigen::Matrix<double, 4, 1>& x,
                const Eigen::Matrix<double, 3, 1>& u) {
               return x.block<2, 1>(2, 0);
             },
-            StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
-                stateStdDevs(0), stateStdDevs(1), std::cos(stateStdDevs(2)),
-                std::sin(stateStdDevs(2)))),
-            StdDevMatrixToArray<2>(
-                frc::MakeMatrix<2, 1>(std::cos(localMeasurementStdDevs(0)),
-                                      std::sin(localMeasurementStdDevs(0)))),
+            MakeQDiagonals(stateStdDevs, frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(), initialPose.Rotation().Sin())),
+            MakeRDiagonals(localMeasurementStdDevs, frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(), initialPose.Rotation().Sin())),
             nominalDt),
         m_kinematics(kinematics),
         m_nominalDt(nominalDt) {
-    // Construct R (covariances) matrix for vision measurements.
-    Eigen::Matrix4d visionContR =
-        frc::MakeCovMatrix<4>(StdDevMatrixToArray<4>(frc::MakeMatrix<4, 1>(
-            visionMeasurementStdDevs(0), visionMeasurementStdDevs(1),
-            std::cos(visionMeasurementStdDevs(2)),
-            std::sin(visionMeasurementStdDevs(2)))));
-
-    // Create and store discrete covariance matrix for vision measurements.
-    m_visionDiscR = frc::DiscretizeR<4>(visionContR, m_nominalDt);
 
     // Create correction mechanism for vision measurements.
     m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,
@@ -110,7 +100,7 @@ class SwerveDrivePoseEstimator {
           u, y,
           [](const Eigen::Matrix<double, 4, 1>& x,
              const Eigen::Matrix<double, 3, 1>& u) { return x; },
-          m_visionDiscR);
+          DiscretizeR<4>(MakeCovMatrix<4>(MakeVisionRDiagonals(visionMeasurementStdDevs, y)), nominalDt));
     };
 
     // Set initial state.
@@ -142,7 +132,7 @@ class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Gets the pose of the robot at the current time as estimated by the Extended
+   * Gets the pose of the robot at the current time as estimated by the Unscented
    * Kalman Filter.
    *
    * @return The estimated robot pose in meters.
@@ -153,7 +143,7 @@ class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Add a vision measurement to the Extended Kalman Filter. This will correct
+   * Add a vision measurement to the Unscented Kalman Filter. This will correct
    * the odometry pose estimate while still accounting for measurement noise.
    *
    * This method can be called as infrequently as you want, as long as you are
@@ -178,7 +168,7 @@ class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Updates the the Extended Kalman Filter using only wheel encoder
+   * Updates the the Unscented Kalman Filter using only wheel encoder
    * information. This should be called every loop, and the correct loop period
    * must be passed into the constructor of this class.
    *
@@ -194,7 +184,7 @@ class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Updates the the Extended Kalman Filter using only wheel encoder
+   * Updates the the Unscented Kalman Filter using only wheel encoder
    * information. This should be called every loop, and the correct loop period
    * must be passed into the constructor of this class.
    *
@@ -224,28 +214,28 @@ class SwerveDrivePoseEstimator {
                               fieldRelativeSpeeds.Y().template to<double>(),
                               omega.template to<double>());
 
-    auto localY =
-        frc::MakeMatrix<2, 1>(angle.Cos(), angle.Sin());
+    auto localY = frc::MakeMatrix<2, 1>(angle.Cos(), angle.Sin());
     m_previousAngle = angle;
 
     m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
 
-    m_observer.Predict(u, dt);
-    m_observer.Correct(u, localY);
+    m_observer.Predict(u, frc::MakeCovMatrix<4>(MakeQDiagonals(m_stateStdDevs, m_observer.Xhat())), dt);
+    m_observer.Correct<2>(u, localY, [](const Eigen::Matrix<double, 4, 1>& x,
+               const Eigen::Matrix<double, 3, 1>& u) {
+              return x.block<2, 1>(2, 0);
+            }, frc::MakeCovMatrix<2>(MakeRDiagonals(m_localMeasurementStdDevs, m_observer.Xhat())));
 
     return GetEstimatedPosition();
   }
 
  private:
-  ExtendedKalmanFilter<4, 3, 2> m_observer;
+  UnscentedKalmanFilter<4, 3, 2> m_observer;
   SwerveDriveKinematics<NumModules>& m_kinematics;
-  KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
+  KalmanFilterLatencyCompensator<4, 3, 2, UnscentedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
   std::function<void(const Eigen::Matrix<double, 3, 1>& u,
                      const Eigen::Matrix<double, 4, 1>& y)>
       m_visionCorrect;
-
-  Eigen::Matrix4d m_visionDiscR;
 
   units::second_t m_nominalDt;
   units::second_t m_prevTime = -1_s;
@@ -253,8 +243,19 @@ class SwerveDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
+  /**
+   * Get x-dot given the current state and input. Recall that the state is [x,
+   * y, std::cos(theta), std::sin(theta)]^T In our case, x-dot will be [dx/dt,
+   * dy/dt, d/dt cos(theta), d/dt sin(theta)].
+   *
+   * @param x The current state.
+   * @param u The current input. In our case, u = [vx, vy, d/dt theta]^T
+   */
   static Eigen::Matrix<double, 4, 1> F(const Eigen::Matrix<double, 4, 1>& x,
                                        const Eigen::Matrix<double, 3, 1>& u) {
+    // Need to return [dx/dt, dy/dt, d/dt cos(theta), d/dt sin(theta)]
+    // dx/dt and dy/dt are from u.
+    // d/dt cos(theta) = -std::sin(theta) * d/dt(theta) by the chain rule.
     return frc::MakeMatrix<4, 1>(u(0), u(1), -x(3) * u(2), x(2) * u(2));
   }
 
@@ -266,6 +267,29 @@ class SwerveDrivePoseEstimator {
       array[i] = vector(i);
     }
     return array;
+  }
+
+  std::array<double, 3> m_stateStdDevs;
+  std::array<double, 1> m_localMeasurementStdDevs;
+  std::array<double, 3> m_visionMeasurementStdDevs;
+
+  static std::array<double, 4> MakeQDiagonals(
+      const std::array<double, 3>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& x) {
+    // Std dev in [x, y, std::cos(theta), std::sin(theta)] form.
+    return { stdDevs[0], stdDevs[1], stdDevs[2] * x(2), stdDevs[2] * x(3) };
+  }
+
+  static std::array<double, 2> MakeRDiagonals(
+      const std::array<double, 1>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& x) {
+    return {stdDevs[0] * x(2), stdDevs[0] * x(3)};
+  }
+
+  static std::array<double, 4> MakeVisionRDiagonals(
+      const std::array<double, 3>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& y) {
+    return {stdDevs[0], stdDevs[1], stdDevs[2] * y(0), stdDevs[2] * y(1)};
   }
 };
 
