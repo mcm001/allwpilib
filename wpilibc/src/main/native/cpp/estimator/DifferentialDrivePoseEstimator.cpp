@@ -62,7 +62,7 @@ void DifferentialDrivePoseEstimator::ResetPosition(
 Pose2d DifferentialDrivePoseEstimator::GetEstimatedPosition() const {
   return Pose2d(units::meter_t(m_observer.Xhat(0)),
                 units::meter_t(m_observer.Xhat(1)),
-                Rotation2d(units::radian_t(m_observer.Xhat(2))));
+                Rotation2d(m_observer.Xhat(2), m_observer.Xhat(3)));
 }
 
 void DifferentialDrivePoseEstimator::AddVisionMeasurement(
