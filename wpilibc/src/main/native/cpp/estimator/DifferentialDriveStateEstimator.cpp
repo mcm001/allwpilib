@@ -23,8 +23,7 @@ DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
       m_rb(kinematics.trackWidth / 2.0),
       m_observer([this](auto& x, auto& u) { return Dynamics(x, u); },
                  &DifferentialDriveStateEstimator::LocalMeasurementModel,
-                 stateStdDevs,
-                 localMeasurementStdDevs, nominalDt),
+                 stateStdDevs, localMeasurementStdDevs, nominalDt),
       m_nominalDt(nominalDt) {
   m_localY.setZero();
   m_globalY.setZero();
@@ -43,7 +42,7 @@ DifferentialDriveStateEstimator::DifferentialDriveStateEstimator(
         u, y, &DifferentialDriveStateEstimator::GlobalMeasurementModel,
         globalDiscR);
   };
-  
+
   Reset(ArrayToVector<10>(initialState));
 }
 

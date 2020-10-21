@@ -14,8 +14,8 @@
 #include <vector>
 
 #include <Eigen/Core>
-#include <units/time.h>
 #include <units/math.h>
+#include <units/time.h>
 
 namespace frc {
 

@@ -47,9 +47,9 @@ namespace frc {
  *
  * Our state-space system is:
  *
- * <strong> x = [[x, y, cos(theta), sin(theta), vel_l, vel_r, dist_l, dist_r, voltError_l,
- * voltError_r, angularVelError]]^T </strong> in the field coordinate system
- * (dist_* are wheel distances.)
+ * <strong> x = [[x, y, std::cos(theta), std::sin(theta), vel_l, vel_r, dist_l,
+ * dist_r, voltError_l, voltError_r, angularVelError]]^T </strong> in the field
+ * coordinate system (dist_* are wheel distances.)
  *
  * <strong> u = [[voltage_l, voltage_r]]^T </strong> This is typically the
  * control input of the last timestep from a LTVDiffDriveController.

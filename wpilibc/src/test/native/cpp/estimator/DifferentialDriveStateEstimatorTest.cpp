@@ -48,8 +48,7 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
   frc::DifferentialDriveStateEstimator estimator{
       plant,
       {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-      {0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0,
-                             10.0, 2.0},
+      {0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0},
       {0.0001, 0.005, 0.005},
       {0.5, 0.5, 0.5},
       kinematics,
@@ -148,7 +147,8 @@ TEST(DifferentialDriveStateEstimatorTest, TestAccuracy) {
     // std::cout << groundTruthState.pose.Translation().X().to<double>() << ","
     //           << groundTruthState.pose.Translation().Y().to<double>() << ","
     //           << estimatedTranslation.X().to<double>() << ","
-    //           << estimatedTranslation.Y().to<double>() << "," << error << "\n";
+    //           << estimatedTranslation.Y().to<double>() << "," << error <<
+    //           "\n";
 
     t += dt;
   }

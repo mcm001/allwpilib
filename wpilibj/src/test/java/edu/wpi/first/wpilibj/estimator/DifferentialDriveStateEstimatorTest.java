@@ -59,14 +59,14 @@ public class DifferentialDriveStateEstimatorTest {
 
     var estimator = new DifferentialDriveStateEstimator(
             plant,
-            MatrixUtils.zeros(Nat.N10()),
+            MatrixUtils.zeros(Nat.N12()),
             new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
                 0.002, 0.002, 0.0001, 1.5, 1.5, 0.5, 0.5, 10.0, 10.0, 2.0),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.0001, 0.005, 0.005),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.5),
             kinematics);
 
-    var feedforward = new ControlAffinePlantInversionFeedforward<>(Nat.N10(), Nat.N2(),
+    var feedforward = new ControlAffinePlantInversionFeedforward<>(Nat.N12(), Nat.N2(),
         estimator::getDynamics, dt);
 
     var config = new TrajectoryConfig(12 / 2.5, (12 / 0.642) - 17.5);
@@ -124,10 +124,10 @@ public class DifferentialDriveStateEstimatorTest {
       );
       var wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds);
 
-      var x = new MatBuilder<>(Nat.N10(), Nat.N1()).fill(
+      var x = new MatBuilder<>(Nat.N12(), Nat.N1()).fill(
               groundTruthState.poseMeters.getTranslation().getX(),
               groundTruthState.poseMeters.getTranslation().getY(),
-              groundTruthState.poseMeters.getRotation().getRadians(),
+              groundTruthState.poseMeters.getRotation().getRadians(), // TODO fix
               wheelSpeeds.leftMetersPerSecond,
               wheelSpeeds.rightMetersPerSecond,
               0.0, 0.0, 0.0, 0.0, 0.0);

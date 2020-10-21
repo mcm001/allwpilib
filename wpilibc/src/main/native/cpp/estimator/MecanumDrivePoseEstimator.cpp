@@ -109,8 +109,7 @@ Pose2d frc::MecanumDrivePoseEstimator::UpdateWithTime(
                                  fieldRelativeVelocities.Y().to<double>(),
                                  omega.to<double>());
 
-  auto localY =
-      frc::MakeMatrix<2, 1>(angle.Cos(), angle.Sin());
+  auto localY = frc::MakeMatrix<2, 1>(angle.Cos(), angle.Sin());
   m_previousAngle = angle;
 
   m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);

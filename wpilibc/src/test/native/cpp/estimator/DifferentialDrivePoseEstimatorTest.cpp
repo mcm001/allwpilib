@@ -5,14 +5,13 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+#include <iostream>
 #include <limits>
 #include <random>
 
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/time.h>
-
-#include <iostream>
 
 #include "frc/StateSpaceUtil.h"
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
@@ -24,20 +23,36 @@
 #include "frc2/Timer.h"
 #include "gtest/gtest.h"
 
+TEST(DifferentialDrivePoseEstimatorTest, TestStraightLine) {
+  frc::DifferentialDrivePoseEstimator estimator{frc::Rotation2d(),
+                                                frc::Pose2d(),
+                                                {0.01, 0.01, 0.01, 0.01, 0.01},
+                                                {0.5, 0.5, 0.5},
+                                                {0.1, 0.1, 0.1}};
+
+  for (int i = 0; i < 100; i++) {
+    frc::Pose2d pose = estimator.UpdateWithTime(
+        i * 0.02_s, frc::Rotation2d(0_deg), {1_m / 1_s, 1_m / 1_s},
+        1_m * i * 0.02, 1_m * i * 0.02);
+    std::cout << pose.Translation().X().to<double>() << ", "
+              << pose.Translation().Y().to<double>() << ", "
+              << pose.Rotation().Degrees().to<double>() << std::endl;
+  }
+}
+
 TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
-  frc::DifferentialDrivePoseEstimator estimator{
-      frc::Rotation2d(), frc::Pose2d(),
-      {0.01, 0.01, 0.01, 0.01, 0.01},
-      {0.5, 0.5, 0.5},
-      {0.1, 0.1, 0.1}};
+  frc::DifferentialDrivePoseEstimator estimator{frc::Rotation2d(),
+                                                frc::Pose2d(),
+                                                {0.01, 0.01, 0.01, 0.01, 0.01},
+                                                {0.5, 0.5, 0.5},
+                                                {0.1, 0.1, 0.1}};
 
   frc::Trajectory trajectory = frc::TrajectoryGenerator::GenerateTrajectory(
       std::vector{
-          frc::Pose2d(),
-          frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
+          frc::Pose2d(), frc::Pose2d(20_m, 20_m, frc::Rotation2d()),
           frc::Pose2d(10_m, 10_m, 180_deg),
-          frc::Pose2d(30_m, 30_m, 0_deg),
-          frc::Pose2d(20_m, 20_m, 180_deg)
+          // frc::Pose2d(30_m, 30_m, 0_deg),
+          // frc::Pose2d(20_m, 20_m, 180_deg)
       },
       frc::TrajectoryConfig(2_mps, 3.0_mps_sq));
 
@@ -70,7 +85,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
+        // estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
       }
       lastVisionPose =
           groundTruthState.pose +
@@ -91,6 +106,13 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
         groundTruthState.pose.Rotation() +
             frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         input, leftDistance, rightDistance);
+
+    std::cout << groundTruthState.pose.Translation().X().to<double>() << ", "
+              << groundTruthState.pose.Translation().Y().to<double>() << ", "
+              << groundTruthState.pose.Rotation().Degrees().to<double>() << ", "
+              << xhat.Translation().X().to<double>() << ", "
+              << xhat.Translation().Y().to<double>() << ", "
+              << xhat.Rotation().Degrees().to<double>() << ", " << std::endl;
 
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())

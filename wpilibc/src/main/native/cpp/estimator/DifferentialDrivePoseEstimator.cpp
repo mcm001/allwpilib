@@ -8,6 +8,7 @@
 #include "frc/estimator/DifferentialDrivePoseEstimator.h"
 
 #include <frc/StateSpaceUtil.h>
+
 #include "frc2/Timer.h"
 
 using namespace frc;
@@ -18,13 +19,13 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
     const std::array<double, 3>& localMeasurementStdDevs,
     const std::array<double, 3>& visionMeasurementStdDevs,
     units::second_t nominalDt)
-    : m_stateStdDevs(frc::ArrayToVector<5>(stateStdDevs)),
-      m_localMeasurementStdDevs(frc::ArrayToVector<3>(localMeasurementStdDevs)),
+    : m_stateStdDevs(stateStdDevs),
+      m_localMeasurementStdDevs(localMeasurementStdDevs),
       m_observer(
           &DifferentialDrivePoseEstimator::F,
           &DifferentialDrivePoseEstimator::LocalMeasurementModel,
-          MakeQDiagonals(frc::ArrayToVector<5>(stateStdDevs), FillStateVector(initialPose, 0_m, 0_m)),
-          MakeRDiagonals(frc::ArrayToVector<3>(localMeasurementStdDevs),
+          MakeQDiagonals(stateStdDevs, FillStateVector(initialPose, 0_m, 0_m)),
+          MakeRDiagonals(localMeasurementStdDevs,
                          FillStateVector(initialPose, 0_m, 0_m)),
           nominalDt),
       m_nominalDt(nominalDt) {
@@ -43,7 +44,7 @@ DifferentialDrivePoseEstimator::DifferentialDrivePoseEstimator(
         },
         DiscretizeR<4>(
             MakeCovMatrix<4>(DifferentialDrivePoseEstimator::MakeRDiagonals(
-                ArrayToVector<3>(visionMeasurementStdDevs), m_observer.Xhat())),
+                visionMeasurementStdDevs, m_observer.Xhat())),
             m_nominalDt));
   };
 
@@ -136,8 +137,8 @@ Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::F(
 
   // As x = [[x_field, y_field, std::cos(theta), std::sin(theta), dist_l,
   // dist_r]]^T, we need to return x-dot = [[vx_field, vy_field, d/dt
-  // cos(theta), d/dt sin(theta), vel_left, vel_right]]^T Assuming  no wheel
-  // slip, vx = (v_left + v_right) / 2, and vy = 0;
+  // std::cos(theta), d/dt sin(theta), vel_left, vel_right]]^T Assuming  no
+  // wheel slip, vx = (v_left + v_right) / 2, and vy = 0;
 
   return MakeMatrix<6, 1>(chassisVel_field(0), chassisVel_field(1), dcosTheta,
                           dsinTheta, u(0), u(1));
@@ -170,14 +171,14 @@ Eigen::Matrix<double, 6, 1> DifferentialDrivePoseEstimator::FillStateVector(
 }
 
 std::array<double, 6> DifferentialDrivePoseEstimator::MakeQDiagonals(
-    const Eigen::Matrix<double, 5, 1>& stdDevs,
+    const std::array<double, 5>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return {stdDevs(0),        stdDevs(1), stdDevs(2) * x(2),
-          stdDevs(2) * x(3), stdDevs(3), stdDevs(4)};
+  return {stdDevs[0],        stdDevs[1], stdDevs[2] * x(2),
+          stdDevs[2] * x(3), stdDevs[3], stdDevs[4]};
 }
 
 std::array<double, 4> DifferentialDrivePoseEstimator::MakeRDiagonals(
-    const Eigen::Matrix<double, 3, 1>& stdDevs,
+    const std::array<double, 3>& stdDevs,
     const Eigen::Matrix<double, 6, 1>& x) {
-  return {stdDevs(0), stdDevs(1), stdDevs(2) * x(2), stdDevs(2) * x(3)};
+  return {stdDevs[0], stdDevs[1], stdDevs[2] * x(2), stdDevs[2] * x(3)};
 }

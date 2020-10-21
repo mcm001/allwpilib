@@ -38,12 +38,28 @@ import edu.wpi.first.wpiutil.math.Nat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DifferentialDrivePoseEstimatorTest {
+
+@Test public void testStraight() {
+  DifferentialDrivePoseEstimator estimator = new DifferentialDrivePoseEstimator(
+      new Rotation2d(), new Pose2d(),
+      VecBuilder.fill(0.01, 0.01, 0.01, 0.01, 0.01),
+      VecBuilder.fill(0.5, 0.5, 0.1),
+      VecBuilder.fill(0.1, 0.1, 0.1));
+
+  for(double i = 0; i < 100; i++) {
+    var pose = estimator.updateWithTime(i * 0.02, new Rotation2d(0), new DifferentialDriveWheelSpeeds(1,
+        1), 0.02 * i * 1, 0.02 * i * 1);
+    System.out.printf("%s, %s, %s%n", pose.getTranslation().getX(), pose.getTranslation().getY(), pose.getRotation().getDegrees());
+  }
+}
+
+
   @SuppressWarnings({"LocalVariableName", "PMD.ExcessiveMethodLength",
         "PMD.AvoidInstantiatingObjectsInLoops"})
   @Test
   public void testAccuracy() {
     var estimator = new DifferentialDrivePoseEstimator(new Rotation2d(), new Pose2d(),
-            new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.02, 0.02, 0.01, 0.02, 0.02),
+            new MatBuilder<>(Nat.N5(), Nat.N1()).fill(0.01, 0.01, 0.01, 0.01, 0.01),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.5, 0.5, 0.1),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.01));
 
@@ -136,14 +152,14 @@ public class DifferentialDrivePoseEstimatorTest {
       t += dt;
     }
 
-//    assertEquals(
-//            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.03,
-//            "Incorrect mean error"
-//    );
-//    assertEquals(
-//            0.0, maxError, 0.05,
-//            "Incorrect max error"
-//    );
+    assertEquals(
+            0.0, errorSum / (traj.getTotalTimeSeconds() / dt), 0.4,
+            "Incorrect mean error"
+    );
+    assertEquals(
+            0.0, maxError, 1.0,
+            "Incorrect max error"
+    );
 
     System.out.println("Mean error (meters): " + errorSum / (traj.getTotalTimeSeconds() / dt));
     System.out.println("Max error (meters):  " + maxError);
@@ -156,11 +172,11 @@ public class DifferentialDrivePoseEstimatorTest {
     chart.addSeries("Trajectory", trajXs, trajYs);
     chart.addSeries("xHat", observerXs, observerYs);
 
-    new SwingWrapper<>(chart).displayChart();
-    try {
-      Thread.sleep(1000000000);
-    } catch (InterruptedException e) {
-    }
+//    new SwingWrapper<>(chart).displayChart();
+//    try {
+//      Thread.sleep(1000000000);
+//    } catch (InterruptedException e) {
+//    }
   }
 
   @Test void test() {

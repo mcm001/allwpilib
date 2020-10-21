@@ -141,8 +141,18 @@ public class SwerveDrivePoseEstimator {
     m_observer.setXhat(StateSpaceUtil.poseTo4dVector(initialPoseMeters));
   }
 
+  /**
+   * Get x-dot given the current state and input. Recall that the state is [x, y, cos(theta), sin(theta)]^T
+   * In our case, x-dot will be [dx/dt, dy/dt, d/dt cos(theta), d/dt sin(theta)].
+   * 
+   * @param x The current state.
+   * @param u The current input. In our case, u = [vx, vy, d/dt theta]^T
+   */
   @SuppressWarnings({"ParameterName", "MethodName"})
   private Matrix<N4, N1> f(Matrix<N4, N1> x, Matrix<N3, N1> u) {
+    // Need to return [dx/dt, dy/dt, d/dt cos(theta), d/dt sin(theta)]
+    // dx/dt and dy/dt are from u.
+    // d/dt cos(theta) = -sin(theta) * d/dt(theta) by the chain rule. 
     return VecBuilder.fill(
             u.get(0, 0), u.get(1, 0), -x.get(3, 0) * u.get(2, 0), x.get(2, 0) * u.get(2, 0)
     );

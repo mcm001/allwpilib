@@ -158,13 +158,13 @@ class DifferentialDrivePoseEstimator {
   Rotation2d m_gyroOffset;
   Rotation2d m_previousAngle;
 
-  Eigen::Matrix<double, 5, 1> m_stateStdDevs;
-  Eigen::Matrix<double, 3, 1> m_localMeasurementStdDevs;
+  std::array<double, 5> m_stateStdDevs;
+  std::array<double, 3> m_localMeasurementStdDevs;
 
   template <int Dim>
   static std::array<double, Dim> StdDevMatrixToArray(
       const Eigen::Matrix<double, Dim, 1>& stdDevs);
-  
+
   static Eigen::Matrix<double, 4, 1> LocalMeasurementModel(
       const Eigen::Matrix<double, 6, 1>& x,
       const Eigen::Matrix<double, 3, 1>& u);
@@ -175,10 +175,10 @@ class DifferentialDrivePoseEstimator {
       units::meter_t rightDistance);
 
   static std::array<double, 6> MakeQDiagonals(
-      const Eigen::Matrix<double, 5, 1>& stdDevs,
+      const std::array<double, 5>& stdDevs,
       const Eigen::Matrix<double, 6, 1>& x);
   static std::array<double, 4> MakeRDiagonals(
-      const Eigen::Matrix<double, 3, 1>& stdDevs,
+      const std::array<double, 3>& stdDevs,
       const Eigen::Matrix<double, 6, 1>& x);
 };
 

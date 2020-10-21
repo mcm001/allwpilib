@@ -65,15 +65,15 @@ import edu.wpi.first.wpiutil.math.numbers.N7;
  */
 @SuppressWarnings({"ParameterName", "LocalVariableName", "MemberName", "PMD.SingularField"})
 public class DifferentialDriveStateEstimator {
-  private final UnscentedKalmanFilter<N12, N2, N4> m_observer;
-  private final KalmanFilterLatencyCompensator<N12, N2, N4> m_latencyCompensator;
+  private UnscentedKalmanFilter<N12, N2, N4> m_observer;
+  private KalmanFilterLatencyCompensator<N12, N2, N4> m_latencyCompensator;
 
-  private final BiConsumer<Matrix<N2, N1>, Matrix<N3, N1>> m_globalCorrect;
+  private BiConsumer<Matrix<N2, N1>, Matrix<N3, N1>> m_globalCorrect;
 
-  private final double m_rb;
-  private final LinearSystem<N2, N2, N2> m_plant;
+  private double m_rb;
+  private LinearSystem<N2, N2, N2> m_plant;
 
-  private final double m_nominalDt; // Seconds
+  private double m_nominalDt; // Seconds
   private double m_prevTimeSeconds = -1.0;
 
 
@@ -96,7 +96,7 @@ public class DifferentialDriveStateEstimator {
    *                                 differential drivetrain's kinematics.
    */
   public DifferentialDriveStateEstimator(LinearSystem<N2, N2, N2> plant,
-                                        Matrix<N10, N1> initialState,
+                                        Matrix<N12, N1> initialState,
                                         Matrix<N10, N1> stateStdDevs,
                                         Matrix<N3, N1> localMeasurementStdDevs,
                                         Matrix<N3, N1> globalMeasurementStdDevs,
@@ -124,7 +124,7 @@ public class DifferentialDriveStateEstimator {
    */
   public DifferentialDriveStateEstimator(
           LinearSystem<N2, N2, N2> plant,
-          Matrix<N10, N1> initialState,
+          Matrix<N12, N1> initialState,
           Matrix<N10, N1> stateStdDevs,
           Matrix<N3, N1> localMeasurementStdDevs,
           Matrix<N3, N1> globalMeasurementStdDevs,
@@ -142,21 +142,21 @@ public class DifferentialDriveStateEstimator {
     var globalContR = StateSpaceUtil.makeCovarianceMatrix(Nat.N3(), globalMeasurementStdDevs);
     var globalDiscR = Discretization.discretizeR(globalContR, m_nominalDt);
 
-    m_observer = new UnscentedKalmanFilter<>(
-      Nat.N10(), Nat.N3(),
-      this::getDynamics,
-      this::getLocalMeasurementModel,
-      stateStdDevs,
-      localMeasurementStdDevs,
-      nominalDtSeconds
-   );
+  //   m_observer = new UnscentedKalmanFilter<>(
+  //     Nat.N12(), Nat.N4(),
+  //     this::getDynamics,
+  //     this::getLocalMeasurementModel,
+  //     stateStdDevs,
+  //     localMeasurementStdDevs,
+  //     nominalDtSeconds
+  //  );
 
     // Create correction mechanism for global measurements.
-    m_globalCorrect = (u, y) -> m_observer.correct(
-      Nat.N3(), u, y,
-      this::getGlobalMeasurementModel,
-      globalDiscR
-    );
+    // m_globalCorrect = (u, y) -> m_observer.correct(
+    //   Nat.N3(), u, y,
+    //   this::getGlobalMeasurementModel,
+    //   globalDiscR
+    // );
     m_latencyCompensator = new KalmanFilterLatencyCompensator<>();
 
     reset(initialState);
@@ -239,7 +239,7 @@ public class DifferentialDriveStateEstimator {
    *
    * @return The robot state estimate.
    */
-  public Matrix<N10, N1> getEstimatedState() {
+  public Matrix<N12, N1> getEstimatedState() {
     return m_observer.getXhat();
   }
 
@@ -267,7 +267,7 @@ public class DifferentialDriveStateEstimator {
    * @param controlInput   The control input from the last timestep.
    * @return The robot state estimate.
    */
-  public Matrix<N10, N1> update(double headingRadians, double leftPosition,
+  public Matrix<N12, N1> update(double headingRadians, double leftPosition,
                                 double rightPosition,
                                 Matrix<N2, N1> controlInput) {
     return updateWithTime(headingRadians,
@@ -290,7 +290,7 @@ public class DifferentialDriveStateEstimator {
    * @return The robot state estimate.
    */
   @SuppressWarnings("VariableDeclarationUsageDistance")
-  public Matrix<N10, N1> updateWithTime(double headingRadians, double leftPosition,
+  public Matrix<N12, N1> updateWithTime(double headingRadians, double leftPosition,
                                         double rightPosition,
                                         Matrix<N2, N1> controlInput,
                                         double currentTimeSeconds) {
@@ -301,10 +301,10 @@ public class DifferentialDriveStateEstimator {
     m_localY.set(LocalOutput.kLeftPosition.value, 0, leftPosition);
     m_localY.set(LocalOutput.kRightPosition.value, 0, rightPosition);
 
-    m_latencyCompensator.addObserverState(m_observer, controlInput, m_localY, currentTimeSeconds);
+    // m_latencyCompensator.addObserverState(m_observer, controlInput, m_localY, currentTimeSeconds);
 
     m_observer.predict(controlInput, dt);
-    m_observer.correct(controlInput, m_localY);
+    // m_observer.correct(controlInput, m_localY);
 
     return getEstimatedState();
   }
@@ -314,7 +314,7 @@ public class DifferentialDriveStateEstimator {
    *
    * @param initialState Initial state for state estimate.
    */
-  public void reset(Matrix<N10, N1> initialState) {
+  public void reset(Matrix<N12, N1> initialState) {
     m_observer.reset();
 
     m_observer.setXhat(initialState);
