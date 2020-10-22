@@ -15,8 +15,8 @@
 #include <units/time.h>
 
 #include "frc/StateSpaceUtil.h"
-#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/SwerveDriveKinematics.h"
@@ -87,12 +87,19 @@ class SwerveDrivePoseEstimator {
                const Eigen::Matrix<double, 3, 1>& u) {
               return x.block<2, 1>(2, 0);
             },
-            MakeQDiagonals(stateStdDevs, frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(), initialPose.Rotation().Sin())),
-            MakeRDiagonals(localMeasurementStdDevs, frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(), initialPose.Rotation().Sin())),
+            // X and Y here are zero because we only use the cosine and sin
+            // states of X in the diagonal.
+            MakeQDiagonals(
+                stateStdDevs,
+                frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(),
+                                      initialPose.Rotation().Sin())),
+            MakeRDiagonals(
+                localMeasurementStdDevs,
+                frc::MakeMatrix<4, 1>(0.0, 0.0, initialPose.Rotation().Cos(),
+                                      initialPose.Rotation().Sin())),
             nominalDt),
         m_kinematics(kinematics),
         m_nominalDt(nominalDt) {
-
     // Create correction mechanism for vision measurements.
     m_visionCorrect = [&](const Eigen::Matrix<double, 3, 1>& u,
                           const Eigen::Matrix<double, 4, 1>& y) {
@@ -100,11 +107,13 @@ class SwerveDrivePoseEstimator {
           u, y,
           [](const Eigen::Matrix<double, 4, 1>& x,
              const Eigen::Matrix<double, 3, 1>& u) { return x; },
-          DiscretizeR<4>(MakeCovMatrix<4>(MakeVisionRDiagonals(visionMeasurementStdDevs, y)), nominalDt));
+          DiscretizeR<4>(MakeCovMatrix<4>(
+                             MakeVisionRDiagonals(visionMeasurementStdDevs, y)),
+                         nominalDt));
     };
 
     // Set initial state.
-    m_observer.SetXhat(PoseTo4dVector(initialPose));
+    ResetPosition(initialPose, gyroAngle);
 
     // Calculate offsets.
     m_gyroOffset = initialPose.Rotation() - gyroAngle;
@@ -132,8 +141,8 @@ class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Gets the pose of the robot at the current time as estimated by the Unscented
-   * Kalman Filter.
+   * Gets the pose of the robot at the current time as estimated by the
+   * Unscented Kalman Filter.
    *
    * @return The estimated robot pose in meters.
    */
@@ -219,11 +228,18 @@ class SwerveDrivePoseEstimator {
 
     m_latencyCompensator.AddObserverState(m_observer, u, localY, currentTime);
 
-    m_observer.Predict(u, frc::MakeCovMatrix<4>(MakeQDiagonals(m_stateStdDevs, m_observer.Xhat())), dt);
-    m_observer.Correct<2>(u, localY, [](const Eigen::Matrix<double, 4, 1>& x,
-               const Eigen::Matrix<double, 3, 1>& u) {
-              return x.block<2, 1>(2, 0);
-            }, frc::MakeCovMatrix<2>(MakeRDiagonals(m_localMeasurementStdDevs, m_observer.Xhat())));
+    m_observer.Predict(u,
+                       frc::MakeCovMatrix<4>(
+                           MakeQDiagonals(m_stateStdDevs, m_observer.Xhat())),
+                       dt);
+    m_observer.Correct<2>(
+        u, localY,
+        [](const Eigen::Matrix<double, 4, 1>& x,
+           const Eigen::Matrix<double, 3, 1>& u) {
+          return x.block<2, 1>(2, 0);
+        },
+        frc::MakeCovMatrix<2>(
+            MakeRDiagonals(m_localMeasurementStdDevs, m_observer.Xhat())));
 
     return GetEstimatedPosition();
   }
@@ -277,7 +293,7 @@ class SwerveDrivePoseEstimator {
       const std::array<double, 3>& stdDevs,
       const Eigen::Matrix<double, 4, 1>& x) {
     // Std dev in [x, y, std::cos(theta), std::sin(theta)] form.
-    return { stdDevs[0], stdDevs[1], stdDevs[2] * x(2), stdDevs[2] * x(3) };
+    return {stdDevs[0], stdDevs[1], stdDevs[2] * x(2), stdDevs[2] * x(3)};
   }
 
   static std::array<double, 2> MakeRDiagonals(

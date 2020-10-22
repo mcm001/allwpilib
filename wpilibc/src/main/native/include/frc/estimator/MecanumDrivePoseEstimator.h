@@ -12,8 +12,8 @@
 #include <Eigen/Core>
 #include <units/time.h>
 
-#include "frc/estimator/ExtendedKalmanFilter.h"
 #include "frc/estimator/KalmanFilterLatencyCompensator.h"
+#include "frc/estimator/UnscentedKalmanFilter.h"
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
 #include "frc/kinematics/MecanumDriveKinematics.h"
@@ -144,9 +144,9 @@ class MecanumDrivePoseEstimator {
                         const MecanumDriveWheelSpeeds& wheelSpeeds);
 
  private:
-  ExtendedKalmanFilter<4, 3, 2> m_observer;
+  UnscentedKalmanFilter<4, 3, 2> m_observer;
   MecanumDriveKinematics m_kinematics;
-  KalmanFilterLatencyCompensator<4, 3, 2, ExtendedKalmanFilter<4, 3, 2>>
+  KalmanFilterLatencyCompensator<4, 3, 2, UnscentedKalmanFilter<4, 3, 2>>
       m_latencyCompensator;
   std::function<void(const Eigen::Matrix<double, 3, 1>& u,
                      const Eigen::Matrix<double, 4, 1>& y)>
@@ -163,14 +163,27 @@ class MecanumDrivePoseEstimator {
   static Eigen::Matrix<double, 4, 1> F(const Eigen::Matrix<double, 4, 1>& x,
                                        const Eigen::Matrix<double, 3, 1>& u);
 
-  template <int Dim>
-  static std::array<double, Dim> StdDevMatrixToArray(
-      const Eigen::Matrix<double, Dim, 1>& vector) {
-    std::array<double, Dim> array;
-    for (size_t i = 0; i < Dim; ++i) {
-      array[i] = vector(i);
-    }
-    return array;
+  std::array<double, 3> m_stateStdDevs;
+  std::array<double, 1> m_localMeasurementStdDevs;
+  std::array<double, 3> m_visionMeasurementStdDevs;
+
+  static std::array<double, 4> MakeQDiagonals(
+      const std::array<double, 3>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& x) {
+    // Std dev in [x, y, std::cos(theta), std::sin(theta)] form.
+    return {stdDevs[0], stdDevs[1], stdDevs[2] * x(2), stdDevs[2] * x(3)};
+  }
+
+  static std::array<double, 2> MakeRDiagonals(
+      const std::array<double, 1>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& x) {
+    return {stdDevs[0] * x(2), stdDevs[0] * x(3)};
+  }
+
+  static std::array<double, 4> MakeVisionRDiagonals(
+      const std::array<double, 3>& stdDevs,
+      const Eigen::Matrix<double, 4, 1>& y) {
+    return {stdDevs[0], stdDevs[1], stdDevs[2] * y(0), stdDevs[2] * y(1)};
   }
 };
 
