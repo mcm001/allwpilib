@@ -127,6 +127,18 @@ Pose2d frc::MecanumDrivePoseEstimator::UpdateWithTime(
   return GetEstimatedPosition();
 }
 
+std::array<double, 2> MecanumDrivePoseEstimator::MakeRDiagonals(
+    const std::array<double, 1>& stdDevs,
+    const Eigen::Matrix<double, 4, 1>& x) {
+  return {stdDevs[0] * x(2), stdDevs[0] * x(3)};
+}
+
+std::array<double, 4> MecanumDrivePoseEstimator::MakeVisionRDiagonals(
+    const std::array<double, 3>& stdDevs,
+    const Eigen::Matrix<double, 4, 1>& y) {
+  return {stdDevs[0], stdDevs[1], stdDevs[2] * y(2), stdDevs[2] * y(3)};
+}
+
 Eigen::Matrix<double, 4, 1> frc::MecanumDrivePoseEstimator::F(
     const Eigen::Matrix<double, 4, 1>& x,
     const Eigen::Matrix<double, 3, 1>& u) {

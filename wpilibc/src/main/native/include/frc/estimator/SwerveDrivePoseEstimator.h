@@ -305,7 +305,7 @@ class SwerveDrivePoseEstimator {
   static std::array<double, 4> MakeVisionRDiagonals(
       const std::array<double, 3>& stdDevs,
       const Eigen::Matrix<double, 4, 1>& y) {
-    return {stdDevs[0], stdDevs[1], stdDevs[2] * y(0), stdDevs[2] * y(1)};
+    return {stdDevs[0], stdDevs[1], stdDevs[2] * y(2), stdDevs[2] * y(3)};
   }
 };
 

@@ -34,9 +34,9 @@ TEST(DifferentialDrivePoseEstimatorTest, TestStraightLine) {
     frc::Pose2d pose = estimator.UpdateWithTime(
         i * 0.02_s, frc::Rotation2d(0_deg), {1_m / 1_s, 1_m / 1_s},
         1_m * i * 0.02, 1_m * i * 0.02);
-    std::cout << pose.Translation().X().to<double>() << ", "
-              << pose.Translation().Y().to<double>() << ", "
-              << pose.Rotation().Degrees().to<double>() << std::endl;
+    // std::cout << pose.Translation().X().to<double>() << ", "
+    //           << pose.Translation().Y().to<double>() << ", "
+    //           << pose.Rotation().Degrees().to<double>() << std::endl;
   }
 }
 
@@ -107,12 +107,12 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
             frc::Rotation2d(units::radian_t(distribution(generator) * 0.1)),
         input, leftDistance, rightDistance);
 
-    std::cout << groundTruthState.pose.Translation().X().to<double>() << ", "
-              << groundTruthState.pose.Translation().Y().to<double>() << ", "
-              << groundTruthState.pose.Rotation().Degrees().to<double>() << ", "
-              << xhat.Translation().X().to<double>() << ", "
-              << xhat.Translation().Y().to<double>() << ", "
-              << xhat.Rotation().Degrees().to<double>() << ", " << std::endl;
+    // std::cout << groundTruthState.pose.Translation().X().to<double>() << ", "
+    //           << groundTruthState.pose.Translation().Y().to<double>() << ", "
+    //           << groundTruthState.pose.Rotation().Degrees().to<double>() << ", "
+    //           << xhat.Translation().X().to<double>() << ", "
+    //           << xhat.Translation().Y().to<double>() << ", "
+    //           << xhat.Rotation().Degrees().to<double>() << ", " << std::endl;
 
     double error = groundTruthState.pose.Translation()
                        .Distance(xhat.Translation())
