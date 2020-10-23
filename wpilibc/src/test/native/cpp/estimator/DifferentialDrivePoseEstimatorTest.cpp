@@ -85,7 +85,7 @@ TEST(DifferentialDrivePoseEstimatorTest, TestAccuracy) {
 
     if (lastVisionUpdateTime + kVisionUpdateRate < t) {
       if (lastVisionPose != frc::Pose2d()) {
-        // estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
+        estimator.AddVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
       }
       lastVisionPose =
           groundTruthState.pose +

@@ -94,7 +94,7 @@ public class SwerveDrivePoseEstimatorTest {
 
       if (lastVisionUpdateTime + visionUpdateRate < t) {
         if (lastVisionPose != null) {
-          estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
+//          estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
 
         lastVisionPose = new Pose2d(
