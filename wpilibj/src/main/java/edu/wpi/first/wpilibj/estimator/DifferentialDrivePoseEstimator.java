@@ -316,7 +316,7 @@ public class DifferentialDrivePoseEstimator {
     var localY = VecBuilder.fill(distanceLeftMeters, distanceRightMeters, angle.getCos(), angle.getSin());
     var q = StateSpaceUtil.makeCovarianceMatrix(Nat.N6(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat()));
     var r = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat()));
-    m_latencyCompensator.addObserverState(m_observer, u, localY, q, r, this::localMeasurementModel, currentTimeSeconds);
+    m_latencyCompensator.addObserverState(Nat.N4(), m_observer, u, localY, q, r, this::localMeasurementModel, currentTimeSeconds);
 
    m_observer.predict(u, q, dt);
    m_observer.correct(Nat.N4(), u, localY, this::localMeasurementModel, r);

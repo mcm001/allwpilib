@@ -15,6 +15,7 @@
 #include "drake/math/discrete_algebraic_riccati_equation.h"
 #include "edu_wpi_first_math_WPIMathJNI.h"
 #include "unsupported/Eigen/MatrixFunctions"
+#include "Eigen/src/Cholesky/LLT.h"
 
 using namespace wpi::java;
 
@@ -103,6 +104,28 @@ Java_edu_wpi_first_math_WPIMathJNI_exp
 
   env->ReleaseDoubleArrayElements(src, arrayBody, 0);
   env->SetDoubleArrayRegion(dst, 0, rows * rows, Aexp.data());
+}
+
+/*
+ * Class:     edu_wpi_first_math_WPIMathJNI
+ * Method:    llt
+ * Signature: ([DI[D)V
+ */
+JNIEXPORT void JNICALL
+Java_edu_wpi_first_math_WPIMathJNI_llt
+  (JNIEnv* env, jclass, jdoubleArray src, jint rows, jdoubleArray dst)
+{
+  jdouble* arrayBody = env->GetDoubleArrayElements(src, nullptr);
+
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Amat{arrayBody, rows, rows};
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> U =
+      Amat.llt().matrixL();
+
+  env->ReleaseDoubleArrayElements(src, arrayBody, 0);
+  env->SetDoubleArrayRegion(dst, 0, rows * rows, U.data());
 }
 
 /*

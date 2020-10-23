@@ -250,7 +250,7 @@ public class MecanumDrivePoseEstimator {
 
     var localY = VecBuilder.fill(angle.getCos(), angle.getSin());
     Matrix<N4, N4> q = null; // TODO
-    m_latencyCompensator.addObserverState(m_observer, u, localY, q, null, null,  currentTimeSeconds);
+    m_latencyCompensator.addObserverState(null, m_observer, u, localY, q, null, null,  currentTimeSeconds);
     m_observer.predict(u, dt);
     m_observer.correct(u, localY);
 

@@ -275,7 +275,7 @@ public class SwerveDrivePoseEstimator {
         makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat()));
     BiFunction<Matrix<N4, N1>, Matrix<N3, N1>, Matrix<N2, N1>> model =
         (x, u_) -> x.block(Nat.N2(), Nat.N1(), 2, 0);
-    m_latencyCompensator.addObserverState(m_observer, u, localY, q, r, model, currentTimeSeconds);
+    m_latencyCompensator.addObserverState(null, m_observer, u, localY, q, r, model, currentTimeSeconds);
     m_observer.predict(u, q, dt);
     m_observer.correct(Nat.N2(), u, localY, model, r);
     return getEstimatedPosition();

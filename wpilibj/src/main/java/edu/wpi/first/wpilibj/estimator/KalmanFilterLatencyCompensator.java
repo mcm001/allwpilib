@@ -14,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
@@ -36,14 +37,15 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
    * @param timestampSeconds The timesnap of the state.
    */
   @SuppressWarnings("ParameterName")
-  public void addObserverState(
+  public <R extends Num> void addObserverState(
+          Nat<R> rows,
           KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY,
           Matrix<S, S> q, Matrix<O, O> r,
           BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel,
           double timestampSeconds
   ) {
     m_pastObserverSnapshots.add(Map.entry(
-            timestampSeconds, new ObserverSnapshot(observer, u, localY, q, r, localMeasurementModel)
+            timestampSeconds, new ObserverSnapshot(observer, u, localY, q, r, localMeasurementModel, rows)
     ));
 
     if (m_pastObserverSnapshots.size() > k_maxPastObserverStates) {
@@ -114,7 +116,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
     // get the present estimated state.
     for (int i = indexOfClosestEntry; i < m_pastObserverSnapshots.size(); i++) {
       var key = m_pastObserverSnapshots.get(i).getKey();
-      var snapshot = m_pastObserverSnapshots.get(i).getValue();
+      ObserverSnapshot snapshot = m_pastObserverSnapshots.get(i).getValue();
 
       if (i == indexOfClosestEntry) {
         observer.setP(snapshot.errorCovariances);
@@ -122,7 +124,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
       }
 
       observer.predict(snapshot.inputs, snapshot.q, key - lastTimestamp);
-      observer.correct(snapshot.inputs, snapshot.localMeasurements);
+      observer.correct(snapshot.localModelNats, snapshot.inputs, snapshot.localMeasurements, snapshot.localMeasurementModel, snapshot.r);
 
       if (i == indexOfClosestEntry) {
         // Note that the measurement is at a timestep close but probably not exactly equal to the
@@ -134,7 +136,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
       lastTimestamp = key;
 
       m_pastObserverSnapshots.set(i, Map.entry(key, new ObserverSnapshot(observer, snapshot.inputs,
-          snapshot.localMeasurements, snapshot.q, snapshot.r, snapshot.localMeasurementModel)));
+          snapshot.localMeasurements, snapshot.q, snapshot.r, snapshot.localMeasurementModel, snapshot.localModelNats)));
     }
   }
 
@@ -142,25 +144,28 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
    * This class contains all the information about our observer at a given time.
    */
   @SuppressWarnings("MemberName")
-  public class ObserverSnapshot {
+  public class ObserverSnapshot<R extends Num> {
     public final Matrix<S, N1> xHat;
     public final Matrix<S, S> errorCovariances;
     public final Matrix<I, N1> inputs;
     public final Matrix<O, N1> localMeasurements;
     public final Matrix<S, S> q;
     private final Matrix<O, O> r;
-    private final BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel;
+    private final BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<R, N1>> localMeasurementModel;
+    private final Nat<R> localModelNats;
 
     @SuppressWarnings("ParameterName")
     private ObserverSnapshot(
             KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY,
-            Matrix<S, S> q, Matrix<O, O> r, BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel
+            Matrix<S, S> q, Matrix<O, O> r, BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<R, N1>> localMeasurementModel,
+            Nat<R> rows
     ) {
       this.xHat = observer.getXhat();
       this.errorCovariances = observer.getP();
       this.q = q;
       this.r = r;
       this.localMeasurementModel = localMeasurementModel;
+      this.localModelNats = rows;
 
       inputs = u;
       localMeasurements = localY;

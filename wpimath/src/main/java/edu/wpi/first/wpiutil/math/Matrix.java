@@ -527,6 +527,15 @@ public class Matrix<R extends Num, C extends Num> {
 
     CholeskyDecomposition_F64<DMatrixRMaj> chol =
             DecompositionFactory_DDRM.chol(temp.numRows(), lowerTriangular);
+
+    for(int i = 0; i < temp.numRows(); i++) {
+      for(int j = 0; j < temp.numCols(); j++) {
+        if(temp.get(i, j) < 0) {
+          temp.set(i, j, 0);
+        }
+      }
+    }
+
     if (!chol.decompose(temp.getMatrix())) {
       // check that the input is not all zeros -- if they are, we special case and return all
       // zeros.

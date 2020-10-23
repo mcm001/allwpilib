@@ -8,8 +8,11 @@
 package edu.wpi.first.wpilibj.estimator;
 
 import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
+
+import java.util.function.BiFunction;
 
 @SuppressWarnings({"ParameterName", "InterfaceTypeParameterName"})
 interface KalmanTypeFilter<S extends Num, I extends Num, O extends Num> {
@@ -32,4 +35,7 @@ interface KalmanTypeFilter<S extends Num, I extends Num, O extends Num> {
   void predict(Matrix<I, N1> u, Matrix<S, S> q, double dtSeconds);
 
   void correct(Matrix<I, N1> u, Matrix<O, N1> y);
+
+  <R extends Num> void correct(Nat<R> rows, Matrix<I, N1> u, Matrix<R, N1> y, BiFunction<Matrix<S, N1>,
+      Matrix<I, N1>, Matrix<R, N1>> localMeasurementModel, Matrix<R, R> r);
 }
