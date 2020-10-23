@@ -269,8 +269,16 @@ public class SwerveDrivePoseEstimator {
 
     var localY = VecBuilder.fill(angle.getCos(), angle.getSin());
     m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
-    m_observer.predict(u, dt);
-    m_observer.correct(u, localY);
+    m_observer.predict(
+        u,
+        StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat())),
+        dt);
+    m_observer.correct(Nat.N2(),
+        u, localY,
+      (x, u_) -> x.block(Nat.N2(), Nat.N1(), 2, 0),
+    StateSpaceUtil.makeCovarianceMatrix(Nat.N2(),
+        makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat())));
+
 
     return getEstimatedPosition();
   }
