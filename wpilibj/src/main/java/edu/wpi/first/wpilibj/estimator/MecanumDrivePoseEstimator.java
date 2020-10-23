@@ -197,8 +197,7 @@ public class MecanumDrivePoseEstimator {
    */
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastGlobalMeasurement(
-            Nat.N4(),
-            m_observer, m_nominalDt,
+        m_observer, m_nominalDt,
             StateSpaceUtil.poseTo4dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
@@ -250,7 +249,8 @@ public class MecanumDrivePoseEstimator {
     m_previousAngle = angle;
 
     var localY = VecBuilder.fill(angle.getCos(), angle.getSin());
-    m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
+    Matrix<N4, N4> q = null; // TODO
+    m_latencyCompensator.addObserverState(m_observer, u, localY, q, r,  currentTimeSeconds);
     m_observer.predict(u, dt);
     m_observer.correct(u, localY);
 

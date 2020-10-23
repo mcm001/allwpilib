@@ -8,6 +8,7 @@
 package edu.wpi.first.wpilibj.estimator;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -143,7 +144,8 @@ public class SwerveDrivePoseEstimator {
   }
 
   /**
-   * Get x-dot given the current state and input. Recall that the state is [x, y, cos(theta), sin(theta)]^T
+   * Get x-dot given the current state and input. Recall that the state is [x, y, cos(theta),
+   * sin(theta)]^T.
    * In our case, x-dot will be [dx/dt, dy/dt, d/dt cos(theta), d/dt sin(theta)].
    * 
    * @param x The current state.
@@ -210,8 +212,7 @@ public class SwerveDrivePoseEstimator {
    */
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastGlobalMeasurement(
-            Nat.N4(),
-            m_observer, m_nominalDt,
+        m_observer, m_nominalDt,
             StateSpaceUtil.poseTo4dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
@@ -268,32 +269,32 @@ public class SwerveDrivePoseEstimator {
     m_previousAngle = angle;
 
     var localY = VecBuilder.fill(angle.getCos(), angle.getSin());
-    m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
-    m_observer.predict(
-        u,
-        StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat())),
-        dt);
-    m_observer.correct(Nat.N2(),
-        u, localY,
-      (x, u_) -> x.block(Nat.N2(), Nat.N1(), 2, 0),
-    StateSpaceUtil.makeCovarianceMatrix(Nat.N2(),
-        makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat())));
-
-
+    var q = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(),
+        makeQDiagonals(m_stateStdDevs, m_observer.getXhat()));
+    var r = StateSpaceUtil.makeCovarianceMatrix(Nat.N2(),
+        makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat()));
+    BiFunction<Matrix<N4, N1>, Matrix<N3, N1>, Matrix<N2, N1>> model =
+        (x, u_) -> x.block(Nat.N2(), Nat.N1(), 2, 0);
+    m_latencyCompensator.addObserverState(m_observer, u, localY, q, r, model, currentTimeSeconds);
+    m_observer.predict(u, q, dt);
+    m_observer.correct(Nat.N2(), u, localY, model, r);
     return getEstimatedPosition();
   }
 
+  @SuppressWarnings("ParameterName")
   private static Matrix<N4, N1> makeQDiagonals(Matrix<N3, N1> stdDevs, Matrix<N4, N1> x) {
     return VecBuilder.fill(stdDevs.get(0, 0), stdDevs.get(1, 0),
-        stdDevs.get(2,0) * x.get(2,0), stdDevs.get(2, 0) * x.get(3, 0));
+        stdDevs.get(2, 0) * x.get(2, 0), stdDevs.get(2, 0) * x.get(3, 0));
   }
 
+  @SuppressWarnings("ParameterName")
   private static Matrix<N2, N1> makeRDiagonals(Matrix<N1, N1> stdDevs, Matrix<N4, N1> x) {
-    return VecBuilder.fill(stdDevs.get(0,0) * x.get(2,0), stdDevs.get(0, 0) * x.get(3, 0));
+    return VecBuilder.fill(stdDevs.get(0, 0) * x.get(2, 0), stdDevs.get(0, 0) * x.get(3, 0));
   }
 
+  @SuppressWarnings("ParameterName")
   private static Matrix<N4, N1> makeVisionRDiagonals(Matrix<N3, N1> stdDevs, Matrix<N4, N1> y) {
     return VecBuilder.fill(stdDevs.get(0, 0), stdDevs.get(1, 0),
-        stdDevs.get(2,0) * y.get(2,0), stdDevs.get(2, 0) * y.get(3, 0));
+        stdDevs.get(2, 0) * y.get(2, 0), stdDevs.get(2, 0) * y.get(3, 0));
   }
 }

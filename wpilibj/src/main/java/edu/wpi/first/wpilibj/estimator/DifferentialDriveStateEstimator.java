@@ -226,8 +226,7 @@ public class DifferentialDriveStateEstimator {
     m_globalY.set(GlobalOutput.kHeading.value, 0, robotPoseMeters.getRotation().getRadians());
 
     m_latencyCompensator.applyPastGlobalMeasurement(
-            Nat.N3(),
-            m_observer, m_nominalDt,
+        m_observer, m_nominalDt,
             m_globalY,
             m_globalCorrect,
             timestampSeconds

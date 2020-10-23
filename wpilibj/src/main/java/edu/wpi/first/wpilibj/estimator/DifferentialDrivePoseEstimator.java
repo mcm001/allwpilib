@@ -247,8 +247,7 @@ public class DifferentialDrivePoseEstimator {
    */
   public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
     m_latencyCompensator.applyPastGlobalMeasurement(
-            Nat.N4(),
-            m_observer, m_nominalDt,
+        m_observer, m_nominalDt,
             StateSpaceUtil.poseTo4dVector(visionRobotPoseMeters),
             m_visionCorrect,
             timestampSeconds
@@ -315,11 +314,12 @@ public class DifferentialDrivePoseEstimator {
     m_previousAngle = angle;
 
     var localY = VecBuilder.fill(distanceLeftMeters, distanceRightMeters, angle.getCos(), angle.getSin());
-//     m_latencyCompensator.addObserverState(m_observer, u, localY, currentTimeSeconds);
+    var q = StateSpaceUtil.makeCovarianceMatrix(Nat.N6(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat()));
+    var r = StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat()));
+    m_latencyCompensator.addObserverState(m_observer, u, localY, q, r, this::localMeasurementModel, currentTimeSeconds);
 
-   m_observer.predict(u, StateSpaceUtil.makeCovarianceMatrix(Nat.N6(), makeQDiagonals(m_stateStdDevs, m_observer.getXhat())), dt);
-
-   m_observer.correct(Nat.N4(), u, localY, this::localMeasurementModel, StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeRDiagonals(m_localMeasurementStdDevs, m_observer.getXhat())));
+   m_observer.predict(u, q, dt);
+   m_observer.correct(Nat.N4(), u, localY, this::localMeasurementModel, r);
 
     return getEstimatedPosition();
   }

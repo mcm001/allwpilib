@@ -107,7 +107,7 @@ public class DifferentialDrivePoseEstimatorTest {
 
       if (lastVisionUpdateTime + visionUpdateRate + rand.nextGaussian() * 0.4 < t) {
         if (lastVisionPose != null) {
-          //estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
+          estimator.addVisionMeasurement(lastVisionPose, lastVisionUpdateTime);
         }
         var groundPose = groundtruthState.poseMeters;
         lastVisionPose = new Pose2d(
@@ -172,11 +172,11 @@ public class DifferentialDrivePoseEstimatorTest {
     chart.addSeries("Trajectory", trajXs, trajYs);
     chart.addSeries("xHat", observerXs, observerYs);
 
-//    new SwingWrapper<>(chart).displayChart();
-//    try {
-//      Thread.sleep(1000000000);
-//    } catch (InterruptedException e) {
-//    }
+    new SwingWrapper<>(chart).displayChart();
+    try {
+      Thread.sleep(1000000000);
+    } catch (InterruptedException e) {
+    }
   }
 
   @Test void test() {

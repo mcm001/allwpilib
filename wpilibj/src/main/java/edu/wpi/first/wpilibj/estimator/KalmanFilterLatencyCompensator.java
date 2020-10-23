@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import edu.wpi.first.wpiutil.math.Matrix;
-import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
@@ -32,15 +32,18 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
    * @param observer         The observer.
    * @param u                The input at the timestamp.
    * @param localY           The local output at the timestamp
+   * @param q                The process noise covariance matrix at the timestep.
    * @param timestampSeconds The timesnap of the state.
    */
   @SuppressWarnings("ParameterName")
   public void addObserverState(
           KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY,
+          Matrix<S, S> q, Matrix<O, O> r,
+          BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel,
           double timestampSeconds
   ) {
     m_pastObserverSnapshots.add(Map.entry(
-            timestampSeconds, new ObserverSnapshot(observer, u, localY)
+            timestampSeconds, new ObserverSnapshot(observer, u, localY, q, r, localMeasurementModel)
     ));
 
     if (m_pastObserverSnapshots.size() > k_maxPastObserverStates) {
@@ -52,7 +55,6 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
    * Add past global measurements (such as from vision)to the estimator.
    *
    * @param <R>                               The rows in the global measurement vector.
-   * @param rows                              The rows in the global measurement vector.
    * @param observer                          The observer to apply the past global measurement.
    * @param nominalDtSeconds                  The nominal timestep.
    * @param globalMeasurement                 The measurement.
@@ -61,12 +63,11 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
    */
   @SuppressWarnings({"ParameterName", "PMD.AvoidInstantiatingObjectsInLoops"})
   public <R extends Num> void applyPastGlobalMeasurement(
-          Nat<R> rows,
-          KalmanTypeFilter<S, I, O> observer,
-          double nominalDtSeconds,
-          Matrix<R, N1> globalMeasurement,
-          BiConsumer<Matrix<I, N1>, Matrix<R, N1>> globalMeasurementCorrect,
-          double globalMeasurementTimestampSeconds
+      KalmanTypeFilter<S, I, O> observer,
+      double nominalDtSeconds,
+      Matrix<R, N1> globalMeasurement,
+      BiConsumer<Matrix<I, N1>, Matrix<R, N1>> globalMeasurementCorrect,
+      double globalMeasurementTimestampSeconds
   ) {
     if (m_pastObserverSnapshots.isEmpty()) {
       // State map was empty, which means that we got a past measurement right at startup. The only
@@ -120,7 +121,7 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
         observer.setXhat(snapshot.xHat);
       }
 
-      observer.predict(snapshot.inputs, key - lastTimestamp);
+      observer.predict(snapshot.inputs, snapshot.q, key - lastTimestamp);
       observer.correct(snapshot.inputs, snapshot.localMeasurements);
 
       if (i == indexOfClosestEntry) {
@@ -132,8 +133,8 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
       }
       lastTimestamp = key;
 
-      m_pastObserverSnapshots.set(i, Map.entry(key,
-              new ObserverSnapshot(observer, snapshot.inputs, snapshot.localMeasurements)));
+      m_pastObserverSnapshots.set(i, Map.entry(key, new ObserverSnapshot(observer, snapshot.inputs,
+          snapshot.localMeasurements, snapshot.q, snapshot.r, snapshot.localMeasurementModel)));
     }
   }
 
@@ -146,13 +147,20 @@ public class KalmanFilterLatencyCompensator<S extends Num, I extends Num, O exte
     public final Matrix<S, S> errorCovariances;
     public final Matrix<I, N1> inputs;
     public final Matrix<O, N1> localMeasurements;
+    public final Matrix<S, S> q;
+    private final Matrix<O, O> r;
+    private final BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel;
 
     @SuppressWarnings("ParameterName")
     private ObserverSnapshot(
-            KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY
+            KalmanTypeFilter<S, I, O> observer, Matrix<I, N1> u, Matrix<O, N1> localY,
+            Matrix<S, S> q, Matrix<O, O> r, BiFunction<Matrix<S, N1>, Matrix<I, N1>, Matrix<O, N1>> localMeasurementModel
     ) {
       this.xHat = observer.getXhat();
       this.errorCovariances = observer.getP();
+      this.q = q;
+      this.r = r;
+      this.localMeasurementModel = localMeasurementModel;
 
       inputs = u;
       localMeasurements = localY;

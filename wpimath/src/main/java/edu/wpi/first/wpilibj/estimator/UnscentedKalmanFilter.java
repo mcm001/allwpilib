@@ -217,7 +217,6 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
    * @param dtSeconds Timestep for prediction.
    */
   @SuppressWarnings({"LocalVariableName", "ParameterName"})
-  @Override
   public void predict(Matrix<Inputs, N1> u, double dtSeconds) {
     predict(u, m_contQ, dtSeconds);
   }
@@ -234,6 +233,7 @@ public class UnscentedKalmanFilter<States extends Num, Inputs extends Num,
    * @param dtSeconds Timestep for prediction.
    */
   @SuppressWarnings({"LocalVariableName", "ParameterName"})
+  @Override
   public void predict(Matrix<Inputs, N1> u, Matrix<States, States> q, double dtSeconds) {
     // Discretize Q before projecting mean and covariance forward
     Matrix<States, States> contA =

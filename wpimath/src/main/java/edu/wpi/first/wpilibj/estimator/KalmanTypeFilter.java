@@ -12,24 +12,24 @@ import edu.wpi.first.wpiutil.math.Num;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 
 @SuppressWarnings({"ParameterName", "InterfaceTypeParameterName"})
-interface KalmanTypeFilter<States extends Num, Inputs extends Num, Outputs extends Num> {
-  Matrix<States, States> getP();
+interface KalmanTypeFilter<S extends Num, I extends Num, O extends Num> {
+  Matrix<S, S> getP();
 
   double getP(int i, int j);
 
-  void setP(Matrix<States, States> newP);
+  void setP(Matrix<S, S> newP);
 
-  Matrix<States, N1> getXhat();
+  Matrix<S, N1> getXhat();
 
   double getXhat(int i);
 
-  void setXhat(Matrix<States, N1> xHat);
+  void setXhat(Matrix<S, N1> xHat);
 
   void setXhat(int i, double value);
 
   void reset();
 
-  void predict(Matrix<Inputs, N1> u, double dtSeconds);
+  void predict(Matrix<I, N1> u, Matrix<S, S> q, double dtSeconds);
 
-  void correct(Matrix<Inputs, N1> u, Matrix<Outputs, N1> y);
+  void correct(Matrix<I, N1> u, Matrix<O, N1> y);
 }
