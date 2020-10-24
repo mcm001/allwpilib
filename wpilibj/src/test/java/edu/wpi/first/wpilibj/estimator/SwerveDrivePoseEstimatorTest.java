@@ -11,6 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import edu.wpi.first.wpilibj.math.StateSpaceUtil;
+import edu.wpi.first.wpilibj.system.RungeKutta;
+import edu.wpi.first.wpiutil.math.Matrix;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.N2;
+import edu.wpi.first.wpiutil.math.numbers.N3;
+import edu.wpi.first.wpiutil.math.numbers.N4;
 import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.wpilibj.geometry.Pose2d;
@@ -214,4 +222,44 @@ public class SwerveDrivePoseEstimatorTest {
     }
 //    */
   }
+
+    @Test
+    public void testNaive() {
+
+        var traj = TrajectoryGenerator.generateTrajectory(List.of(new Pose2d(), new Pose2d(5, 5, new Rotation2d())), new TrajectoryConfig(2, 2));
+
+        Matrix<N4, N1> x = VecBuilder.fill(0, 0, 1, 0);
+        var ukf = new UnscentedKalmanFilter<>(Nat.N4(), Nat.N2(), this::f, (x_, u) -> x_.block(Nat.N2(), Nat.N1(), 2, 0), VecBuilder.fill(0.1, 0.1, 0.1, 0.1), VecBuilder.fill(0.1, 0.1), 0.020);
+        ukf.setXhat(VecBuilder.fill(0, 0, 1, 0));
+        for (int i = 0; i < traj.getTotalTimeSeconds() / 0.020; i++) {
+            var state = traj.sample(i * 0.020);
+            var u = VecBuilder.fill(state.velocityMetersPerSecond * state.poseMeters.getRotation().getCos(), state.velocityMetersPerSecond * state.poseMeters.getRotation().getSin(), state.curvatureRadPerMeter * state.velocityMetersPerSecond);
+            x = RungeKutta.rungeKutta(this::f, x, u, 0.020);
+            ukf.predict(u, StateSpaceUtil.makeCovarianceMatrix(Nat.N4(), makeQDiagonals(VecBuilder.fill(0.1, 0.1, 0.1), ukf.getXhat())),0.020);
+            ukf.correct(Nat.N2(), u, x.block(Nat.N2(), Nat.N1(), 2, 0), (x_, u_) -> x_.block(Nat.N2(), Nat.N1(), 2, 0), StateSpaceUtil.makeCovarianceMatrix(Nat.N2(), makeRDiagonals(VecBuilder.fill(0.1), ukf.getXhat())));
+
+//            System.out.printf("%s, %s, %s, %s\n", x.get(0,0), x.get(1,0), x.get(2,0), x.get(3,0));
+            System.out.printf("%s, %s, %s, %s\n", ukf.getXhat(0), ukf.getXhat(1), ukf.getXhat(2), ukf.getXhat(3));
+        }
+    }
+
+    // U = vx, vy, omega in global
+    Matrix<N4, N1> f(Matrix<N4, N1> x, Matrix<N3, N1> u) {
+        return VecBuilder.fill(
+            u.get(0, 0), u.get(1, 0), -x.get(3, 0) * u.get(2, 0), x.get(2, 0) * u.get(2, 0)
+        );
+    }
+
+    @SuppressWarnings("ParameterName")
+    private static Matrix<N4, N1> makeQDiagonals(Matrix<N3, N1> stdDevs, Matrix<N4, N1> x) {
+      return VecBuilder.fill(stdDevs.get(0, 0), stdDevs.get(1, 0),
+          stdDevs.get(2, 0) * x.get(2, 0), stdDevs.get(2, 0) * x.get(3, 0));
+//          stdDevs.get(2, 0), stdDevs.get(2, 0));
+    }
+
+    @SuppressWarnings("ParameterName")
+    private static Matrix<N2, N1> makeRDiagonals(Matrix<N1, N1> stdDevs, Matrix<N4, N1> x) {
+      return VecBuilder.fill(stdDevs.get(0, 0) * x.get(2, 0), stdDevs.get(0, 0) * x.get(3, 0));
+//      return VecBuilder.fill(stdDevs.get(0, 0), stdDevs.get(0, 0));
+    }
 }
