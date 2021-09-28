@@ -91,6 +91,7 @@ public final class MathUtil {
    * @param startValue The value to start at.
    * @param endValue The value to end at.
    * @param t How far between the two values to interpolate. This is clamped to [0, 1].
+   * @return The interpolated value.
    */
   @SuppressWarnings("ParameterName")
   public static double interpolate(double startValue, double endValue, double t) {

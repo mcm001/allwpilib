@@ -33,6 +33,7 @@ public class TimeInterpolatableBuffer<T> {
    * @param interpolateFunction The function used to interpolate between values.
    * @param historySizeSeconds The history size of the buffer.
    * @param <T> The type of data to store in the buffer.
+   * @return The new TimeInterpolatableBuffer.
    */
   public static <T> TimeInterpolatableBuffer<T> createBuffer(
       InterpolateFunction<T> interpolateFunction, double historySizeSeconds) {
@@ -44,6 +45,7 @@ public class TimeInterpolatableBuffer<T> {
    *
    * @param historySizeSeconds The history size of the buffer.
    * @param <T> The type of {@link Interpolatable} to store in the buffer.
+   * @return The new TimeInterpolatableBuffer.
    */
   public static <T extends Interpolatable<T>> TimeInterpolatableBuffer<T> createBuffer(
       double historySizeSeconds) {
@@ -54,6 +56,7 @@ public class TimeInterpolatableBuffer<T> {
    * Create a new TimeInterpolatableBuffer to store Double values.
    *
    * @param historySizeSeconds The history size of the buffer.
+   * @return The new TimeInterpolatableBuffer.
    */
   public static TimeInterpolatableBuffer<Double> createDoubleBuffer(double historySizeSeconds) {
     return new TimeInterpolatableBuffer<>(MathUtil::interpolate, historySizeSeconds);
@@ -133,6 +136,7 @@ public class TimeInterpolatableBuffer<T> {
      * @param start The lower bound, or start.
      * @param end The upper bound, or end.
      * @param t How far between the lower and upper bound we are. This should be bounded in [0, 1].
+     * @return The interpolated value.
      */
     @SuppressWarnings("ParameterName")
     T interpolate(T start, T end, double t);
