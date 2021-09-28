@@ -6,7 +6,7 @@
 
 #include "frc/geometry/Pose2d.h"
 #include "frc/geometry/Rotation2d.h"
-#include "frc/interpolatable/TimeInterpolatableBuffer.h"
+#include "frc/interpolation/TimeInterpolatableBuffer.h"
 #include "gtest/gtest.h"
 #include "units/time.h"
 
