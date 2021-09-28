@@ -19,7 +19,6 @@ import edu.wpi.first.math.MathUtil;
  * @param <T> The type stored in this buffer.
  */
 public class TimeInterpolatableBuffer<T> {
-
   private final double m_historySize;
   private final InterpolateFunction<T> m_interpolatingFunc;
   private final NavigableMap<Double, T> m_buffer = new TreeMap<>();

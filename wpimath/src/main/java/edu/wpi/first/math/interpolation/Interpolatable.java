@@ -11,7 +11,6 @@ package edu.wpi.first.math.interpolation;
  * @param <T> The class that is interpolatable.
  */
 public interface Interpolatable<T> {
-
   /**
    * Return the interpolated value. This object is assumed to be the starting position,
    * or lower bound.
