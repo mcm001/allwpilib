@@ -12,7 +12,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <ceres/ceres.h>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/core/utils/logger.hpp>

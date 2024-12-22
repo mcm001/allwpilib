@@ -54,10 +54,7 @@ class PoseGraphError {
     return true;
   }
 
-  static ceres::CostFunction* Create(const Pose& t_ab_observed) {
-    return new ceres::AutoDiffCostFunction<PoseGraphError, 6, 3, 4, 3, 4>(
-        new PoseGraphError(t_ab_observed));
-  }
+
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -468,96 +465,7 @@ int fieldcalibration::calibrate(std::string input_dir_path,
     }
   }
 
-  // Build optimization problem
-  ceres::Problem problem;
-  ceres::Manifold* quaternion_manifold = new ceres::EigenQuaternionManifold;
-
-  for (const auto& constraint : constraints) {
-    auto pose_begin_iter = poses.find(constraint.id_begin);
-    auto pose_end_iter = poses.find(constraint.id_end);
-
-    ceres::CostFunction* cost_function =
-        PoseGraphError::Create(constraint.t_begin_end);
-
-    problem.AddResidualBlock(cost_function, nullptr,
-                             pose_begin_iter->second.p.data(),
-                             pose_begin_iter->second.q.coeffs().data(),
-                             pose_end_iter->second.p.data(),
-                             pose_end_iter->second.q.coeffs().data());
-
-    problem.SetManifold(pose_begin_iter->second.q.coeffs().data(),
-                        quaternion_manifold);
-    problem.SetManifold(pose_end_iter->second.q.coeffs().data(),
-                        quaternion_manifold);
-  }
-
-  // Pin tag
-  auto pinned_tag_iter = poses.find(pinned_tag_id);
-  if (pinned_tag_iter != poses.end()) {
-    problem.SetParameterBlockConstant(pinned_tag_iter->second.p.data());
-    problem.SetParameterBlockConstant(
-        pinned_tag_iter->second.q.coeffs().data());
-  }
-
-  // Solve
-  ceres::Solver::Options options;
-  options.max_num_iterations = 200;
-  options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-  options.num_threads = 10;
-
-  ceres::Solver::Summary summary;
-  ceres::Solve(options, &problem, &summary);
-
-  std::cout << summary.BriefReport() << std::endl;
-
-  // Output
-  std::map<int, wpi::json> observed_map = ideal_map;
-
-  Eigen::Matrix<double, 4, 4> correction_a;
-  correction_a << 0, 0, -1, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1;
-
-  Eigen::Matrix<double, 4, 4> correction_b;
-  correction_b << 0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1;
-
-  Eigen::Matrix<double, 4, 4> pinned_tag_transform =
-      get_tag_transform(ideal_map, pinned_tag_id);
-
-  for (const auto& [tag_id, pose] : poses) {
-    // Transformation from pinned tag
-    Eigen::Matrix<double, 4, 4> transform =
-        Eigen::Matrix<double, 4, 4>::Identity();
-
-    transform.block<3, 3>(0, 0) = pose.q.toRotationMatrix();
-    transform.block<3, 1>(0, 3) = pose.p;
-
-    // Transformation from world
-    Eigen::Matrix<double, 4, 4> corrected_transform =
-        pinned_tag_transform * correction_a * transform * correction_b;
-    Eigen::Quaternion<double> corrected_transform_q(
-        corrected_transform.block<3, 3>(0, 0));
-
-    observed_map[tag_id]["pose"]["translation"]["x"] =
-        corrected_transform(0, 3);
-    observed_map[tag_id]["pose"]["translation"]["y"] =
-        corrected_transform(1, 3);
-    observed_map[tag_id]["pose"]["translation"]["z"] =
-        corrected_transform(2, 3);
-
-    observed_map[tag_id]["pose"]["rotation"]["quaternion"]["X"] =
-        corrected_transform_q.x();
-    observed_map[tag_id]["pose"]["rotation"]["quaternion"]["Y"] =
-        corrected_transform_q.y();
-    observed_map[tag_id]["pose"]["rotation"]["quaternion"]["Z"] =
-        corrected_transform_q.z();
-    observed_map[tag_id]["pose"]["rotation"]["quaternion"]["W"] =
-        corrected_transform_q.w();
-  }
-
   wpi::json observed_map_json;
-
-  for (const auto& [tag_id, tag_json] : observed_map) {
-    observed_map_json["tags"].push_back(tag_json);
-  }
 
   observed_map_json["field"] = {
       {"length", static_cast<double>(json.at("field").at("length"))},
