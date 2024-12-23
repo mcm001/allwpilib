@@ -38,20 +38,27 @@ struct Constraint {
 namespace fieldcalibration {
 std::tuple<Eigen::Matrix<double, 3, 3>, Eigen::Matrix<double, 8, 1>>
 load_camera_model(std::string path);
+
 std::tuple<Eigen::Matrix<double, 3, 3>, Eigen::Matrix<double, 8, 1>>
 load_camera_model(wpi::json json_data);
+
 std::map<int, wpi::json> load_ideal_map(std::string path);
+
 std::vector<Eigen::Vector3d> get_model_corners(double tag_size);
+
 Eigen::Matrix<double, 4, 4> get_tag_transform(
     std::map<int, wpi::json>& ideal_map, int tag_id);
+
 Eigen::Matrix<double, 4, 4> estimate_tag_pose(
     apriltag_detection_t* tag_detection,
     const Eigen::Matrix<double, 3, 3>& camera_matrix,
     const Eigen::Matrix<double, 8, 1>& camera_distortion, double tag_size);
+
 void draw_tag_cube(cv::Mat& frame, Eigen::Matrix<double, 4, 4> camera_to_tag,
                    const Eigen::Matrix<double, 3, 3>& camera_matrix,
                    const Eigen::Matrix<double, 8, 1>& camera_distortion,
                    double tag_size);
+
 bool process_video_file(
     apriltag_detector_t* tag_detector,
     const Eigen::Matrix<double, 3, 3>& camera_matrix,
@@ -61,6 +68,7 @@ bool process_video_file(
              Eigen::aligned_allocator<std::pair<const int, Pose>>>& poses,
     std::vector<Constraint, Eigen::aligned_allocator<Constraint>>& constraints,
     bool show_debug_window);
+
 int calibrate(std::string input_dir_path, std::string output_file_path,
               std::string camera_model_path, std::string ideal_map_path,
               int pinned_tag_id, bool show_debug_window);

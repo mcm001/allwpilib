@@ -1,28 +1,6 @@
-/*
- * MIT License
- *
- * Copyright (c) PhotonVision
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-#include "wpical.h"
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include <gtsam/geometry/Point2.h>
 #include <gtsam/geometry/Pose3.h>
@@ -46,6 +24,7 @@
 #include <opencv2/core/types.hpp>
 
 #include "pose_converters.h"
+#include "wpical.h"
 
 // #define OPENCV_DISABLE_EIGEN_TENSOR_SUPPORT
 #include <opencv2/core/eigen.hpp>
@@ -63,8 +42,8 @@ using DistortionMatrix = Eigen::Matrix<double, 8, 1>;
  */
 std::set<int> TagsUsed(KeyframeMap tags) {
   std::vector<int> v;
-  for (const auto &[key, tags] : tags) {
-    for (const TagDetection &tag : tags) {
+  for (const auto& [key, tags] : tags) {
+    for (const TagDetection& tag : tags) {
       v.push_back(tag.id);
     }
   }
@@ -72,22 +51,21 @@ std::set<int> TagsUsed(KeyframeMap tags) {
 }
 
 CalResult wpical::OptimizeLayout(
-    const GtsamApriltagMap &tagLayoutGuess, const KeyframeMap &keyframes,
+    const GtsamApriltagMap& tagLayoutGuess, const KeyframeMap& keyframes,
     gtsam::Cal3_S2 cal,
-    const std::map<int32_t, std::pair<gtsam::Pose3, gtsam::SharedNoiseModel>>
-        &fixedTags,
+    const std::map<int32_t, std::pair<gtsam::Pose3, gtsam::SharedNoiseModel>>&
+        fixedTags,
     const gtsam::SharedNoiseModel cameraNoise) {
-
   ExpressionFactorGraph graph;
 
   // constrain fixed(ish) tags - future work can investigate partial pose priors
-  for (const auto &[tagId, info] : fixedTags) {
+  for (const auto& [tagId, info] : fixedTags) {
     graph.addPrior(L(tagId), std::get<0>(info), std::get<1>(info));
   }
 
   // Add all our tag observation factors
-  for (const auto &[stateKey, tags] : keyframes) {
-    for (const TagDetection &tag : tags) {
+  for (const auto& [stateKey, tags] : keyframes) {
+    for (const TagDetection& tag : tags) {
       auto worldPcorners =
           tagLayoutGuess.WorldToCornersFactor(Pose3_{L(tag.id)});
 
@@ -112,7 +90,7 @@ CalResult wpical::OptimizeLayout(
   Values initial;
 
   // Guess for all camera poses based on tag layout JSON
-  for (const auto &[stateKey, tags] : keyframes) {
+  for (const auto& [stateKey, tags] : keyframes) {
     if (!tags.size()) {
       std::cerr << "Can't guess pose of camera for observation " << stateKey
                 << " (no tags in observation)" << std::endl;
@@ -155,7 +133,7 @@ CalResult wpical::OptimizeLayout(
   Values result;
   try {
     result = optimizer.optimize();
-  } catch (std::exception *e) {
+  } catch (std::exception* e) {
     std::cerr << e->what();
     return {};
   }
@@ -209,8 +187,7 @@ CalResult wpical::OptimizeLayout(
         int id = static_cast<int>(key - L(0));
 
         tags.push_back(frc::AprilTag{id, est});
-        ret.tagPoseCovariances[id] =
-            Pose3WithVariance::FromEigen(est, stddev);
+        ret.tagPoseCovariances[id] = Pose3WithVariance::FromEigen(est, stddev);
       }
       if (key >= X(0) && key <= X(1000000)) {
         ret.cameraPoseCovariances[key] =
