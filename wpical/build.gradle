@@ -177,6 +177,13 @@ model {
                 } else {
                     println("Adding libgtsam")
                     it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsam.a'
+                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam_unstable/libgtsam_unstable.a'
+                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/3rdparty/metis/libmetis/libmetis-gtsam.a'
+
+                    // /usr/lib/x86_64-linux-gnu/libcholmod.a
+                    it.linker.args << '-lcholmod'
+                    it.linker.args << '-llapack'
+
                     it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
                     it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
                     it.cppCompiler.args.add("-Wno-deprecated-copy")
