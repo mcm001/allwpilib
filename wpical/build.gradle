@@ -175,10 +175,12 @@ model {
                 } else if (it.targetPlatform.operatingSystem.isMacOsX()) {
                     it.linker.args << '-framework' << 'Metal' << '-framework' << 'MetalKit' << '-framework' << 'Cocoa' << '-framework' << 'IOKit' << '-framework' << 'CoreFoundation' << '-framework' << 'CoreVideo' << '-framework' << 'QuartzCore' << '-framework' << 'Accelerate'
                 } else {
-                    // println("Adding libgtsam")
-                    // it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsamRelWithDebInfo.a'
-                    // it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
-                    // it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
+                    println("Adding libgtsam")
+                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsam.a'
+                    it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
+                    it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
+                    it.cppCompiler.args.add("-Wno-deprecated-copy")
+                    it.cppCompiler.args.add("-Wno-redundant-move")
 
                     it.linker.args << '-lX11' << "-lgfortran"
                     if (it.targetPlatform.name.startsWith('linuxarm')) {

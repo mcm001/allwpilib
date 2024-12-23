@@ -41,6 +41,7 @@ target_include_directories(
         src/main/native/include
         src/main/native/thirdparty/libdogleg/include
         src/main/native/thirdparty/mrcal/include
+        src/main/native/thirdparty/mrcal/generated
         src/main/native/thirdparty/mrcal_java/include
 )
 
@@ -82,14 +83,13 @@ endif()
 target_compile_options(wpical PRIVATE ${compile_flags})
 
 find_package(OpenCV REQUIRED)
-find_package(Ceres CONFIG REQUIRED)
 target_link_libraries(
     wpical
     apriltag
     ${OpenCV_LIBS}
     wpigui
     wpiutil
-    Ceres::ceres
+    wpimath
 )
 
 if(WIN32)
@@ -124,6 +124,5 @@ if(WITH_TESTS)
         ${OpenCV_LIBS}
         wpigui
         wpiutil
-        Ceres::ceres
     )
 endif()
