@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-wpi::json fmap::singleTag(int tag, const tag::pose& tagpose) {
+wpi::json fmap::singleTag(int tag, const tag::Pose& tagpose) {
   std::vector<double> transform = {};
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -27,7 +27,7 @@ wpi::json fmap::convertfmap(const wpi::json& json) {
 
   std::string fmapend = "],\"type\":\"frc\"}";
 
-  fieldmap fieldmap(json);
+  Fieldmap fieldmap(json);
 
   for (int i = 0; i < fieldmap.getNumTags(); i++) {
     fmapstart += singleTag(i + 1, fieldmap.getTag(i + 1)).dump();

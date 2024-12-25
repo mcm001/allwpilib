@@ -4,18 +4,16 @@
 
 #pragma once
 
-#include <numbers>
+#include <cmath>
 #include <vector>
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
 #include <tagpose.h>
 #include <wpi/json.h>
 
-class fieldmap {
+class Fieldmap {
  public:
-  fieldmap() = default;
-  explicit fieldmap(const wpi::json& json) {
+  Fieldmap() = default;
+  explicit Fieldmap(const wpi::json& json) {
     double field_length_meters =
         static_cast<double>(json.at("field").at("length"));
     double field_width_meters =
@@ -42,11 +40,12 @@ class fieldmap {
     }
   }
 
-  const tag::pose& getTag(size_t tag) const { return tagVec[tag - 1]; }
+  const tag::Pose& getTag(size_t tag) const { return tagVec[tag - 1]; }
 
   int getNumTags() const { return tagVec.size(); }
 
   static double minimizeAngle(double angle) {
+    angle = std::fmod(angle, 360);
     if (angle > 180) {
       return angle - 360;
     } else if (angle < -180) {
@@ -56,5 +55,5 @@ class fieldmap {
   }
 
  private:
-  std::vector<tag::pose> tagVec;
+  std::vector<tag::Pose> tagVec;
 };

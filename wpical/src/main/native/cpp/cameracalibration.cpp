@@ -4,15 +4,23 @@
 
 #include "cameracalibration.h"
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
-bool filter(std::vector<cv::Point2f> charuco_corners,
-            std::vector<int> charuco_ids,
-            std::vector<std::vector<cv::Point2f>> marker_corners,
-            std::vector<int> marker_ids, int board_width, int board_height) {
+#include <mrcal_wrapper.h>
+#include <opencv2/objdetect/aruco_board.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+#include <wpi/json.h>
+
+static bool filter(std::vector<cv::Point2f> charuco_corners,
+                   std::vector<int> charuco_ids,
+                   std::vector<std::vector<cv::Point2f>> marker_corners,
+                   std::vector<int> marker_ids, int board_width,
+                   int board_height) {
   if (charuco_ids.empty() || charuco_corners.empty()) {
     return false;
   }
