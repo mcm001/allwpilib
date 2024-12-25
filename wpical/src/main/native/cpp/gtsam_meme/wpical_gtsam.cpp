@@ -24,7 +24,7 @@
 #include <opencv2/core/types.hpp>
 
 #include "pose_converters.h"
-#include "wpical.h"
+#include "wpical_gtsam.h"
 
 // #define OPENCV_DISABLE_EIGEN_TENSOR_SUPPORT
 #include <opencv2/core/eigen.hpp>
