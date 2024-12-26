@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include "frc/apriltag/AprilTagFieldLayout.h"
 #include <functional>
 #include <iostream>
 #include <map>
@@ -116,18 +117,6 @@ inline CameraModel load_camera_model(wpi::json json_data) {
 
   CameraModel camera_model{camera_matrix, camera_distortion};
   return camera_model;
-}
-
-inline std::map<int, wpi::json> load_ideal_map(std::string path) {
-  std::ifstream file(path);
-  wpi::json json_data = wpi::json::parse(file);
-  std::map<int, wpi::json> ideal_map;
-
-  for (const auto& element : json_data["tags"]) {
-    ideal_map[element["ID"]] = element;
-  }
-
-  return ideal_map;
 }
 
 inline void draw_tag_cube(cv::Mat& frame,
@@ -321,18 +310,19 @@ int fieldcalibration::calibrate(std::string input_dir_path,
       camera_matrix(0, 2), camera_matrix(1, 2),
   };
 
-  wpi::json json = wpi::json::parse(std::ifstream(ideal_map_path));
-  if (!json.contains("tags")) {
+  // Load the seed field layout from disk
+  frc::AprilTagFieldLayout idealTagLayout;
+  try {
+    wpi::json json = wpi::json::parse(std::ifstream(ideal_map_path));
+    idealTagLayout = json.get<frc::AprilTagFieldLayout>();
+  } catch (...) {
+    std::cerr << "Could not deserialize" << ideal_map_path << std::endl;
     return 1;
   }
+  
 
   // Load ideal field map
   std::map<int, wpi::json> ideal_map;
-  try {
-    ideal_map = load_ideal_map(ideal_map_path);
-  } catch (...) {
-    return 1;
-  }
 
   // Apriltag detector
   apriltag_detector_t* tag_detector = apriltag_detector_create();
@@ -367,9 +357,21 @@ int fieldcalibration::calibrate(std::string input_dir_path,
     }
   }
 
-  // TODO - fill these in
-  wpical::GtsamApriltagMap layoutGuess{{}, TAG_SIZE};
-  std::map<int32_t, std::pair<gtsam::Pose3, gtsam::SharedNoiseModel>> fixedTags;
+  wpical::GtsamApriltagMap layoutGuess{idealTagLayout, TAG_SIZE};
+  
+  // TODO - handle constraints more generally (ie, multiple, tunable)
+
+  // Noise on our pose prior. order is rx, ry, rz, tx, ty, tz, and units are
+  // [rad] and [m].
+  // Guess ~1 degree and 5 mm for fun.
+  using gtsam::Vector6;
+  using gtsam::Vector3;
+  Vector6 sigmas;
+  sigmas << Vector3::Constant(0.015), Vector3::Constant(0.005);
+  gtsam::SharedNoiseModel posePriorNoise = gtsam::noiseModel::Diagonal::Sigmas(sigmas);
+  std::map<int32_t, std::pair<gtsam::Pose3, gtsam::SharedNoiseModel>> fixedTags {
+    { pinned_tag_id, { layoutGuess.WorldToTag(pinned_tag_id).value(), posePriorNoise } }
+  };
 
   // one pixel in u and v - TODO don't hardcode this
   gtsam::SharedNoiseModel cameraNoise{
@@ -378,13 +380,9 @@ int fieldcalibration::calibrate(std::string input_dir_path,
   auto calResult = wpical::OptimizeLayout(layoutGuess, outputMap, gtsam_cal,
                                           fixedTags, cameraNoise);
 
-  wpi::json observed_map_json;
+  wpi::json observed_map_json = calResult.optimizedLayout;
 
   // TODO add my tags to the output map
-
-  observed_map_json["field"] = {
-      {"length", static_cast<double>(json.at("field").at("length"))},
-      {"width", static_cast<double>(json.at("field").at("width"))}};
 
   std::ofstream output_file(output_file_path);
   output_file << observed_map_json.dump(4) << std::endl;
