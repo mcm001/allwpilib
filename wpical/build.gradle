@@ -235,10 +235,28 @@ model {
                 lib project: ':wpigui', library: 'wpigui', linkage: 'static'
                 lib project: ':thirdparty:imgui_suite', library: 'imguiSuite', linkage: 'static'
                 lib project: ':apriltag', library: 'apriltag', linkage: 'static'
-                nativeUtils.useRequiredLibrary(it, 'ceres')
+                lib project: ':wpimath', library: 'wpimath', linkage: 'static'
                 nativeUtils.useRequiredLibrary(it, 'opencv_static')
                 it.cppCompiler.define('PROJECT_ROOT_PATH', testResources)
                 it.cppCompiler.define 'GLOG_USE_GLOG_EXPORT'
+
+                it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
+                it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
+                it.cppCompiler.args.add("-Wno-deprecated-copy")
+                it.cppCompiler.args.add("-Wno-redundant-move")
+
+                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsam.a'
+                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam_unstable/libgtsam_unstable.a'
+                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/3rdparty/metis/libmetis/libmetis-gtsam.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcholmod.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/liblapack.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcolamd.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libsuitesparseconfig.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcamd.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libamd.a'
+                it.linker.args << '/usr/lib/x86_64-linux-gnu/libblas.a'
+                it.linker.args << '/usr/lib/gcc/x86_64-linux-gnu/11/libgomp.a'
+
                 if (it.targetPlatform.name == nativeUtils.wpi.platforms.windowsarm64) {
                     // https://developercommunity.visualstudio.com/t/-imp-std-init-once-complete-unresolved-external-sy/1684365#T-N10041864
                     it.linker.args << '/alternatename:__imp___std_init_once_complete=__imp_InitOnceComplete'
