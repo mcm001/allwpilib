@@ -31,6 +31,7 @@ def wpilibVersionFileInput = file("src/main/generate/WPILibVersion.cpp.in")
 def wpilibVersionFileOutput = file("$buildDir/generated/main/cpp/WPILibVersion.cpp")
 
 apply from: "${rootDir}/shared/ceres.gradle"
+apply from: "${rootDir}/shared/gtsam.gradle"
 apply from: "${rootDir}/shared/opencv.gradle"
 
 task generateCppVersion() {
@@ -162,6 +163,8 @@ model {
                 lib project: ':thirdparty:imgui_suite', library: 'imguiSuite', linkage: 'static'
                 lib project: ':apriltag', library: 'apriltag', linkage: 'static'
                 nativeUtils.useRequiredLibrary(it, 'opencv_static')
+                nativeUtils.useRequiredLibrary(it, 'gtsam')
+                nativeUtils.useRequiredLibrary(it, 'ceres')
                 it.cppCompiler.define 'GLOG_USE_GLOG_EXPORT'
                 if (it.targetPlatform.operatingSystem.isWindows()) {
                     it.cppCompiler.define('GLOG_DEPRECATED', '__declspec(deprecated)')
@@ -175,27 +178,10 @@ model {
                 } else if (it.targetPlatform.operatingSystem.isMacOsX()) {
                     it.linker.args << '-framework' << 'Metal' << '-framework' << 'MetalKit' << '-framework' << 'Cocoa' << '-framework' << 'IOKit' << '-framework' << 'CoreFoundation' << '-framework' << 'CoreVideo' << '-framework' << 'QuartzCore' << '-framework' << 'Accelerate'
                 } else {
-                    println("Adding libgtsam")
                     // it.linker.args << '-flto'
                     // it.cCompiler.args << '-flto'
                     // it.cppCompiler.args << '-flto'
 
-                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsam.a'
-                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam_unstable/libgtsam_unstable.a'
-                    it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/3rdparty/metis/libmetis/libmetis-gtsam.a'
-
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libcholmod.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/liblapack.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libcolamd.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libsuitesparseconfig.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libcamd.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libamd.a'
-                    it.linker.args << '/usr/lib/x86_64-linux-gnu/libblas.a'
-                    it.linker.args << '/usr/lib/gcc/x86_64-linux-gnu/11/libgomp.a'
-
-
-                    it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
-                    it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
                     it.cppCompiler.args.add("-Wno-deprecated-copy")
                     it.cppCompiler.args.add("-Wno-redundant-move")
 
@@ -240,22 +226,6 @@ model {
                 it.cppCompiler.define('PROJECT_ROOT_PATH', testResources)
                 it.cppCompiler.define 'GLOG_USE_GLOG_EXPORT'
 
-                it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-src");
-                it.cppCompiler.args.add("-I/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build");
-                it.cppCompiler.args.add("-Wno-deprecated-copy")
-                it.cppCompiler.args.add("-Wno-redundant-move")
-
-                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/libgtsam.a'
-                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam_unstable/libgtsam_unstable.a'
-                it.linker.args << '/home/matt/Documents/GitHub/thirdparty-gtsam/build/_deps/gtsam-build/gtsam/3rdparty/metis/libmetis/libmetis-gtsam.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcholmod.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/liblapack.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcolamd.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libsuitesparseconfig.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libcamd.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libamd.a'
-                it.linker.args << '/usr/lib/x86_64-linux-gnu/libblas.a'
-                it.linker.args << '/usr/lib/gcc/x86_64-linux-gnu/11/libgomp.a'
 
                 if (it.targetPlatform.name == nativeUtils.wpi.platforms.windowsarm64) {
                     // https://developercommunity.visualstudio.com/t/-imp-std-init-once-complete-unresolved-external-sy/1684365#T-N10041864
